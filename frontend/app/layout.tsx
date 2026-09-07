@@ -5,6 +5,7 @@ import { Cairo, Tajawal } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@inlang/paraglide-next";
 import { SITE_URL } from "@/lib/site";
+import NextTopLoader from "nextjs-toploader";
 
 import { Analytics } from "@/components/analytics";
 
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${cairo.variable} ${tajawal.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col">
+          <NextTopLoader color="#2563eb" showSpinner={false} />
           {children}
           <Analytics />
         </body>

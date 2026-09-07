@@ -159,3 +159,31 @@ async def subscribe_page_to_app(page: FacebookPage) -> bool:
     except httpx.RequestError as e:
         logger.warning("page_subscribe_request_error page_id=%s error=%s", page.page_id, str(e))
         return False
+
+
+async def is_page_access_token_valid(page_access_token: str) -> bool:
+    """Validate a page access token against the Graph API.
+    Returns True if valid, False if expired, revoked, or invalid."""
+    app_access_token = f"{settings.META_APP_ID}|{settings.META_APP_SECRET}"
+
+    try:
+        async with httpx.AsyncClient(timeout=_HTTP_TIMEOUT_SECONDS) as client:
+            response = await client.get(
+                _DEBUG_TOKEN_URL,
+                params={"input_token": page_access_token, "access_token": app_access_token},
+            )
+
+        if response.status_code >= 500:
+            return True  # Give the benefit of the doubt on Meta downtime
+
+        response.raise_for_status()
+        data = response.json()["data"]
+
+        if data.get("is_valid") is not True or data.get("app_id") != settings.META_APP_ID:
+            return False
+
+        return True
+    except httpx.HTTPError:
+        return False
+    except (KeyError, TypeError, ValueError):
+        return False

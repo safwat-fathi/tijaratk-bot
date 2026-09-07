@@ -1,9 +1,9 @@
-.PHONY: run dev worker test lint format migrate upgrade db-bash seed
+.PHONY: run start worker test lint format migrate upgrade db-bash seed
 
 run:
 	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 
-dev:
+start:
 	uv run uvicorn app.main:app --reload
 
 worker:

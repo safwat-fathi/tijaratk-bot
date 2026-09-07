@@ -42,8 +42,8 @@ export function AutoLearningToggle({ initialEnabled }: { initialEnabled: boolean
         }`}
       >
         <span
-          className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-            enabled ? "-translate-x-5" : "-translate-x-0.5"
+          className={`absolute top-0.5 start-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+            enabled ? "rtl:-translate-x-5 ltr:translate-x-5" : "translate-x-0"
           }`}
         />
       </button>

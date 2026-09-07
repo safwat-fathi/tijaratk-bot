@@ -24,9 +24,7 @@ async def _embedding_for(text: str) -> list[float] | None:
 
 async def list_examples(db: AsyncSession, merchant_id: str) -> list[LabeledExampleRead]:
     result = await db.execute(
-        select(LabeledExample)
-        .where(LabeledExample.merchant_id == merchant_id)
-        .order_by(LabeledExample.normalized_text)
+        select(LabeledExample).where(LabeledExample.merchant_id == merchant_id).order_by(LabeledExample.normalized_text)
     )
     return [LabeledExampleRead.model_validate(row) for row in result.scalars().all()]
 

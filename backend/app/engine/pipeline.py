@@ -237,7 +237,7 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
                 merchant_name=merchant_name,
                 user_prompt=(
                     f"customer: {normalized_text}\n"
-                    f'action_result: {resolution.response_text}\n'
+                    f"action_result: {resolution.response_text}\n"
                     "Turn the action_result facts into a natural reply to the customer."
                 ),
             )
@@ -339,7 +339,7 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
         if knowledge_matches:
             prompt = (
                 f"customer: {normalized_text}\n"
-                f'store_info: {knowledge_matches[0]["content"]}\n'
+                f"store_info: {knowledge_matches[0]['content']}\n"
                 "Answer the customer's question using store_info."
             )
         else:

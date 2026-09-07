@@ -5,11 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.domains.auth.dependencies import get_current_merchant
-from app.domains.auth.meta_client import fetch_user_pages, verify_facebook_access_token
+from app.domains.auth.meta_client import fetch_user_pages, is_page_access_token_valid, verify_facebook_access_token
 from app.domains.auth.schemas import AuthTokenResponse, FacebookCallbackRequest
 from app.domains.auth.service import find_or_create_merchant_by_facebook_id, provision_channel_connections
 from app.domains.auth.tokens import create_access_token
-from app.models import ChannelConnection, MerchantStatus
+from app.models import Channel, ChannelConnection, MerchantStatus
 
 router = APIRouter()
 
@@ -71,3 +71,34 @@ async def get_me(merchant=Depends(get_current_merchant), db: AsyncSession = Depe
             for c in connections
         ],
     )
+
+
+@router.get("/me/verify-tokens")
+async def verify_tokens(merchant=Depends(get_current_merchant), db: AsyncSession = Depends(get_db)):
+    """Verify Facebook page tokens in the background."""
+    result = await db.execute(
+        select(ChannelConnection).where(
+            ChannelConnection.merchant_id == merchant.id, ChannelConnection.is_active.is_(True)
+        )
+    )
+    connections = result.scalars().all()
+
+    valid_connections = []
+    invalid_connections = []
+
+    for c in connections:
+        if c.channel == Channel.FACEBOOK and c.page_access_token:
+            is_valid = await is_page_access_token_valid(c.page_access_token)
+            if not is_valid:
+                c.is_active = False
+                invalid_connections.append(c)
+                continue
+        valid_connections.append(c)
+
+    if invalid_connections:
+        await db.commit()
+
+    if connections and not valid_connections:
+        raise HTTPException(status_code=401, detail="Facebook token expired. Please log in again.")
+
+    return {"status": "ok"}
