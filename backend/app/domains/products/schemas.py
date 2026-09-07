@@ -35,12 +35,18 @@ class ProductRead(BaseModel):
     aliases: list[str]
     variants: list[ProductVariantRead]
     price: float | None = None
+    category: str | None = None
+    description: str | None = None
+    image_url: str | None = None
 
 
 class ProductCreate(BaseModel):
     name: str
     aliases: list[str] = Field(default_factory=list)
     price: float | None = None
+    category: str | None = None
+    description: str | None = None
+    image_url: str | None = None
     variants: list[ProductVariantCreate] = Field(default_factory=list)
 
 
@@ -48,3 +54,6 @@ class ProductUpdate(BaseModel):
     name: str | None = None
     aliases: list[str] | None = None
     price: float | None = None
+    category: str | None = None
+    description: str | None = None
+    image_url: str | None = None

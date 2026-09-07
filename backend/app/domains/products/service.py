@@ -35,6 +35,9 @@ def _to_product_read(p: Product) -> ProductRead:
             for v in p.variants
         ],
         price=float(p.price) if p.price is not None else None,
+        category=p.category,
+        description=p.description,
+        image_url=p.image_url,
     )
 
 
@@ -75,6 +78,9 @@ async def create_product(db: AsyncSession, merchant_id: str, payload: ProductCre
         name=payload.name,
         aliases=payload.aliases,
         price=Decimal(str(payload.price)) if payload.price is not None else None,
+        category=payload.category,
+        description=payload.description,
+        image_url=payload.image_url,
     )
     product.embedding = await embed_text(f"{product.name} " + " ".join(product.aliases))
     db.add(product)
@@ -103,6 +109,12 @@ async def update_product(
         product.aliases = payload.aliases
     if payload.price is not None:
         product.price = Decimal(str(payload.price))
+    if payload.category is not None:
+        product.category = payload.category
+    if payload.description is not None:
+        product.description = payload.description
+    if payload.image_url is not None:
+        product.image_url = payload.image_url
     # Re-embed if name or aliases changed
     if payload.name is not None or payload.aliases is not None:
         product.embedding = await embed_text(f"{product.name} " + " ".join(product.aliases))

@@ -80,8 +80,8 @@ async def test_ingest_message_rejects_conversation_owned_by_different_merchant(d
 
 async def test_ingest_message_requires_authentication(db_session, conversation, monkeypatch):
     # Explicitly disable the dev bypass so this test isn't accidentally
-    # green because of a locally-configured AUTH_DEV_BYPASS_MERCHANT_ID.
-    monkeypatch.setattr(settings, "AUTH_DEV_BYPASS_MERCHANT_ID", "")
+    # green because of a locally-configured DEMO_API_KEY.
+    monkeypatch.setattr(settings, "DEMO_API_KEY", "")
 
     async def _override_get_db():
         yield db_session
@@ -187,7 +187,7 @@ async def test_ingest_purchase_intent_returns_full_order_detail(db_session, merc
     assert body["order"]["line_items"][0]["product_id"] == product.id
 
 
-async def test_ingest_question_returns_answer_text(db_session, merchant, conversation, mock_ai):
+async def test_ingest_question_returns_answer_messages(db_session, merchant, conversation, mock_ai):
     db_session.add(
         StoreKnowledge(
             merchant_id=conversation.merchant_id,
@@ -232,4 +232,4 @@ async def test_ingest_question_returns_answer_text(db_session, merchant, convers
         app.dependency_overrides.pop(get_current_merchant, None)
 
     assert response.status_code == 200
-    assert response.json()["answer_text"] == "بنشحن لكل محافظات مصر خلال يومين لأربعة أيام."
+    assert response.json()["answer_messages"][0]["text"] == "بنشحن لكل محافظات مصر خلال يومين لأربعة أيام."

@@ -90,6 +90,7 @@ async def ingest_channel_message(session: AsyncSession, parsed: ParsedInboundMes
             raw_text=parsed.text,
             normalized_text=parsed.text,
             external_message_id=parsed.external_message_id,
+            postback_payload=parsed.postback_payload,
         )
         .on_conflict_do_nothing(
             index_elements=["external_message_id"],

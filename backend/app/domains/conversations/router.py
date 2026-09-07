@@ -3,9 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.domains.auth.dependencies import get_current_merchant
-from app.domains.channels.reply_sender import send_facebook_reply
 from app.domains.conversations.schemas import ConversationRead, MessageRead, ReplyRequest
 from app.domains.conversations.service import get_conversation_messages, list_conversations
+from app.domains.messaging.models import TextMessage
+from app.domains.messaging.sender import send_facebook_messages
 from app.models import Channel, ChannelConnection, Conversation, Direction, Merchant, Message
 from app.models._ids import new_id
 
@@ -43,12 +44,15 @@ async def reply_to_conversation(
         raise HTTPException(status_code=404, detail="conversation not found")
 
     # Persist the outbound message
+    msg_model = TextMessage(text=payload.text)
     outbound = Message(
         id=new_id(),
         conversation_id=conversation.id,
         direction=Direction.OUTBOUND,
-        raw_text=payload.text,
-        normalized_text=payload.text,
+        raw_text=msg_model.text_fallback(),
+        normalized_text=msg_model.text_fallback(),
+        message_type=msg_model.kind,
+        rich_payload=msg_model.model_dump(mode="json"),
     )
     db.add(outbound)
 
@@ -57,11 +61,13 @@ async def reply_to_conversation(
     if conversation.channel_connection_id:
         connection = await db.get(ChannelConnection, conversation.channel_connection_id)
         if connection and connection.page_access_token and connection.channel == Channel.FACEBOOK:
-            sent = await send_facebook_reply(
+            results = await send_facebook_messages(
                 connection.page_access_token,
                 conversation.customer_ref,
-                payload.text,
+                [msg_model],
             )
+            if results:
+                sent = results[0]
 
     await db.commit()
     return {"message_id": outbound.id, "sent": sent}

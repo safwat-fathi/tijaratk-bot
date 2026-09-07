@@ -41,7 +41,7 @@ async def test_delivery_area_crud_happy_path(db_session, merchant):
 
 
 async def test_delivery_areas_endpoints_require_auth(db_session, monkeypatch):
-    monkeypatch.setattr(settings, "AUTH_DEV_BYPASS_MERCHANT_ID", "")
+    monkeypatch.setattr(settings, "DEMO_API_KEY", "")
 
     async def _override_get_db():
         yield db_session

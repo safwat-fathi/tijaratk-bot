@@ -54,8 +54,8 @@ async def test_list_products_returns_only_merchant_scoped_products(db_session, m
 
 async def test_get_products_requires_authentication(db_session, merchant, monkeypatch):
     # Explicitly disable the dev bypass so this test isn't accidentally
-    # green because of a locally-configured AUTH_DEV_BYPASS_MERCHANT_ID.
-    monkeypatch.setattr(settings, "AUTH_DEV_BYPASS_MERCHANT_ID", "")
+    # green because of a locally-configured DEMO_API_KEY.
+    monkeypatch.setattr(settings, "DEMO_API_KEY", "")
 
     async def _override_get_db():
         yield db_session

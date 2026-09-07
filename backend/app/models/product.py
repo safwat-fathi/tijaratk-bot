@@ -24,6 +24,9 @@ class Product(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     aliases: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
     price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    category: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String, nullable=True)
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024), nullable=True)
 
     merchant: Mapped[Merchant] = relationship(back_populates="products")

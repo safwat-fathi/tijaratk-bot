@@ -35,4 +35,5 @@ class MessageIngestResponse(BaseModel):
     order_id: str | None
     order_status: str | None
     order: OrderDetail | None = None
-    answer_text: str | None = None
+    answer_messages: list[dict] = Field(default_factory=list)
+

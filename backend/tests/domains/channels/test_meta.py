@@ -90,7 +90,7 @@ def test_parse_meta_payload_drops_echo_messages():
     assert parse_meta_payload(payload) == []
 
 
-def test_parse_meta_payload_drops_non_text_messages():
+def test_parse_meta_payload_drops_unsupported_messages():
     payload = _messenger_payload("mid.111", "")
     del payload["entry"][0]["messaging"][0]["message"]["text"]
     payload["entry"][0]["messaging"][0]["message"]["attachments"] = [{"type": "image", "payload": {}}]

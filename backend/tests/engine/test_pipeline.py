@@ -497,7 +497,7 @@ async def test_question_intent_returns_seeded_knowledge_answer(db_session, conve
 
     # The raw knowledge content is grounding input to the generation call,
     # not the reply itself — the customer gets the AI-written reply.
-    assert result.answer_text == "بنوصل لكل المحافظات خلال يومين لأربعة يام!"
+    assert result.messages[0].text == "بنوصل لكل المحافظات خلال يومين لأربعة يام!"
 
 
 async def test_question_intent_prefers_more_specific_knowledge_match(db_session, conversation, mock_ai):
@@ -535,7 +535,7 @@ async def test_question_intent_prefers_more_specific_knowledge_match(db_session,
         db_session, conversation, _inbound_message(conversation, "ايه هي مواعيد العمل؟", "ايه هي مواعيد العمل؟")
     )
 
-    assert result.answer_text == "مواعيد العمل من ١٠ الصبح لـ ١٠ بالليل."
+    assert result.messages[0].text == "مواعيد العمل من ١٠ الصبح لـ ١٠ بالليل."
     # The more specific knowledge match is what gets grounded into the
     # generation prompt (call[0] is classification, call[1] is generation).
     generation_body = json.loads(route.calls[1].request.content)
@@ -557,7 +557,7 @@ async def test_no_matching_knowledge_generates_reply_without_store_info(db_sessi
         db_session, conversation, _inbound_message(conversation, "الاسعار كام؟", "الاسعار كام؟")
     )
 
-    assert result.answer_text == "هتأكد وأرد عليك حالا!"
+    assert result.messages[0].text == "هتأكد وأرد عليك حالا!"
     generation_body = json.loads(route.calls[1].request.content)
     assert "store_info:" not in generation_body["messages"][1]["content"]
 
@@ -594,7 +594,8 @@ async def test_purchase_intent_with_order_skips_knowledge_lookup(db_session, con
     )
 
     assert result.order is not None
-    assert result.answer_text is None
+    assert len(result.messages) == 1
+    assert "تم استلام طلبك" in result.messages[0].text
 
 
 async def test_tier0_greeting_generates_ai_reply(db_session, conversation, mock_ai):
@@ -606,7 +607,7 @@ async def test_tier0_greeting_generates_ai_reply(db_session, conversation, mock_
 
     assert result.message.intent == "greeting"
     assert result.message.model_tier == ModelTier.RULE
-    assert result.answer_text == "أهلاً وسهلاً! إزاي أقدر أساعدك؟"
+    assert result.messages[0].text == "أهلاً وسهلاً! إزاي أقدر أساعدك؟"
 
 
 async def test_tier0_greeting_generation_failure_falls_back_to_none(db_session, conversation, mock_ai):
@@ -616,8 +617,9 @@ async def test_tier0_greeting_generation_failure_falls_back_to_none(db_session, 
 
     result = await process_message(db_session, conversation, _inbound_message(conversation, "أهلا", "أهلا"))
 
-    # Worker falls back to its static greeting on None — never silence.
-    assert result.answer_text is None
+    # Worker falls back to just the main menu if AI generation for greeting fails.
+    assert len(result.messages) == 1
+    assert "تحب تعمل إيه؟" in result.messages[0].text
     events = (await db_session.execute(select(AIUsageEvent))).scalars().all()
     assert any(e.success is False for e in events)
 
@@ -637,7 +639,7 @@ async def test_generation_failure_on_question_path_falls_back_to_none(db_session
         db_session, conversation, _inbound_message(conversation, "الاسعار كام؟", "الاسعار كام؟")
     )
 
-    assert result.answer_text is None
+    assert not result.messages
 
 
 async def test_low_confidence_classification_escalates_without_auto_reply(db_session, conversation, mock_ai):
@@ -666,4 +668,4 @@ async def test_low_confidence_classification_escalates_without_auto_reply(db_ses
     )
 
     assert result.message.escalation_reason is not None
-    assert result.answer_text is None
+    assert not result.messages

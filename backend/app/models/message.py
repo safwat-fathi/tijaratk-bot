@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import DateTime, Float, ForeignKey, Index, String, func, text
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -43,5 +44,11 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     clustered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Rich messaging fields
+    message_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    rich_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    postback_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
     order: Mapped[Order] = relationship(back_populates="message")
+

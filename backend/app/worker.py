@@ -11,7 +11,8 @@ from app.clustering.job import run_clustering
 from app.core.config import settings
 from app.core.database import async_session_maker
 from app.core.locks import conversation_lock
-from app.domains.channels.reply_sender import send_facebook_reply
+from app.domains.messaging.models import OutboundMessage, TextMessage
+from app.domains.messaging.sender import send_facebook_messages
 from app.engine.pipeline import process_message
 from app.models import Channel, ChannelConnection, Conversation, Direction, Message
 from app.models._ids import new_id
@@ -19,20 +20,11 @@ from app.models._ids import new_id
 logger = logging.getLogger(__name__)
 
 
-def _compose_reply(result) -> str | None:
-    """Build a human-readable reply from the pipeline result. The order
-    confirmation is the deliberate last-resort fallback: it must stay
-    deterministic and never pass through the AI (order numbers + hallucination)."""
-    if result.answer_text:
-        return result.answer_text
-    if result.order is not None:
-        return f"تم استلام طلبك #{result.order.order_number or result.order.id[:8]}. هنتواصل معاك قريب!"
-    return None
-
-
-async def _send_outbound(session: AsyncSession, conversation: Conversation, reply_text: str) -> None:
-    """Send a reply via the channel and persist the outbound message."""
-    if not conversation.channel_connection_id:
+async def _send_outbound(
+    session: AsyncSession, conversation: Conversation, outbound_messages: list[OutboundMessage]
+) -> None:
+    """Send rich messages via the channel and persist each outbound message."""
+    if not outbound_messages or not conversation.channel_connection_id:
         return
 
     connection = await session.get(ChannelConnection, conversation.channel_connection_id)
@@ -41,22 +33,25 @@ async def _send_outbound(session: AsyncSession, conversation: Conversation, repl
         return
 
     if connection.channel == Channel.FACEBOOK:
-        sent = await send_facebook_reply(
+        results = await send_facebook_messages(
             connection.page_access_token,
             conversation.customer_ref,
-            reply_text,
+            outbound_messages,
         )
-        if sent:
-            session.add(
-                Message(
-                    id=new_id(),
-                    conversation_id=conversation.id,
-                    direction=Direction.OUTBOUND,
-                    raw_text=reply_text,
-                    normalized_text=reply_text,
+        for msg, sent in zip(outbound_messages, results):
+            if sent:
+                session.add(
+                    Message(
+                        id=new_id(),
+                        conversation_id=conversation.id,
+                        direction=Direction.OUTBOUND,
+                        raw_text=msg.text_fallback(),
+                        normalized_text=msg.text_fallback(),
+                        message_type=msg.kind,
+                        rich_payload=msg.model_dump(mode="json"),
+                    )
                 )
-            )
-            await session.flush()
+        await session.flush()
 
 
 async def _process_channel_message(
@@ -71,10 +66,16 @@ async def _process_channel_message(
     async with lock_cm(conversation.id):
         result = await process_message(session, conversation, message)
 
-        # Send outbound reply if the pipeline produced one
-        reply_text = _compose_reply(result)
-        if reply_text:
-            await _send_outbound(session, conversation, reply_text)
+        # Send outbound messages if the pipeline produced any
+        outbound = result.messages
+        if not outbound and result.order is not None:
+            # Fallback: if pipeline produced an order but no messages (shouldn't happen),
+            # send a deterministic order confirmation
+            order_display = result.order.order_number or result.order.id[:8]
+            outbound = [TextMessage(text=f"تم استلام طلبك #{order_display}. هنتواصل معاك قريب!")]
+
+        if outbound:
+            await _send_outbound(session, conversation, outbound)
 
         await session.commit()
 
@@ -97,3 +98,4 @@ class WorkerSettings:
     functions = [process_channel_message]
     cron_jobs = [cron(run_auto_learning, hour=3, minute=0)]
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)
+

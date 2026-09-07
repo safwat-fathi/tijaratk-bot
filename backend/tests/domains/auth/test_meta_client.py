@@ -14,7 +14,13 @@ async def test_verify_facebook_access_token_returns_identity_on_success(monkeypa
     monkeypatch.setattr(settings, "META_APP_SECRET", "test-app-secret")
 
     debug_route = respx.get(_DEBUG_TOKEN_URL).mock(
-        return_value=httpx.Response(200, json={"data": {"is_valid": True, "app_id": "test-app-id"}})
+        return_value=httpx.Response(200, json={
+            "data": {
+                "is_valid": True,
+                "app_id": "test-app-id",
+                "scopes": ["pages_show_list", "pages_manage_metadata", "pages_messaging"]
+            }
+        })
     )
     me_route = respx.get(_ME_URL).mock(return_value=httpx.Response(200, json={"id": "fb-user-1", "name": "Amr"}))
 
@@ -70,13 +76,16 @@ async def test_verify_facebook_access_token_returns_none_when_app_id_mismatch(mo
     assert not me_route.called
 
 
-@respx.mock
-async def test_verify_facebook_access_token_returns_none_on_http_error(monkeypatch):
+async def test_verify_facebook_access_token_raises_502_on_http_error(monkeypatch):
     monkeypatch.setattr(settings, "META_APP_ID", "test-app-id")
     monkeypatch.setattr(settings, "META_APP_SECRET", "test-app-secret")
 
     respx.get(_DEBUG_TOKEN_URL).mock(return_value=httpx.Response(500))
 
-    identity = await verify_facebook_access_token("user-access-token")
+    import pytest
+    from fastapi import HTTPException
 
-    assert identity is None
+    with pytest.raises(HTTPException) as exc_info:
+        await verify_facebook_access_token("user-access-token")
+
+    assert exc_info.value.status_code == 502

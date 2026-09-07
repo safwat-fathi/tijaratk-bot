@@ -47,8 +47,8 @@ async def test_list_conversations_filters_by_merchant_id(db_session, merchant, c
 
 async def test_get_conversations_requires_authentication(db_session, conversation, monkeypatch):
     # Explicitly disable the dev bypass so this test isn't accidentally
-    # green because of a locally-configured AUTH_DEV_BYPASS_MERCHANT_ID.
-    monkeypatch.setattr(settings, "AUTH_DEV_BYPASS_MERCHANT_ID", "")
+    # green because of a locally-configured DEMO_API_KEY.
+    monkeypatch.setattr(settings, "DEMO_API_KEY", "")
 
     async def _override_get_db():
         yield db_session

@@ -64,7 +64,7 @@ async def test_resolve_action_executes_search_store_knowledge_with_no_matches(
 
     assert resolution.outcome.status == "executed"
     assert resolution.escalation_reason is None
-    assert resolution.response_text == "I couldn't find any information about that."
+    assert resolution.response_text == "لم أتمكن من العثور على أي معلومات حول ذلك."
 
 
 async def test_resolve_action_returns_knowledge_content_on_match(db_session, merchant, conversation, message, mock_ai):
