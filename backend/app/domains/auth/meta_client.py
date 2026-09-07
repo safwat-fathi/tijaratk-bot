@@ -141,7 +141,7 @@ async def subscribe_page_to_app(page: FacebookPage) -> bool:
             response = await client.post(
                 _SUBSCRIBED_APPS_URL_TEMPLATE.format(page.page_id),
                 params={"access_token": page.access_token},
-                data={"subscribed_fields": "messages"},
+                data={"subscribed_fields": "messages,messaging_postbacks,messaging_optins"},
             )
         if response.status_code >= 500:
             logger.warning("page_subscribe_failed page_id=%s status=%s", page.page_id, response.status_code)

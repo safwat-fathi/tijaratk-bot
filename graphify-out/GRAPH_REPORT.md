@@ -1,52 +1,52 @@
-# Graph Report - tijaratk-bot  (2026-09-06)
+# Graph Report - tijaratk-bot  (2026-09-07)
 
 ## Corpus Check
-- 341 files · ~454,227 words
+- 352 files · ~465,491 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1914 nodes · 4169 edges · 165 communities (152 shown, 13 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 245 edges (avg confidence: 0.93)
+- 2146 nodes · 4587 edges · 180 communities (167 shown, 13 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 305 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `09296f78`
+- Built from commit: `9a0c0671`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- engine/schemas.py
-- channels/router.py
-- Order
+- dispatch_action
 - test_meta.py
+- Order
+- TijaratkBot_Facebook_WhatsApp_Implementation_Plan.md
 - match_variant_hint
 - delivery/router.py
 - app/page.tsx
-- StoreKnowledge
+- OutboundMessage
 - handoff/router.py
 - devDependencies
 - demo/actions.ts
 - process_message
 - compilerOptions
-- store_knowledge/router.py
+- StoreKnowledge
 - complete
 - ingest_message
-- build_system_prompt
+- ConvState
 - get_db
 - evaluate_preflight
 - get_current_merchant
-- channels/test_router.py
-- Direction
+- AsyncClient
+- build_context_prompt
 - create_access_token
 - conversations/router.py
-- ConvState
+- classify_message
 - match_tier0
 - settings.json
 - FastAPI
 - conftest.py
 - TijaratkBot_SRD.md
 - TijaratkBot_PRD.md
-- auth/router.py
+- logging.py
 - health_check
 - login/actions.ts
 - 1511b3371e51_add_ai_usage_events_table.py
@@ -70,7 +70,7 @@
 - Classification Pipeline: Debugging Session Log — 2026-08-22
 - Cart & Checkout Services + Order Service Hardening Implementation Plan
 - Global Constraints
-- labeled_examples/router.py
+- embed_text
 - Demo Merchant Seed Implementation Plan
 - TijaratkBot Marketing Site — SEO & Frontend Performance Plan
 - Commerce Layer Completion — Doc Reconciliation + Safe-to-Land Gaps
@@ -78,10 +78,10 @@
 - nav.tsx
 - 2. 16-Task Roadmap & Progress Status
 - pricing/page.tsx
-- Conversation
-- Product
+- pipeline.py
+- checkout/test_service.py
 - 33. Onboarding
-- test_action_validator.py
+- ProductVariant
 - 44. Failure Handling
 - AGENTS.md
 - 15. AI Tool/Action Set
@@ -97,20 +97,23 @@
 - 37. Future Roadmap
 - 6. Core Product Modes
 - TijaratkBot — Product Requirements Document (PRD)
-- verify_facebook_access_token
-- merchant.py
+- Cart
+- Product
+- Merchant
+- manual_order.py
 - 4. Remediation plan (phases; each independently shippable)
 - TijaratkBot
 - README.md
 - CLAUDE.md
 - app/layout.tsx
-- conversation.py
+- ingest_channel_message
+- test_product_matching.py
 - faq/page.tsx
 - backend/AGENTS.md
 - ActionArgumentError
-- ChannelConnection
-- new_id
-- register_tool
+- EncryptedString
+- app/models/__init__.py
+- Message
 - blog-content.ts
 - Merchant Dashboard Remediation
 - resolve_action
@@ -118,30 +121,38 @@
 - features-content.ts
 - how-it-works-content.ts
 - use-local-storage.ts
-- asyncio
+- 83. Phase 1 Delivery Plan
 - 2. What is DONE
-- env.py
+- extract_order
 - merchants/router.py
+- handoff/test_router.py
+- 57. API Design
 - Implement AI-Driven Response Generation
-- GetDeliveryInfoAction
+- 100. Production Readiness Checklist
 - test_action_schemas.py
-- handle_search_store_knowledge
+- 18. Phase 1 Scope --- Facebook Messenger
+- 1. Executive Summary
+- 5. Recommended Customer UX
+- 73. Metrics
+- 7. Why This Is Especially Important for 300 Products
+- 80. Testing Strategy
+- 6. The Hybrid UX Principle
+- 82. UX Test Dataset
+- 8. Recommended Customer Conversation Flow
 
 ## God Nodes (most connected - your core abstractions)
-1. `Product` - 104 edges
-2. `Merchant` - 78 edges
-3. `ProductVariant` - 63 edges
-4. `process_message()` - 50 edges
+1. `Product` - 111 edges
+2. `Merchant` - 80 edges
+3. `ProductVariant` - 68 edges
+4. `process_message()` - 55 edges
 5. `get_db()` - 46 edges
-6. `new_id()` - 41 edges
+6. `new_id()` - 43 edges
 7. `get_current_merchant()` - 40 edges
 8. `ConvState` - 40 edges
-9. `add_item()` - 37 edges
+9. `add_item()` - 39 edges
 10. `Conversation` - 32 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `run_auto_learning()` --calls--> `run_clustering()`  [EXTRACTED]
-  backend/app/worker.py → backend/app/clustering/job.py
 - `test_facebook_callback_creates_merchant_and_returns_token()` --indirect_call--> `get_db()`  [INFERRED]
   backend/tests/domains/auth/test_router.py → backend/app/core/database.py
 - `test_facebook_callback_rejects_invalid_facebook_token()` --indirect_call--> `get_db()`  [INFERRED]
@@ -150,27 +161,29 @@
   backend/tests/domains/auth/test_router.py → backend/app/core/database.py
 - `test_get_me_rejects_missing_token()` --indirect_call--> `get_db()`  [INFERRED]
   backend/tests/domains/auth/test_router.py → backend/app/core/database.py
+- `test_get_me_returns_merchant()` --indirect_call--> `get_db()`  [INFERRED]
+  backend/tests/domains/auth/test_router.py → backend/app/core/database.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (165 total, 13 thin omitted)
+## Communities (180 total, 13 thin omitted)
 
-### Community 0 - "engine/schemas.py"
-Cohesion: 0.18
-Nodes (9): _ActionBase, ExtractionResult, GeneratedReply, IntentClassification, json_schema_response_format(), BaseModel, field_validator, test_json_schema_response_format_shape() (+1 more)
+### Community 0 - "dispatch_action"
+Cohesion: 0.06
+Nodes (57): _ActionBase, CreateOrderAction, ExtractionResult, GeneratedReply, GetCheckoutStateAction, GetDeliveryInfoAction, GetProductAction, IntentClassification (+49 more)
 
-### Community 1 - "channels/router.py"
-Cohesion: 0.16
-Nodes (20): ArqRedis, AsyncSession, get, post, receive_meta_webhook(), receive_twilio_webhook(), verify_meta_webhook(), parse_twilio_payload() (+12 more)
+### Community 1 - "test_meta.py"
+Cohesion: 0.09
+Nodes (39): parse_meta_payload(), Try to decode a JSON string from a postback/quick_reply payload., _safe_json_payload(), verify_meta_signature(), ArqRedis, AsyncSession, get, post (+31 more)
 
 ### Community 2 - "Order"
-Cohesion: 0.11
-Nodes (39): ConversationNotFoundError, create_manual_order(), ProductNotFoundError, AsyncSession, Exception, AsyncSession, Decimal, Single, service-owned writer for `Order`/`OrderItem` rows. `status` and… (+31 more)
+Cohesion: 0.23
+Nodes (22): AsyncSession, Decimal, Single, service-owned writer for `Order`/`OrderItem` rows. `status` and…, ResolvedOrderLine, write_order(), ModelTier, OrderSource, OrderStatus (+14 more)
 
-### Community 3 - "test_meta.py"
-Cohesion: 0.27
-Nodes (15): parse_meta_payload(), verify_meta_signature(), _messenger_payload(), _sign(), test_parse_meta_payload_drops_echo_messages(), test_parse_meta_payload_drops_non_text_messages(), test_parse_meta_payload_extracts_messenger_text_message(), test_parse_meta_payload_handles_multiple_entries_and_messages_in_one_batch() (+7 more)
+### Community 3 - "TijaratkBot_Facebook_WhatsApp_Implementation_Plan.md"
+Cohesion: 0.02
+Nodes (93): 101. What Not to Build in Phase 1, 102. Recommended Build Order, 103. Final Architecture, 104. The Most Important Engineering Rule, 105. Final Recommendation, 10. Product Detail UX, 11. Variant Resolution, 12. Cart UX (+85 more)
 
 ### Community 4 - "match_variant_hint"
 Cohesion: 0.47
@@ -184,9 +197,9 @@ Nodes (28): delete_delivery_area_endpoint(), get_delivery_areas(), patch_deliver
 Cohesion: 0.15
 Nodes (11): Page(), PricingSection(), FAQSection(), getFaqs(), Features(), Hero(), HowItWorks(), MarketProof() (+3 more)
 
-### Community 7 - "StoreKnowledge"
-Cohesion: 0.32
-Nodes (10): Keyword-match MVP for SRD §23 ("keyword/full-text retrieval"). A row matches…, search(), Base, StoreKnowledge, test_search_filters_by_knowledge_type(), test_search_is_scoped_to_merchant(), test_search_matches_on_keyword_substring(), test_search_ranks_more_specific_keyword_first() (+2 more)
+### Community 7 - "OutboundMessage"
+Cohesion: 0.08
+Nodes (46): Button, ButtonMessage, GenericElement, GenericTemplateMessage, MediaMessage, OutboundMessage, BaseModel, QuickReply (+38 more)
 
 ### Community 8 - "handoff/router.py"
 Cohesion: 0.39
@@ -194,67 +207,67 @@ Nodes (7): AsyncSession, post, return_to_ai(), takeover_conversation(), HandoffR
 
 ### Community 9 - "devDependencies"
 Cohesion: 0.05
-Nodes (39): eslint, eslint-config-next, dependencies, @inlang/paraglide-js, @inlang/paraglide-next, lucide-react, next, react (+31 more)
+Nodes (41): eslint, eslint-config-next, dependencies, @inlang/paraglide-js, @inlang/paraglide-next, lucide-react, next, nextjs-toploader (+33 more)
 
 ### Community 10 - "demo/actions.ts"
 Cohesion: 0.05
-Nodes (80): checkResponse(), ConversationRecord, createExampleAction(), createKnowledgeAction(), createManualOrderAction(), createProductAction(), deleteExampleAction(), deleteKnowledgeAction() (+72 more)
+Nodes (84): checkResponse(), ConversationRecord, createExampleAction(), createKnowledgeAction(), createManualOrderAction(), createProductAction(), deleteExampleAction(), deleteKnowledgeAction() (+76 more)
 
 ### Community 11 - "process_message"
-Cohesion: 0.07
-Nodes (69): cluster_messages(), fetch_embedded_messages(), label_cluster(), AsyncSession, representative_messages(), run_clustering(), estimate_cost(), Per-model cost-per-1k-tokens rate table. Empty by default — estimate_cost… (+61 more)
+Cohesion: 0.21
+Nodes (33): _correction_count(), _known_intents(), _merchant_info(), PipelineResult, process_message(), AsyncSession, _chat_response(), _embedding_response() (+25 more)
 
 ### Community 12 - "compilerOptions"
 Cohesion: 0.06
 Nodes (30): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+22 more)
 
-### Community 13 - "store_knowledge/router.py"
-Cohesion: 0.24
-Nodes (18): create(), delete(), get_store_knowledge(), AsyncSession, delete, get, post, put (+10 more)
+### Community 13 - "StoreKnowledge"
+Cohesion: 0.13
+Nodes (29): create(), delete(), get_store_knowledge(), AsyncSession, delete, get, post, put (+21 more)
 
 ### Community 14 - "complete"
-Cohesion: 0.18
-Nodes (20): AsyncOpenAI, AICallError, get_deepseek_client(), get_embedding_client(), parse_json_content(), Exception, Model call failed or returned unusable content., §7's observability requirement: log token counts + latency for every AI call,… (+12 more)
+Cohesion: 0.22
+Nodes (17): AsyncOpenAI, AICallError, get_deepseek_client(), get_embedding_client(), parse_json_content(), Exception, Model call failed or returned unusable content., §7's observability requirement: log token counts + latency for every AI call,… (+9 more)
 
 ### Community 15 - "ingest_message"
 Cohesion: 0.17
 Nodes (17): ingest(), AsyncSession, MessageIngestRequest, MessageIngestResponse, post, Response, MessageIngestRequest, MessageIngestResponse (+9 more)
 
-### Community 16 - "build_system_prompt"
-Cohesion: 0.31
-Nodes (6): build_system_prompt(), test_build_system_prompt_accepts_action_task_block(), test_empty_slots_says_nothing_gathered(), test_includes_merchant_name_and_dialect_guidance(), test_nonempty_slots_are_serialized_without_ascii_escaping(), test_state_gloss_is_included()
+### Community 16 - "ConvState"
+Cohesion: 0.29
+Nodes (10): CallUsage, deepseek_provider(), generate_reply(), build_system_prompt(), ConvState, test_build_system_prompt_accepts_action_task_block(), test_empty_slots_says_nothing_gathered(), test_includes_merchant_name_and_dialect_guidance() (+2 more)
 
 ### Community 17 - "get_db"
-Cohesion: 0.18
-Nodes (16): get_db(), Dependency function that yields a database session., test_delivery_area_crud_happy_path(), test_delivery_areas_endpoints_require_auth(), test_patch_and_delete_reject_cross_merchant_area(), test_get_conversations_requires_authentication(), test_list_conversations_filters_by_merchant_id(), _chat_response() (+8 more)
+Cohesion: 0.19
+Nodes (15): get_db(), Dependency function that yields a database session., test_delivery_area_crud_happy_path(), test_delivery_areas_endpoints_require_auth(), test_patch_and_delete_reject_cross_merchant_area(), test_get_conversations_requires_authentication(), test_list_conversations_filters_by_merchant_id(), _chat_response() (+7 more)
 
 ### Community 18 - "evaluate_preflight"
 Cohesion: 0.20
 Nodes (16): check_ambiguous_fields(), check_confidence_threshold(), check_reasoning_heavy(), check_repeated_correction(), evaluate_postflight(), evaluate_preflight(), Triggers knowable before any model call., Triggers only knowable from the model's output. (+8 more)
 
 ### Community 19 - "get_current_merchant"
-Cohesion: 0.24
-Nodes (14): get_current_merchant(), AsyncSession, HTTPAuthorizationCredentials, _bearer(), HTTPAuthorizationCredentials, test_get_current_merchant_dev_bypass_returns_merchant_when_configured_and_no_token(), test_get_current_merchant_invalid_token_raises_401(), test_get_current_merchant_missing_token_raises_401() (+6 more)
+Cohesion: 0.26
+Nodes (14): get_current_merchant(), AsyncSession, HTTPAuthorizationCredentials, _bearer(), HTTPAuthorizationCredentials, test_get_current_merchant_demo_bypass_returns_merchant_when_configured(), test_get_current_merchant_invalid_token_raises_401(), test_get_current_merchant_missing_token_raises_401() (+6 more)
 
-### Community 20 - "channels/test_router.py"
-Cohesion: 0.31
-Nodes (10): get_arq_pool(), ArqRedis, _messenger_body(), _sign_meta(), test_meta_post_creates_message_and_enqueues_job(), test_meta_post_duplicate_delivery_enqueues_again_for_worker_idempotency(), test_meta_post_rejects_invalid_signature(), test_meta_post_unparseable_body_still_returns_200() (+2 more)
+### Community 20 - "AsyncClient"
+Cohesion: 0.35
+Nodes (13): AsyncClient, get_arq_pool(), ArqRedis, _messenger_body(), _sign_meta(), test_meta_get_verify_echoes_challenge(), test_meta_get_verify_rejects_wrong_token(), test_meta_post_creates_message_and_enqueues_job() (+5 more)
 
-### Community 21 - "Direction"
-Cohesion: 0.31
-Nodes (7): build_context_prompt(), Direction, FakeExample, FakeMessage, test_build_context_prompt_includes_examples(), test_build_context_prompt_includes_history_and_current(), test_build_context_prompt_action_mode_runs()
+### Community 21 - "build_context_prompt"
+Cohesion: 0.21
+Nodes (9): build_context_prompt(), main(), Manual evaluation runner — NOT part of `make test` / CI. Hits the real…, run_case(), FakeExample, FakeMessage, test_build_context_prompt_includes_examples(), test_build_context_prompt_includes_history_and_current() (+1 more)
 
 ### Community 22 - "create_access_token"
 Cohesion: 0.36
 Nodes (8): create_access_token(), decode_access_token(), Decode and validate a JWT. Returns the merchant_id (the "sub" claim) on…, Encode a JWT with claims {"sub": merchant_id, "exp": <now +…, test_create_and_decode_access_token_round_trip(), test_decode_access_token_returns_none_for_garbage_input(), test_decode_access_token_returns_none_when_expired(), test_decode_access_token_returns_none_when_tampered()
 
 ### Community 23 - "conversations/router.py"
-Cohesion: 0.22
-Nodes (15): Send a text message to a Facebook/Messenger user via the Send API. Returns True…, send_facebook_reply(), get_conversations(), get_messages(), AsyncSession, get, post, reply_to_conversation() (+7 more)
+Cohesion: 0.28
+Nodes (13): get_conversations(), get_messages(), AsyncSession, get, post, reply_to_conversation(), ConversationRead, MessageRead (+5 more)
 
-### Community 24 - "ConvState"
-Cohesion: 0.22
-Nodes (18): classify_message(), _intent_response_schema(), BaseModel, extract_order(), ConvState, main(), Manual evaluation runner — NOT part of `make test` / CI. Hits the real…, run_case() (+10 more)
+### Community 24 - "classify_message"
+Cohesion: 0.42
+Nodes (8): classify_message(), _intent_response_schema(), BaseModel, _chat_response(), test_classify_message_flags_low_confidence(), test_classify_message_rejects_off_vocabulary_intent(), test_classify_message_returns_result_when_confident(), test_classify_message_skips_ai_call_on_repeated_correction()
 
 ### Community 25 - "match_tier0"
 Cohesion: 0.36
@@ -265,8 +278,8 @@ Cohesion: 0.20
 Nodes (9): languageTags, modules, plugin.inlang.messageFormat, pathPattern, $schema, sourceLanguageTag, ar, en (+1 more)
 
 ### Community 27 - "FastAPI"
-Cohesion: 0.29
-Nodes (7): configure_logging(), close_arq_pool(), close_ai_clients(), lifespan(), get, root(), FastAPI
+Cohesion: 0.23
+Nodes (9): configure_logging(), close_arq_pool(), close_ai_clients(), lifespan(), get, root(), test_get_products_requires_authentication(), test_list_products_returns_only_merchant_scoped_products() (+1 more)
 
 ### Community 28 - "conftest.py"
 Cohesion: 0.27
@@ -280,25 +293,25 @@ Nodes (53): 10. Product Search, 11. Conversation, 12. Conversation State, 13. Me
 Cohesion: 0.06
 Nodes (31): 10. L0 — Deterministic Layer, 11. L1 — Nile-Chat 4B, 12. L2 — DeepSeek V4 Flash, 13. L3 — Human Escalation, 14. AI Action Architecture, 16. Catalog Retrieval, 17. Egyptian Arabic and Arabizi Normalization, 18. Conversation State (+23 more)
 
-### Community 31 - "auth/router.py"
-Cohesion: 0.12
-Nodes (25): FacebookIdentity, FacebookPage, fetch_user_pages(), Subscribe the page to this app's webhooks so Meta delivers its message events.…, Fetch the Facebook Pages managed by this user. Each page comes with a page-…, subscribe_page_to_app(), ConnectedChannel, facebook_callback() (+17 more)
+### Community 31 - "logging.py"
+Cohesion: 0.08
+Nodes (38): FacebookIdentity, FacebookPage, fetch_user_pages(), is_page_access_token_valid(), Subscribe the page to this app's webhooks so Meta delivers its message events.…, Validate a page access token against the Graph API. Returns True if valid,…, Verify a Facebook user access token against the Graph API. Returns the verified…, Fetch the Facebook Pages managed by this user. Each page comes with a page-… (+30 more)
 
 ### Community 32 - "health_check"
 Cohesion: 0.33
 Nodes (5): health_check(), get, Check if the API is running., HealthResponse, BaseModel
 
 ### Community 33 - "login/actions.ts"
-Cohesion: 0.12
-Nodes (18): loginWithFacebookAction(), logoutAction(), setAuthCookies(), LoginPage(), navigation, SidebarClient(), OnboardingPage(), ConnectFacebookPages() (+10 more)
+Cohesion: 0.13
+Nodes (17): loginWithFacebookAction(), logoutAction(), setAuthCookies(), LoginPage(), navigation, SidebarClient(), OnboardingPage(), ConnectFacebookPages() (+9 more)
 
 ### Community 38 - "opencode.json"
 Cohesion: 0.50
 Nodes (3): plugin, $schema, .opencode/plugins/graphify.js
 
 ### Community 88 - "products/router.py"
-Cohesion: 0.20
-Nodes (24): create(), delete(), get_products(), AsyncSession, delete, get, post, put (+16 more)
+Cohesion: 0.16
+Nodes (29): create(), delete(), get_products(), AsyncSession, delete, get, post, put (+21 more)
 
 ### Community 89 - "Backend review & remediation plan — classy-arabic (`backend/`)"
 Cohesion: 0.07
@@ -336,9 +349,9 @@ Nodes (14): Cart & Checkout Services + Order Service Hardening Implementation Pl
 Cohesion: 0.14
 Nodes (13): DeepSeek-Only Engine Implementation Plan, Explicitly out of scope, Global Constraints, Self-review (spec coverage / placeholders / type consistency), Task 1: `app/engine/prompts.py` — shared system-prompt composer, Task 2: Simplify `context_budget.py` and `routing_policy.py`, Task 3: Collapse `ModelTier` to `RULE` / `DEEPSEEK`, Task 4: Collapse the model layer — `clients.py`, `gateway.py`, `classification.py`, `extraction.py`, `clustering/job.py` (+5 more)
 
-### Community 98 - "labeled_examples/router.py"
-Cohesion: 0.15
-Nodes (28): create(), delete(), get_known_intents(), get_labeled_examples(), AsyncSession, delete, get, post (+20 more)
+### Community 98 - "embed_text"
+Cohesion: 0.05
+Nodes (56): asyncio, do_run_migrations(), Run migrations in 'offline' mode. This configures the context with just a URL…, In this scenario we need to create an Engine and associate a connection with…, Run migrations in 'online' mode., run_async_migrations(), run_migrations_offline(), run_migrations_online() (+48 more)
 
 ### Community 99 - "Demo Merchant Seed Implementation Plan"
 Cohesion: 0.15
@@ -365,24 +378,24 @@ Cohesion: 0.18
 Nodes (10): 1. Project & Architecture Context, 2. 16-Task Roadmap & Progress Status, 3. Important Architectural Rulings & Invariant Rules, 4. Immediate Execution Guide: Task 8 (Delivery Service), ✅ Phase 0 — Product Variants & Order Writer Consolidation (COMPLETED), ✅ Phase 1 — Multi-Tenancy & Auth Spine (COMPLETED), ⏳ Phase 2 — Delivery Service (CURRENT & NEXT TASK), Session Handover & Context Summary: Tijaratk Bot Multi-Phase Plan (+2 more)
 
 ### Community 105 - "pricing/page.tsx"
-Cohesion: 0.16
-Nodes (13): GET(), metadata, PricingPage(), renderFeatureValue(), PricingTable(), COMPARISON_CATEGORIES, ComparisonFeature, FAIR_USAGE_TERMS (+5 more)
+Cohesion: 0.18
+Nodes (11): GET(), metadata, PricingTable(), COMPARISON_CATEGORIES, ComparisonFeature, FAIR_USAGE_TERMS, getPricingMarkdown(), PAYMENT_METHODS (+3 more)
 
-### Community 107 - "Conversation"
-Cohesion: 0.23
-Nodes (17): ConversationNotFoundError, AsyncSession, Exception, return_to_ai(), takeover_conversation(), Conversation, Base, HandoffReason (+9 more)
+### Community 107 - "pipeline.py"
+Cohesion: 0.15
+Nodes (19): ConversationNotFoundError, AsyncSession, Exception, return_to_ai(), takeover_conversation(), estimate_cost(), Per-model cost-per-1k-tokens rate table. Empty by default — estimate_cost…, _generate_reply() (+11 more)
 
-### Community 108 - "Product"
-Cohesion: 0.05
-Nodes (106): add_item(), CartItemNotFoundError, _get_item_for_conversation(), _get_or_create_active_cart(), AsyncSession, Exception, line_item_id does not reference an existing cart item for this conversation's…, remove_item() (+98 more)
+### Community 108 - "checkout/test_service.py"
+Cohesion: 0.14
+Nodes (28): create_order(), get_checkout_state(), AsyncSession, Real delivery-area lookup (SRD §29). A merchant with no configured active areas…, validate_delivery_area(), DeliveryArea, Base, test_create_order_allows_new_cart_after_checkout() (+20 more)
 
 ### Community 109 - "33. Onboarding"
 Cohesion: 0.29
 Nodes (7): 33. Onboarding, Step 1, Step 2, Step 3, Step 4, Step 5, Step 6
 
-### Community 110 - "test_action_validator.py"
-Cohesion: 0.08
-Nodes (52): check_product_belongs_to_merchant(), check_product_exists(), _check_product_ownership(), check_variant_belongs_to_product(), check_variant_exists(), check_variant_is_active(), _check_variant_ownership(), evaluate_action() (+44 more)
+### Community 110 - "ProductVariant"
+Cohesion: 0.11
+Nodes (42): check_product_belongs_to_merchant(), check_product_exists(), _check_product_ownership(), check_variant_belongs_to_product(), check_variant_exists(), check_variant_is_active(), _check_variant_ownership(), evaluate_action() (+34 more)
 
 ### Community 111 - "44. Failure Handling"
 Cohesion: 0.33
@@ -440,13 +453,21 @@ Nodes (3): 37. Future Roadmap, Phase 2, Phase 3
 Cohesion: 0.67
 Nodes (3): 6.1 Catalog Mode, 6.2 AI Commerce Mode, 6. Core Product Modes
 
-### Community 129 - "verify_facebook_access_token"
-Cohesion: 0.50
-Nodes (7): Verify a Facebook user access token against the Graph API. Returns the verified…, verify_facebook_access_token(), mock, test_verify_facebook_access_token_returns_identity_on_success(), test_verify_facebook_access_token_returns_none_on_http_error(), test_verify_facebook_access_token_returns_none_when_app_id_mismatch(), test_verify_facebook_access_token_returns_none_when_invalid()
+### Community 129 - "Cart"
+Cohesion: 0.20
+Nodes (19): _get_item_for_conversation(), _get_or_create_active_cart(), AsyncSession, remove_item(), _get_active_cart_items(), Product, ProductVariant, Cart (+11 more)
 
-### Community 131 - "merchant.py"
+### Community 130 - "Product"
 Cohesion: 0.24
-Nodes (10): MerchantStatus, _mock_facebook_success(), mock, test_facebook_callback_creates_merchant_and_returns_token(), test_facebook_callback_rejects_invalid_facebook_token(), test_facebook_callback_rejects_suspended_merchant(), test_get_me_rejects_missing_token(), test_get_me_returns_merchant() (+2 more)
+Nodes (22): add_item(), CartItemNotFoundError, Exception, line_item_id does not reference an existing cart item for this conversation's…, update_item(), Product, Base, test_add_item_creates_cart_and_item() (+14 more)
+
+### Community 131 - "Merchant"
+Cohesion: 0.24
+Nodes (12): MerchantStatus, Merchant, Base, _mock_facebook_success(), mock, test_facebook_callback_creates_merchant_and_returns_token(), test_facebook_callback_rejects_invalid_facebook_token(), test_facebook_callback_rejects_suspended_merchant() (+4 more)
+
+### Community 132 - "manual_order.py"
+Cohesion: 0.17
+Nodes (17): ConversationNotFoundError, create_manual_order(), ProductNotFoundError, AsyncSession, Exception, create_manual(), list_orders(), AsyncSession (+9 more)
 
 ### Community 133 - "4. Remediation plan (phases; each independently shippable)"
 Cohesion: 0.12
@@ -468,9 +489,13 @@ Nodes (9): App layout, Architecture, Commands, ⛔ CRITICAL SECURITY RULE: Envir
 Cohesion: 0.19
 Nodes (5): cairo, tajawal, Analytics(), BLOG_POSTS, SITE_URL
 
-### Community 138 - "conversation.py"
-Cohesion: 0.41
-Nodes (9): ParsedInboundMessage, _find_channel_connection(), _find_or_create_conversation(), ingest_channel_message(), AsyncSession, test_ingest_creates_conversation_and_message(), test_ingest_drops_messages_for_unmapped_account(), test_ingest_is_idempotent_on_duplicate_external_message_id() (+1 more)
+### Community 138 - "ingest_channel_message"
+Cohesion: 0.53
+Nodes (8): ParsedInboundMessage, _find_channel_connection(), ingest_channel_message(), AsyncSession, test_ingest_creates_conversation_and_message(), test_ingest_drops_messages_for_unmapped_account(), test_ingest_is_idempotent_on_duplicate_external_message_id(), test_ingest_reuses_existing_conversation_for_same_customer()
+
+### Community 139 - "test_product_matching.py"
+Cohesion: 0.29
+Nodes (16): build_resolved_order_lines(), match_line_items_to_products(), AsyncSession, Batch-loads Product and ProductVariant rows for every resolved id across all…, For each item with a resolved product_id, load that product's ACTIVE…, resolve_variants_for_line_items(), ExtractedLineItem, _embedding_response() (+8 more)
 
 ### Community 140 - "faq/page.tsx"
 Cohesion: 0.27
@@ -484,17 +509,17 @@ Nodes (3): 🚨 CRITICAL RULE: Mandatory Frontend & Backend Lint Checks, ⛔ CRI
 Cohesion: 0.27
 Nodes (15): AddToCartAction, RemoveFromCartAction, UpdateCartAction, handle_add_to_cart(), handle_remove_from_cart(), handle_update_cart(), AsyncSession, ActionArgumentError (+7 more)
 
-### Community 143 - "ChannelConnection"
-Cohesion: 0.14
-Nodes (9): Any, ChannelConnection, Base, Channel, EncryptedString, A SQLAlchemy TypeDecorator that transparently encrypts strings on the way in…, test_channel_connection_defaults(), test_webhook_event_stores_raw_payload() (+1 more)
+### Community 143 - "EncryptedString"
+Cohesion: 0.29
+Nodes (4): Any, EncryptedString, A SQLAlchemy TypeDecorator that transparently encrypts strings on the way in…, TypeDecorator
 
-### Community 144 - "new_id"
-Cohesion: 0.16
-Nodes (15): AbstractAsyncContextManager, new_id(), _compose_reply(), _process_channel_message(), AsyncSession, Conversation, Build a human-readable reply from the pipeline result. The order confirmation…, Send a reply via the channel and persist the outbound message. (+7 more)
+### Community 144 - "app/models/__init__.py"
+Cohesion: 0.13
+Nodes (20): AbstractAsyncContextManager, _find_or_create_conversation(), Send a sequence of rich messages to a Facebook/Messenger user. Returns a list…, send_facebook_messages(), ChannelConnection, Base, Channel, DeliveryAreaStatus (+12 more)
 
-### Community 145 - "register_tool"
-Cohesion: 0.30
-Nodes (15): CreateOrderAction, GetCheckoutStateAction, UpdateCustomerInfoAction, handle_create_order(), handle_get_checkout_state(), handle_update_customer_info(), AsyncSession, register_tool() (+7 more)
+### Community 145 - "Message"
+Cohesion: 0.22
+Nodes (14): cluster_messages(), fetch_embedded_messages(), label_cluster(), AsyncSession, representative_messages(), run_clustering(), Message, Base (+6 more)
 
 ### Community 146 - "blog-content.ts"
 Cohesion: 0.39
@@ -520,53 +545,93 @@ Nodes (4): GET(), FEATURE_PILLARS, FeaturePillar, getFeaturesMarkdown()
 Cohesion: 0.47
 Nodes (4): GET(), getHowItWorksMarkdown(), HOW_IT_WORKS_STEPS, StepItem
 
-### Community 155 - "asyncio"
-Cohesion: 0.27
-Nodes (6): asyncio, conversation_lock(), ArqRedis, Redis mutex keyed `conversation:{id}:lock` (SRD §36) so two concurrent webhook…, test_lock_excludes_concurrent_holders(), test_lock_releases_on_exception()
+### Community 155 - "83. Phase 1 Delivery Plan"
+Cohesion: 0.22
+Nodes (9): 83. Phase 1 Delivery Plan, Milestone 1 --- Foundation, Milestone 2 --- Catalog, Milestone 3 --- Commerce Core, Milestone 4 --- Facebook Integration, Milestone 5 --- Messenger Catalog UX, Milestone 6 --- AI Layer, Milestone 7 --- Merchant Inbox (+1 more)
 
 ### Community 156 - "2. What is DONE"
 Cohesion: 0.17
 Nodes (11): 1. What the plan was, 1a. Challenges applied to the original plan, 1b. Final approved plan (three parts), 2. What is DONE, 3. What is NOT done, 4. Files changed (summary), AI-Driven Responses & Merchant AI Learning — Implementation Status, Backend (+3 more)
 
-### Community 157 - "env.py"
-Cohesion: 0.28
-Nodes (8): do_run_migrations(), Run migrations in 'offline' mode. This configures the context with just a URL…, In this scenario we need to create an Engine and associate a connection with…, Run migrations in 'online' mode., run_async_migrations(), run_migrations_offline(), run_migrations_online(), Connection
+### Community 157 - "extract_order"
+Cohesion: 0.46
+Nodes (6): extract_order(), test_raw_message(), _chat_response(), test_extract_order_flags_ambiguous_fields(), test_extract_order_returns_result_when_clean(), test_extract_order_skips_ai_call_on_repeated_correction()
 
 ### Community 158 - "merchants/router.py"
 Cohesion: 0.33
 Nodes (8): get_settings(), MerchantSettingsRead, MerchantSettingsUpdate, AsyncSession, BaseModel, get, patch, update_settings()
 
+### Community 159 - "handoff/test_router.py"
+Cohesion: 0.46
+Nodes (7): override_deps(), AsyncSession, Conversation, fixture, sample_conversation(), test_return_to_ai(), test_takeover_conversation()
+
+### Community 160 - "57. API Design"
+Cohesion: 0.33
+Nodes (6): 57. API Design, Authentication, Channels, Conversations, Orders, Products
+
 ### Community 161 - "Implement AI-Driven Response Generation"
 Cohesion: 0.25
 Nodes (7): 1. `backend/app/engine/generation.py` [NEW], 2. `backend/app/engine/pipeline.py` [MODIFY], 3. `backend/app/worker.py` [MODIFY], Implement AI-Driven Response Generation, Open Questions, Proposed Changes, Verification Plan
 
-### Community 162 - "GetDeliveryInfoAction"
-Cohesion: 0.52
-Nodes (5): GetDeliveryInfoAction, handle_get_delivery_info(), AsyncSession, test_dispatch_get_delivery_info_executes(), test_handle_get_delivery_info_returns_available_default_for_unconfigured_merchant()
+### Community 162 - "100. Production Readiness Checklist"
+Cohesion: 0.40
+Nodes (5): 100. Production Readiness Checklist, AI, Commerce, Facebook, UX
 
-### Community 164 - "handle_search_store_knowledge"
-Cohesion: 0.57
-Nodes (5): SearchStoreKnowledgeAction, handle_search_store_knowledge(), AsyncSession, test_handle_search_store_knowledge_returns_empty_results_when_nothing_seeded(), test_handle_search_store_knowledge_returns_seeded_match()
+### Community 164 - "18. Phase 1 Scope --- Facebook Messenger"
+Cohesion: 0.40
+Nodes (5): 18. Phase 1 Scope --- Facebook Messenger, AI, Channel, Commerce, Merchant
+
+### Community 166 - "1. Executive Summary"
+Cohesion: 0.50
+Nodes (4): 1. Executive Summary, Phase 1 --- Facebook Messenger, Phase 2 --- WhatsApp, TijaratkBot --- Facebook Messenger Commerce Bot Implementation Plan
+
+### Community 171 - "5. Recommended Customer UX"
+Cohesion: 0.50
+Nodes (4): 5. Recommended Customer UX, Mode A --- Structured browsing, Mode B --- Natural-language search, Mode C --- Conversational ordering
+
+### Community 172 - "73. Metrics"
+Cohesion: 0.50
+Nodes (4): 73. Metrics, AI metrics, Business metrics, UX metrics
+
+### Community 173 - "7. Why This Is Especially Important for 300 Products"
+Cohesion: 0.50
+Nodes (4): 7. Why This Is Especially Important for 300 Products, Problem 1 --- Discovery, Problem 2 --- Decision overload, Problem 3 --- Conversation context
+
+### Community 174 - "80. Testing Strategy"
+Cohesion: 0.50
+Nodes (4): 80. Testing Strategy, Backend unit tests, Channel tests, Integration tests
+
+### Community 176 - "6. The Hybrid UX Principle"
+Cohesion: 0.67
+Nodes (3): 6. The Hybrid UX Principle, AI for:, Structured UI for:
+
+### Community 177 - "82. UX Test Dataset"
+Cohesion: 0.67
+Nodes (3): 82. UX Test Dataset, Task, Task
+
+### Community 178 - "8. Recommended Customer Conversation Flow"
+Cohesion: 0.67
+Nodes (3): 8.1 Entry, 8.2 Browse, 8. Recommended Customer Conversation Flow
 
 ## Knowledge Gaps
-- **461 isolated node(s):** `$schema`, `.opencode/plugins/graphify.js`, `Config`, `WorkerSettings`, `tijaratk-bot` (+456 more)
+- **597 isolated node(s):** `$schema`, `.opencode/plugins/graphify.js`, `Config`, `WorkerSettings`, `tijaratk-bot` (+592 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **13 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Merchant` connect `Product` to `Order`, `merchant.py`, `delivery/router.py`, `StoreKnowledge`, `handoff/router.py`, `conversation.py`, `process_message`, `store_knowledge/router.py`, `ingest_message`, `ChannelConnection`, `new_id`, `get_db`, `get_current_merchant`, `resolve_action`, `conversations/router.py`, `conftest.py`, `merchants/router.py`, `auth/router.py`, `products/router.py`, `labeled_examples/router.py`, `Conversation`, `test_action_validator.py`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
-- **Why does `Product` connect `Product` to `Order`, `merchant.py`, `process_message`, `test_action_validator.py`, `ActionArgumentError`, `get_db`, `register_tool`, `resolve_action`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **Why does `get_db()` connect `get_db` to `channels/router.py`, `Order`, `merchant.py`, `labeled_examples/router.py`, `delivery/router.py`, `handoff/router.py`, `Conversation`, `Product`, `store_knowledge/router.py`, `ingest_message`, `channels/test_router.py`, `conversations/router.py`, `products/router.py`, `merchants/router.py`, `auth/router.py`?**
-  _High betweenness centrality (0.018) - this node is a cross-community bridge._
-- **Are the 8 inferred relationships involving `Product` (e.g. with `add_item()` and `_get_active_cart_items()`) actually correct?**
-  _`Product` has 8 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 11 inferred relationships involving `Merchant` (e.g. with `get_checkout_state()` and `return_to_ai()`) actually correct?**
-  _`Merchant` has 11 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 11 inferred relationships involving `ProductVariant` (e.g. with `add_item()` and `create_manual_order()`) actually correct?**
-  _`ProductVariant` has 11 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 25 inferred relationships involving `get_db()` (e.g. with `test_facebook_callback_creates_merchant_and_returns_token()` and `test_facebook_callback_rejects_invalid_facebook_token()`) actually correct?**
-  _`get_db()` has 25 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `Merchant` connect `Merchant` to `Order`, `Product`, `manual_order.py`, `delivery/router.py`, `OutboundMessage`, `handoff/router.py`, `test_product_matching.py`, `StoreKnowledge`, `ingest_message`, `app/models/__init__.py`, `get_db`, `Message`, `get_current_merchant`, `resolve_action`, `conversations/router.py`, `FastAPI`, `conftest.py`, `merchants/router.py`, `logging.py`, `handoff/test_router.py`, `products/router.py`, `embed_text`, `pipeline.py`, `checkout/test_service.py`, `ProductVariant`?**
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
+- **Why does `Product` connect `Product` to `dispatch_action`, `Cart`, `Order`, `Merchant`, `OutboundMessage`, `process_message`, `checkout/test_service.py`, `test_product_matching.py`, `ProductVariant`, `ActionArgumentError`, `app/models/__init__.py`, `get_db`, `resolve_action`, `products/router.py`, `FastAPI`?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `ConvState` connect `ConvState` to `Order`, `pipeline.py`, `process_message`, `app/models/__init__.py`, `get_db`, `build_context_prompt`, `classify_message`, `conftest.py`, `extract_order`, `handoff/test_router.py`?**
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Are the 13 inferred relationships involving `Product` (e.g. with `add_item()` and `_get_active_cart_items()`) actually correct?**
+  _`Product` has 13 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 12 inferred relationships involving `Merchant` (e.g. with `get_checkout_state()` and `return_to_ai()`) actually correct?**
+  _`Merchant` has 12 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 13 inferred relationships involving `ProductVariant` (e.g. with `add_item()` and `create_manual_order()`) actually correct?**
+  _`ProductVariant` has 13 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 2 inferred relationships involving `process_message()` (e.g. with `OutboundMessage` and `AICallError`) actually correct?**
+  _`process_message()` has 2 INFERRED edges - model-reasoned connections that need verification._
