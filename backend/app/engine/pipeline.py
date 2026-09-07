@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.domains.checkout.order_writer import write_order
 from app.domains.handoff.service import takeover_conversation
-from app.domains.messaging.models import OutboundMessage, TextMessage
+from app.domains.messaging.models import OutboundMessage, QuickReply, QuickReplyMessage, TextMessage
 from app.domains.store_knowledge import service as knowledge_service
 from app.engine.classification import classify_message
 from app.engine.clients import AICallError
@@ -165,6 +165,12 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
         session, conversation.merchant_id
     )
 
+    from app.models.channel_connection import ChannelConnection
+    cc_name = await session.scalar(
+        select(ChannelConnection.account_name).where(ChannelConnection.id == conversation.channel_connection_id)
+    )
+    display_name = cc_name or merchant_name or "المتجر"
+
     # --- Postback routing (L0 deterministic, no AI needed) ---
     if message.postback_payload and isinstance(message.postback_payload, dict):
         message.intent = f"postback:{message.postback_payload.get('action', 'unknown')}"
@@ -200,20 +206,24 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
                 if ai_text:
                     outbound.append(TextMessage(text=ai_text))
             # Always append the main menu after greeting
-            outbound.append(main_menu_message(merchant_name))
+            outbound.append(main_menu_message(display_name))
         await session.flush()
         return PipelineResult(message=message, order=None, messages=outbound)
 
     if not merchant_ai_enabled or not conversation.ai_enabled or conversation.human_takeover:
         outbound: list[OutboundMessage] = []
         if not conversation.human_takeover:
-            message.intent = "fallback:no_ai"
-            message.intent_confidence = 1.0
-            message.model_tier = ModelTier.RULE
-            outbound = [
-                TextMessage(text="عفواً، لا يمكنني فهم الرسائل النصية حالياً. يرجى استخدام القائمة لاختيار طلبك."),
-                main_menu_message(merchant_name),
-            ]
+            checkout_step = conversation.slots.get("deterministic_checkout_step")
+            if checkout_step:
+                outbound = await _handle_deterministic_checkout_step(session, conversation, message)
+            else:
+                message.intent = "fallback:no_ai"
+                message.intent_confidence = 1.0
+                message.model_tier = ModelTier.RULE
+                outbound = [
+                    TextMessage(text="أهلاً بك! تقدر تستخدم القائمة تحت عشان تختار اللي انت محتاجه."),
+                    main_menu_message(display_name),
+                ]
         await session.flush()
         return PipelineResult(message=message, order=None, messages=outbound)
 
@@ -385,3 +395,62 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
     await session.flush()
     return PipelineResult(message=message, order=order, messages=outbound)
 
+
+async def _handle_deterministic_checkout_step(
+    session: AsyncSession, conversation: Conversation, message: Message
+) -> list[OutboundMessage]:
+    import re
+
+    from app.domains.checkout import service as checkout_service
+
+    step = conversation.slots.get("deterministic_checkout_step")
+    slots = dict(conversation.slots)
+    outbound: list[OutboundMessage] = []
+    text = message.normalized_text
+
+    message.intent = f"checkout_step:{step}"
+    message.intent_confidence = 1.0
+    message.model_tier = ModelTier.RULE
+
+    if step == "name":
+        slots["customer_name"] = text
+        slots["deterministic_checkout_step"] = "phone"
+        outbound.append(TextMessage(text=f"أهلاً بك يا {text}!\n\nبرجاء إدخال رقم الموبايل للتواصل:"))
+
+    elif step == "phone":
+        if not re.match(r"^01[0125]\d{8}$", text.replace(" ", "")):
+            outbound.append(TextMessage(text="رقم الموبايل غير صحيح. يرجى إدخال رقم مصري صحيح (مثال: 01012345678):"))
+        else:
+            slots["customer_phone"] = text.replace(" ", "")
+            slots["deterministic_checkout_step"] = "address"
+            outbound.append(TextMessage(text="شكراً لك.\n\nأخيراً، برجاء كتابة عنوان التوصيل بالتفصيل:"))
+
+    elif step == "address":
+        slots["customer_address"] = text
+        slots.pop("deterministic_checkout_step", None)
+        conversation.slots = slots  # Must set here before checkout_service reads it
+
+        try:
+            order_data = await checkout_service.create_order(
+                session, conversation.merchant_id, conversation.id, confirm=True, message_id=message.id
+            )
+            outbound.append(
+                TextMessage(text=f"تم تأكيد طلبك بنجاح! رقم الطلب: {order_data['order_number']} وسيتم التوصيل قريباً.")
+            )
+            outbound.append(QuickReplyMessage(
+                text="تحب تعمل حاجة تانية؟",
+                quick_replies=[QuickReply(title="🏠 القائمة", payload={"action": "main_menu"})]
+            ))
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error("deterministic_checkout_failed error=%s", e)
+            outbound.append(
+                TextMessage(text="عفواً، حدثت مشكلة أثناء إتمام الطلب. يرجى مراجعة السلة أو المحاولة لاحقاً.")
+            )
+            outbound.append(QuickReplyMessage(
+                text="الرجوع للقائمة الرئيسية:",
+                quick_replies=[QuickReply(title="🏠 القائمة", payload={"action": "main_menu"})]
+            ))
+
+    conversation.slots = slots
+    return outbound

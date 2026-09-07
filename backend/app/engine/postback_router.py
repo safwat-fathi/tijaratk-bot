@@ -58,9 +58,11 @@ async def handle_postback(
     action = payload.get("action", "")
     try:
         if action == "main_menu":
-            return await _handle_main_menu(session, merchant_id)
+            return await _handle_main_menu(session, merchant_id, conversation_id)
         if action == "browse_categories":
-            return await _handle_browse_categories(session, merchant_id)
+            return await _handle_browse_categories(session, merchant_id, conversation_id)
+        if action == "start_checkout":
+            return await _handle_start_checkout(session, merchant_id, conversation_id)
         if action == "view_category":
             return await _handle_view_category(session, merchant_id, payload)
         if action == "view_product":
@@ -82,7 +84,12 @@ async def handle_postback(
         ]
 
     logger.info("unknown_postback_action action=%s payload=%s", action, json.dumps(payload, ensure_ascii=False))
-    return [TextMessage(text="مش متأكد إيه اللي تقصده. جرب من القائمة الرئيسية.")]
+    return [
+        QuickReplyMessage(
+            text="مش متأكد إيه اللي تقصده. جرب من القائمة الرئيسية.",
+            quick_replies=[QuickReply(title="🏠 القائمة", payload={"action": "main_menu"})],
+        )
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -90,14 +97,43 @@ async def handle_postback(
 # ---------------------------------------------------------------------------
 
 
-async def _handle_main_menu(session: AsyncSession, merchant_id: str) -> list[OutboundMessage]:
+async def _clear_deterministic_checkout_state(session: AsyncSession, conversation_id: str) -> None:
+    from app.models.conversation import Conversation
+    conversation = await session.get(Conversation, conversation_id)
+    if conversation and "deterministic_checkout_step" in conversation.slots:
+        slots = dict(conversation.slots)
+        slots.pop("deterministic_checkout_step", None)
+        conversation.slots = slots
+
+
+async def _handle_main_menu(session: AsyncSession, merchant_id: str, conversation_id: str) -> list[OutboundMessage]:
+    from app.models.channel_connection import ChannelConnection
+    from app.models.conversation import Conversation
     from app.models.merchant import Merchant
 
-    merchant_name = await session.scalar(select(Merchant.name).where(Merchant.id == merchant_id))
-    return [main_menu_message(merchant_name or "المتجر")]
+    await _clear_deterministic_checkout_state(session, conversation_id)
+
+    result = await session.execute(
+        select(ChannelConnection.account_name, Merchant.name)
+        .select_from(Conversation)
+        .outerjoin(ChannelConnection, Conversation.channel_connection_id == ChannelConnection.id)
+        .join(Merchant, Merchant.id == Conversation.merchant_id)
+        .where(Conversation.id == conversation_id)
+    )
+    row = result.first()
+    if row:
+        account_name, merchant_name = row
+        display_name = account_name or merchant_name or "المتجر"
+    else:
+        display_name = "المتجر"
+
+    return [main_menu_message(display_name)]
 
 
-async def _handle_browse_categories(session: AsyncSession, merchant_id: str) -> list[OutboundMessage]:
+async def _handle_browse_categories(
+    session: AsyncSession, merchant_id: str, conversation_id: str
+) -> list[OutboundMessage]:
+    await _clear_deterministic_checkout_state(session, conversation_id)
     result = await session.execute(
         select(Product.category)
         .where(Product.merchant_id == merchant_id, Product.category.is_not(None))
@@ -149,8 +185,12 @@ async def _handle_view_category(
 
         buttons = [
             Button(
-                title="اختار المنتج",
-                payload={"action": "view_product", "product_id": p.id},
+                title="أضف للسلة",
+                payload={
+                    "action": "view_product",
+                    "product_id": p.id,
+                    "_echo": f"أضف {p.name} إلى السلة"
+                },
             )
         ]
         elements.append(
@@ -228,7 +268,11 @@ async def _handle_view_product(
                 buttons=[
                     Button(
                         title="أضف للسلة 🛒",
-                        payload={"action": "add_to_cart", "product_id": product.id},
+                        payload={
+                            "action": "add_to_cart",
+                            "product_id": product.id,
+                            "_echo": f"أضف {product.name} إلى السلة"
+                        },
                     ),
                     Button(title="🏠 القائمة", payload={"action": "main_menu"}),
                 ],
@@ -236,6 +280,19 @@ async def _handle_view_product(
         )
 
     return messages
+
+
+async def _handle_start_checkout(
+    session: AsyncSession, merchant_id: str, conversation_id: str
+) -> list[OutboundMessage]:
+    from app.models.conversation import Conversation
+
+    conversation = await session.get(Conversation, conversation_id)
+    slots = dict(conversation.slots)
+    slots["deterministic_checkout_step"] = "name"
+    conversation.slots = slots
+
+    return [TextMessage(text="ممتاز! عشان نقدر نوصلك الطلب، محتاجين شوية بيانات.\n\nالاسم بالكامل؟")]
 
 
 async def _handle_add_to_cart(

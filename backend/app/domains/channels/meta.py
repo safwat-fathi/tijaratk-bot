@@ -88,13 +88,17 @@ def parse_meta_payload(payload: dict) -> list[ParsedInboundMessage]:
                 # Postbacks don't have a mid; use a synthetic dedup key.
                 mid = postback.get("mid") or f"pb:{sender['id']}:{event.get('timestamp', '')}"
 
+                text_to_display = title
+                if postback_payload and isinstance(postback_payload, dict) and "_echo" in postback_payload:
+                    text_to_display = postback_payload["_echo"]
+
                 parsed.append(
                     ParsedInboundMessage(
                         channel=channel,
                         external_account_id=page_id,
                         external_customer_id=sender["id"],
                         external_message_id=mid,
-                        text=title,
+                        text=text_to_display,
                         postback_payload=postback_payload,
                     )
                 )
