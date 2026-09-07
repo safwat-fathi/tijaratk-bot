@@ -12,8 +12,8 @@ module.exports = {
     },
     {
       name: 'tijaratk-bot-backend',
-      script: 'uv',
-      args: 'run uvicorn app.main:app --host 127.0.0.1 --port 8000',
+      script: 'make',
+      args: 'run',
       cwd: './backend',
       interpreter: 'none',
       env: {

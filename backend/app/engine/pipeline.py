@@ -179,9 +179,43 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
         await session.flush()
         return PipelineResult(message=message, order=None, messages=outbound)
 
-    if not merchant_ai_enabled or not conversation.ai_enabled or conversation.human_takeover:
+    tier0_intent = match_tier0(normalized_text)
+    if tier0_intent:
+        message.intent = tier0_intent
+        message.intent_confidence = 1.0
+        message.model_tier = ModelTier.RULE
+        outbound: list[OutboundMessage] = []
+        if tier0_intent == "greeting":
+            if merchant_ai_enabled and conversation.ai_enabled and not conversation.human_takeover:
+                ai_text = await _generate_reply(
+                    session,
+                    conversation,
+                    message,
+                    merchant_name=merchant_name,
+                    user_prompt=(
+                        f"customer: {normalized_text}\n"
+                        "The customer just greeted you. Greet them back and ask how you can help."
+                    ),
+                )
+                if ai_text:
+                    outbound.append(TextMessage(text=ai_text))
+            # Always append the main menu after greeting
+            outbound.append(main_menu_message(merchant_name))
         await session.flush()
-        return PipelineResult(message=message, order=None)
+        return PipelineResult(message=message, order=None, messages=outbound)
+
+    if not merchant_ai_enabled or not conversation.ai_enabled or conversation.human_takeover:
+        outbound: list[OutboundMessage] = []
+        if not conversation.human_takeover:
+            message.intent = "fallback:no_ai"
+            message.intent_confidence = 1.0
+            message.model_tier = ModelTier.RULE
+            outbound = [
+                TextMessage(text="عفواً، لا يمكنني فهم الرسائل النصية حالياً. يرجى استخدام القائمة لاختيار طلبك."),
+                main_menu_message(merchant_name),
+            ]
+        await session.flush()
+        return PipelineResult(message=message, order=None, messages=outbound)
 
     # Read history BEFORE any flush of `message`
     history_result = await session.execute(
@@ -191,30 +225,6 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
         .limit(settings.CONTEXT_HISTORY_TURNS)
     )
     history = list(reversed(history_result.scalars().all()))
-
-    tier0_intent = match_tier0(normalized_text)
-    if tier0_intent:
-        message.intent = tier0_intent
-        message.intent_confidence = 1.0
-        message.model_tier = ModelTier.RULE
-        outbound: list[OutboundMessage] = []
-        if tier0_intent == "greeting":
-            ai_text = await _generate_reply(
-                session,
-                conversation,
-                message,
-                merchant_name=merchant_name,
-                user_prompt=(
-                    f"customer: {normalized_text}\n"
-                    "The customer just greeted you. Greet them back and ask how you can help."
-                ),
-            )
-            if ai_text:
-                outbound.append(TextMessage(text=ai_text))
-            # Always append the main menu after greeting
-            outbound.append(main_menu_message(merchant_name))
-        await session.flush()
-        return PipelineResult(message=message, order=None, messages=outbound)
 
     examples: list[LabeledExample] = []
     try:
