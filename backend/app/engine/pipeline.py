@@ -118,9 +118,14 @@ async def _correction_count(session: AsyncSession, conversation_id: str) -> int:
     return result.scalar_one()
 
 
-async def _merchant_info(session: AsyncSession, merchant_id: str) -> tuple[str, bool, bool]:
+async def _merchant_info(session: AsyncSession, merchant_id: str) -> tuple[str, bool, bool, str | None]:
     result = await session.execute(
-        select(Merchant.name, Merchant.ai_tool_ordering_enabled, Merchant.ai_enabled).where(Merchant.id == merchant_id)
+        select(
+            Merchant.name,
+            Merchant.ai_tool_ordering_enabled,
+            Merchant.ai_enabled,
+            Merchant.welcome_message,
+        ).where(Merchant.id == merchant_id)
     )
     return result.one()
 
@@ -161,9 +166,10 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
     session.add(message)
     normalized_text = message.normalized_text
 
-    merchant_name, ai_tool_ordering_enabled, merchant_ai_enabled = await _merchant_info(
+    merchant_name, ai_tool_ordering_enabled, merchant_ai_enabled, welcome_msg = await _merchant_info(
         session, conversation.merchant_id
     )
+    welcome_msg_template = welcome_msg or "أهلاً بيك في {store_name}! 👋\nتحب تعمل إيه؟"
 
     from app.models.channel_connection import ChannelConnection
     cc_name = await session.scalar(
@@ -206,7 +212,7 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
                 if ai_text:
                     outbound.append(TextMessage(text=ai_text))
             # Always append the main menu after greeting
-            outbound.append(main_menu_message(display_name))
+            outbound.append(main_menu_message(display_name, welcome_msg_template))
         await session.flush()
         return PipelineResult(message=message, order=None, messages=outbound)
 
@@ -222,7 +228,7 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
                 message.model_tier = ModelTier.RULE
                 outbound = [
                     TextMessage(text="أهلاً بك! تقدر تستخدم القائمة تحت عشان تختار اللي انت محتاجه."),
-                    main_menu_message(display_name),
+                    main_menu_message(display_name, welcome_msg_template),
                 ]
         await session.flush()
         return PipelineResult(message=message, order=None, messages=outbound)

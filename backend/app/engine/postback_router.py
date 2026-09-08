@@ -36,10 +36,14 @@ logger = logging.getLogger(__name__)
 _PAGE_SIZE = 10
 
 
-def main_menu_message(merchant_name: str) -> QuickReplyMessage:
+def main_menu_message(
+    merchant_name: str,
+    welcome_message_template: str = "أهلاً بيك في {store_name}! 👋\nتحب تعمل إيه؟",
+) -> QuickReplyMessage:
     """Build the main menu quick-reply message."""
+    text = welcome_message_template.replace("{store_name}", merchant_name)
     return QuickReplyMessage(
-        text=f"أهلاً بيك في {merchant_name}! 👋\nتحب تعمل إيه؟",
+        text=text,
         quick_replies=[
             QuickReply(title="🛍️ تصفح المنتجات", payload={"action": "browse_categories"}),
             QuickReply(title="🔍 ابحث عن منتج", payload={"action": "search_prompt"}),
@@ -56,6 +60,7 @@ async def handle_postback(
 ) -> list[OutboundMessage]:
     """Route a postback payload to the appropriate handler and return messages."""
     action = payload.get("action", "")
+
     try:
         if action == "main_menu":
             return await _handle_main_menu(session, merchant_id, conversation_id)

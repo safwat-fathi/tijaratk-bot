@@ -416,3 +416,17 @@ export async function updateAutoLearningAction(
   await checkResponse(res, "Failed to update settings");
   return res.json();
 }
+
+export async function updateWelcomeMessageAction(
+  message: string,
+): Promise<{ welcome_message: string }> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/merchants/me/settings`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ welcome_message: message }),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to update welcome message");
+  return res.json();
+}
