@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from httpx import ASGITransport, AsyncClient
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.domains.auth.dependencies import get_current_merchant
 from app.main import app
@@ -53,8 +52,9 @@ async def test_list_products_returns_only_merchant_scoped_products(db_session, m
 
 async def test_get_products_requires_authentication(db_session):
     from httpx import ASGITransport, AsyncClient
-    from app.main import app
+
     from app.core.database import get_db
+    from app.main import app
 
     async def _override_get_db():
         yield db_session

@@ -1,14 +1,13 @@
-import pytest
-from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
 from app.main import app
-from app.models import Conversation, Merchant, Message, StoreKnowledge, Product
+from app.models import Conversation, Merchant, Product, StoreKnowledge
 
 
 async def test_demo_router_returns_503_if_merchant_not_configured(monkeypatch):
     monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", "")
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/demo/conversations/")
         assert response.status_code == 503
@@ -19,6 +18,7 @@ async def test_demo_router_conversations_returns_merchants_conversations(
     db_session, merchant: Merchant, conversation: Conversation, monkeypatch
 ):
     monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/demo/conversations/")
         assert response.status_code == 200
@@ -31,6 +31,7 @@ async def test_demo_router_products_returns_merchants_products(
     db_session, merchant: Merchant, monkeypatch
 ):
     monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
     product = Product(
         merchant_id=merchant.id,
         name="Test Product",
@@ -38,7 +39,7 @@ async def test_demo_router_products_returns_merchants_products(
     )
     db_session.add(product)
     await db_session.commit()
-    
+
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/demo/products/")
         assert response.status_code == 200
@@ -51,6 +52,7 @@ async def test_demo_router_knowledge_returns_merchants_knowledge(
     db_session, merchant: Merchant, monkeypatch
 ):
     monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
     knowledge = StoreKnowledge(
         merchant_id=merchant.id,
         topic="Shipping",
@@ -71,13 +73,14 @@ async def test_demo_router_post_message_ingests_message(
     db_session, merchant: Merchant, conversation: Conversation, monkeypatch
 ):
     monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
-    
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
+
     payload = {
         "conversation_id": conversation.id,
         "text": "Hello bot",
         "simulate_ai": False,
     }
-    
+
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post("/demo/messages/", json=payload)
         assert response.status_code in (200, 202)

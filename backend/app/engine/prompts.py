@@ -45,7 +45,10 @@ def build_system_prompt(*, task_block: str, merchant_name: str, conv_state: Conv
 
 CLASSIFICATION_TASK_BLOCK = (
     "You classify customer messages into an intent label. Respond only with json "
-    "matching the schema. Known intents so far: {known_intents}."
+    "matching the schema. Known intents so far: {known_intents}.\n"
+    "CRITICAL RULE: Even if the conversation is in GATHERING or CONFIRMING state, "
+    "if the customer asks a general question about policies, shipping, or FAQs, "
+    "classify it as 'inquiry' (or the relevant intent), NOT 'purchase_intent'."
 )
 
 EXTRACTION_TASK_BLOCK = (

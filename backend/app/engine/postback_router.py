@@ -78,6 +78,12 @@ async def handle_postback(
             return await _handle_view_cart(session, merchant_id, conversation_id)
         if action == "search_prompt":
             return [TextMessage(text="اكتب اسم المنتج أو وصفه وأنا هبحثلك 🔍")]
+        if action == "escalate":
+            reason = payload.get("reason", "customer_requested")
+            from app.domains.handoff.service import takeover_conversation
+            from app.models.enums import HandoffReason
+            await takeover_conversation(session, merchant_id, conversation_id, HandoffReason.AI_ESCALATION, notes=reason)  # noqa: E501
+            return [TextMessage(text="تم تحويلك لخدمة العملاء. فريقنا هيرد عليك في أقرب وقت!")]
     except Exception as exc:  # noqa: BLE001 — deterministic router must never crash the pipeline
         logger.warning("postback_handler_error action=%s error=%s", action, exc)
         return [

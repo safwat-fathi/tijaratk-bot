@@ -5,7 +5,6 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.domains.auth.tokens import decode_access_token
 from app.models import Merchant, MerchantStatus

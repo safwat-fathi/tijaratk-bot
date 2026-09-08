@@ -668,4 +668,5 @@ async def test_low_confidence_classification_escalates_without_auto_reply(db_ses
     )
 
     assert result.message.escalation_reason is not None
-    assert not result.messages
+    assert len(result.messages) == 1
+    assert "تحب نحولك لخدمة العملاء" in result.messages[0].text

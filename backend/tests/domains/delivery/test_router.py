@@ -1,6 +1,5 @@
 from httpx import ASGITransport, AsyncClient
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.domains.auth.dependencies import get_current_merchant
 from app.main import app

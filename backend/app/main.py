@@ -26,7 +26,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-from app.core.rate_limit import RateLimitMiddleware
+from app.core.rate_limit import RateLimitMiddleware  # noqa: E402
 
 app.add_middleware(
     CORSMiddleware,

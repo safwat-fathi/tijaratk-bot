@@ -1,5 +1,5 @@
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -39,15 +39,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         try:
             redis = await get_arq_pool()
-            
+
             # Use a pipeline to INCR and set EXPIRE
             pipe = redis.pipeline()
             pipe.incr(redis_key)
             pipe.expire(redis_key, window * 2) # keep it around slightly longer than the window
             results = await pipe.execute()
-            
+
             request_count = results[0]
-            
+
             if request_count > max_reqs:
                 retry_after = window - (current_time % window)
                 return Response(

@@ -1,5 +1,3 @@
-import time
-import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
@@ -18,7 +16,7 @@ async def test_demo_rate_limit_enforcement(monkeypatch, db_session, merchant):
         # Request 1
         resp1 = await client.get("/demo/conversations/", headers={"X-Forwarded-For": "1.2.3.4"})
         assert resp1.status_code == 200
-        
+
         # Request 2
         resp2 = await client.get("/demo/products/", headers={"X-Forwarded-For": "1.2.3.4"})
         assert resp2.status_code == 200
@@ -40,7 +38,7 @@ async def test_rate_limit_bypassed_when_disabled(monkeypatch, db_session, mercha
         # Request 1
         resp1 = await client.get("/demo/conversations/", headers={"X-Forwarded-For": "1.1.1.1"})
         assert resp1.status_code == 200
-        
+
         # Request 2 should NOT be rate limited
         resp2 = await client.get("/demo/products/", headers={"X-Forwarded-For": "1.1.1.1"})
         assert resp2.status_code == 200

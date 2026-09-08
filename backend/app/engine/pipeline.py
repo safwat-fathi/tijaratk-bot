@@ -299,10 +299,20 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
         )
     except AICallError as exc:
         logger.warning("classification_failed message_id=%s error=%s", message.id, exc)
-        await _trigger_escalation(session, conversation, message, "ai_call_failed")
         session.add(_usage_event(conversation.id, message.id, None, success=False, failed_tier="deepseek"))
+        if not message.escalation_reason:
+            message.escalation_reason = "ai_call_failed"
+        outbound = [
+            QuickReplyMessage(
+                text="عذراً، حصلت مشكلة في النظام. تحب نحولك لخدمة العملاء؟",
+                quick_replies=[
+                    QuickReply(title="نعم، تواصل مع الدعم", payload={"action": "escalate", "reason": "ai_call_failed"}),
+                    QuickReply(title="لا، القائمة الرئيسية", payload={"action": "main_menu"}),
+                ]
+            )
+        ]
         await session.flush()
-        return PipelineResult(message=message, order=None)
+        return PipelineResult(message=message, order=None, messages=outbound)
 
     if usage is not None:
         session.add(_usage_event(conversation.id, message.id, usage, success=True))
@@ -311,9 +321,19 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
     message.model_tier = ModelTier.DEEPSEEK
 
     if reason:
-        await _trigger_escalation(session, conversation, message, reason)
+        if not message.escalation_reason:
+            message.escalation_reason = reason
+        outbound = [
+            QuickReplyMessage(
+                text="عذراً، مش قادرين نفهم طلبك بالظبط. تحب نحولك لخدمة العملاء؟",
+                quick_replies=[
+                    QuickReply(title="نعم، تواصل مع الدعم", payload={"action": "escalate", "reason": reason}),
+                    QuickReply(title="لا، القائمة الرئيسية", payload={"action": "main_menu"}),
+                ]
+            )
+        ]
         await session.flush()
-        return PipelineResult(message=message, order=None)
+        return PipelineResult(message=message, order=None, messages=outbound)
 
     order = None
     if classification.intent == "purchase_intent" and conversation.state in (ConvState.GATHERING, ConvState.CONFIRMING):
@@ -337,42 +357,69 @@ async def process_message(session: AsyncSession, conversation: Conversation, mes
             )
         except AICallError as exc:
             logger.warning("extraction_failed message_id=%s error=%s", message.id, exc)
-            await _trigger_escalation(session, conversation, message, "ai_call_failed")
             session.add(_usage_event(conversation.id, message.id, None, success=False, failed_tier="deepseek"))
+            if not message.escalation_reason:
+                message.escalation_reason = "ai_call_failed"
+            outbound = [
+                QuickReplyMessage(
+                    text="عذراً، حصلت مشكلة في النظام. تحب نحولك لخدمة العملاء؟",
+                    quick_replies=[
+                        QuickReply(title="نعم، تواصل مع الدعم", payload={"action": "escalate", "reason": "ai_call_failed"}),  # noqa: E501
+                        QuickReply(title="لا، القائمة الرئيسية", payload={"action": "main_menu"}),
+                    ]
+                )
+            ]
             await session.flush()
-            return PipelineResult(message=message, order=None)
+            return PipelineResult(message=message, order=None, messages=outbound)
 
         if extraction_usage is not None:
             session.add(_usage_event(conversation.id, message.id, extraction_usage, success=True))
 
-        extraction.line_items = await match_line_items_to_products(
-            session, conversation.merchant_id, extraction.line_items
-        )
-        extraction.line_items = await resolve_variants_for_line_items(session, extraction.line_items)
-        resolved_lines, all_resolved = await build_resolved_order_lines(session, extraction.line_items)
-        status = (
-            OrderStatus.AUTO_CONFIRMED
-            if all_resolved
-            and not extraction.ambiguous_fields
-            and extraction.confidence >= settings.CLASSIFICATION_CONFIDENCE_THRESHOLD
-            else OrderStatus.PENDING_REVIEW
-        )
-        order = await write_order(
-            session,
-            merchant_id=conversation.merchant_id,
-            conversation_id=conversation.id,
-            message_id=message.id,
-            status=status,
-            source=OrderSource.AI_EXTRACTION,
-            lines=resolved_lines,
-            extracted_payload=extraction.model_dump(mode="json"),
-            confidence_score=extraction.confidence,
-            extracted_by_tier=ModelTier.DEEPSEEK,
-            escalation_reason=extraction_reason,
-            assign_order_number=False,
-        )
-        if extraction_reason and not message.escalation_reason:
-            message.escalation_reason = extraction_reason
+        if not extraction.line_items and extraction_reason == "confidence_below_threshold":
+            # Likely a misclassified policy question. Drop order extraction and let it fall through to knowledge base.
+            order = None
+        else:
+            if extraction_reason:
+                if not message.escalation_reason:
+                    message.escalation_reason = extraction_reason
+                outbound = [
+                    QuickReplyMessage(
+                        text="عذراً، مش قادرين نفهم تفاصيل الطلب بالظبط. تحب نحولك لخدمة العملاء؟",
+                        quick_replies=[
+                            QuickReply(title="نعم، تواصل مع الدعم", payload={"action": "escalate", "reason": extraction_reason}),  # noqa: E501
+                            QuickReply(title="لا، القائمة الرئيسية", payload={"action": "main_menu"}),
+                        ]
+                    )
+                ]
+                await session.flush()
+                return PipelineResult(message=message, order=None, messages=outbound)
+
+            extraction.line_items = await match_line_items_to_products(
+                session, conversation.merchant_id, extraction.line_items
+            )
+            extraction.line_items = await resolve_variants_for_line_items(session, extraction.line_items)
+            resolved_lines, all_resolved = await build_resolved_order_lines(session, extraction.line_items)
+            status = (
+                OrderStatus.AUTO_CONFIRMED
+                if all_resolved
+                and not extraction.ambiguous_fields
+                and extraction.confidence >= settings.CLASSIFICATION_CONFIDENCE_THRESHOLD
+                else OrderStatus.PENDING_REVIEW
+            )
+            order = await write_order(
+                session,
+                merchant_id=conversation.merchant_id,
+                conversation_id=conversation.id,
+                message_id=message.id,
+                status=status,
+                source=OrderSource.AI_EXTRACTION,
+                lines=resolved_lines,
+                extracted_payload=extraction.model_dump(mode="json"),
+                confidence_score=extraction.confidence,
+                extracted_by_tier=ModelTier.DEEPSEEK,
+                escalation_reason=None,
+                assign_order_number=False,
+            )
 
     outbound: list[OutboundMessage] = []
     if order is not None:
