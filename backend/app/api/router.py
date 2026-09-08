@@ -5,6 +5,7 @@ from app.domains.channels.router import router as channels_router
 from app.domains.checkout.router import router as checkout_router
 from app.domains.conversations.router import router as conversations_router
 from app.domains.delivery.router import router as delivery_router
+from app.domains.demo.router import router as demo_router
 from app.domains.handoff.router import router as handoff_router
 from app.domains.health.router import router as health_router
 from app.domains.labeled_examples.router import router as labeled_examples_router
@@ -16,6 +17,7 @@ from app.domains.store_knowledge.router import router as store_knowledge_router
 api_router = APIRouter()
 
 api_router.include_router(health_router, prefix="/health", tags=["health"])
+api_router.include_router(demo_router, prefix="/demo", tags=["demo"])
 api_router.include_router(messages_router, prefix="/messages", tags=["messages"])
 api_router.include_router(products_router, prefix="/products", tags=["products"])
 api_router.include_router(conversations_router, prefix="/conversations", tags=["conversations"])

@@ -1,0 +1,85 @@
+import pytest
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
+
+from app.core.config import settings
+from app.main import app
+from app.models import Conversation, Merchant, Message, StoreKnowledge, Product
+
+
+async def test_demo_router_returns_503_if_merchant_not_configured(monkeypatch):
+    monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", "")
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/demo/conversations/")
+        assert response.status_code == 503
+        assert "not configured" in response.json()["detail"]
+
+
+async def test_demo_router_conversations_returns_merchants_conversations(
+    db_session, merchant: Merchant, conversation: Conversation, monkeypatch
+):
+    monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/demo/conversations/")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == conversation.id
+
+
+async def test_demo_router_products_returns_merchants_products(
+    db_session, merchant: Merchant, monkeypatch
+):
+    monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
+    product = Product(
+        merchant_id=merchant.id,
+        name="Test Product",
+        price=10.0,
+    )
+    db_session.add(product)
+    await db_session.commit()
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/demo/products/")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == product.id
+
+
+async def test_demo_router_knowledge_returns_merchants_knowledge(
+    db_session, merchant: Merchant, monkeypatch
+):
+    monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
+    knowledge = StoreKnowledge(
+        merchant_id=merchant.id,
+        topic="Shipping",
+        content="We ship worldwide.",
+    )
+    db_session.add(knowledge)
+    await db_session.commit()
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/demo/knowledge/")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == knowledge.id
+
+
+async def test_demo_router_post_message_ingests_message(
+    db_session, merchant: Merchant, conversation: Conversation, monkeypatch
+):
+    monkeypatch.setattr(settings, "DEMO_STOPGAP_MERCHANT_ID", merchant.id)
+    
+    payload = {
+        "conversation_id": conversation.id,
+        "text": "Hello bot",
+        "simulate_ai": False,
+    }
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/demo/messages/", json=payload)
+        assert response.status_code in (200, 202)
+        data = response.json()
+        assert "message_id" in data

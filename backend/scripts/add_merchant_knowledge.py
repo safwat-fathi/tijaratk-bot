@@ -6,7 +6,7 @@ from app.core.database import async_session_maker
 from app.models import StoreKnowledge
 from app.models._ids import new_id
 
-TARGET_MERCHANT_ID = "50064628-c874-41f9-9640-5591b955d17b"
+TARGET_MERCHANT_ID = "af66a415-9846-4aab-95d0-d4213e73f7aa"
 
 STORE_KNOWLEDGE = [
     {

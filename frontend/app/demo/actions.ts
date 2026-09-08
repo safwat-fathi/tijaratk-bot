@@ -47,7 +47,7 @@ export async function sendMessage(
 
   let response: Response;
   try {
-    response = await fetch(`${baseUrl}/messages/`, {
+    response = await fetch(`${baseUrl}/demo/messages/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

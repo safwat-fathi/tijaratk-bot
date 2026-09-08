@@ -8,21 +8,14 @@ export interface StoreKnowledge {
   created_at: string;
 }
 
-export async function getStoreKnowledge(merchantId: string): Promise<StoreKnowledge[]> {
+export async function getStoreKnowledge(): Promise<StoreKnowledge[]> {
   const baseUrl = process.env.BASE_API_URL;
   if (!baseUrl) {
     throw new Error("BASE_API_URL not configured");
   }
-  const demoKey = process.env.DEMO_API_KEY;
-  const headers: HeadersInit = {};
-  if (demoKey) {
-    headers["Authorization"] = `Bearer ${demoKey}`;
-  }
-
   const response = await fetch(
-    `${baseUrl}/store-knowledge/?merchant_id=${encodeURIComponent(merchantId)}`,
+    `${baseUrl}/demo/knowledge/`,
     { 
-      headers,
       cache: "no-store" 
     },
   );

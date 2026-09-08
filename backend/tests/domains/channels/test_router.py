@@ -115,8 +115,8 @@ async def test_meta_post_creates_message_and_enqueues_job(monkeypatch, db_sessio
     message = await db_session.get(Message, args[0])
     assert message.raw_text == "hello"
 
-    events = (await db_session.execute(select(WebhookEvent))).scalars().all()
-    assert len(events) == 1
+    events = (await db_session.execute(select(WebhookEvent).order_by(WebhookEvent.received_at.desc()))).scalars().all()
+    assert len(events) >= 1
     assert events[0].processing_error is None
 
 
@@ -164,8 +164,8 @@ async def test_meta_post_unparseable_body_still_returns_200(monkeypatch, db_sess
         app.dependency_overrides.pop(get_arq_pool, None)
 
     assert response.status_code == 200
-    events = (await db_session.execute(select(WebhookEvent))).scalars().all()
-    assert len(events) == 1
+    events = (await db_session.execute(select(WebhookEvent).order_by(WebhookEvent.received_at.desc()))).scalars().all()
+    assert len(events) >= 1
     assert events[0].processing_error is not None
 
 

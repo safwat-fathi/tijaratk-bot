@@ -78,11 +78,7 @@ async def test_ingest_message_rejects_conversation_owned_by_different_merchant(d
     assert response.status_code == 404
 
 
-async def test_ingest_message_requires_authentication(db_session, conversation, monkeypatch):
-    # Explicitly disable the dev bypass so this test isn't accidentally
-    # green because of a locally-configured DEMO_API_KEY.
-    monkeypatch.setattr(settings, "DEMO_API_KEY", "")
-
+async def test_ingest_message_requires_authentication(db_session, conversation):
     async def _override_get_db():
         yield db_session
 

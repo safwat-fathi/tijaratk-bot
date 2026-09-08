@@ -51,11 +51,10 @@ async def test_list_products_returns_only_merchant_scoped_products(db_session, m
     assert body[0]["variants"][0]["attributes"] == {"size": "M"}
     assert body[0]["price"] == 249.0
 
-
-async def test_get_products_requires_authentication(db_session, merchant, monkeypatch):
-    # Explicitly disable the dev bypass so this test isn't accidentally
-    # green because of a locally-configured DEMO_API_KEY.
-    monkeypatch.setattr(settings, "DEMO_API_KEY", "")
+async def test_get_products_requires_authentication(db_session):
+    from httpx import ASGITransport, AsyncClient
+    from app.main import app
+    from app.core.database import get_db
 
     async def _override_get_db():
         yield db_session

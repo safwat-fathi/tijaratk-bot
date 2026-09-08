@@ -46,8 +46,14 @@ class Settings(BaseSettings):
     JWT_EXPIRE_MINUTES: int = 10080  # 7 days
     ENCRYPTION_KEY: str = ""
 
-    DEMO_API_KEY: str = ""
     DEMO_STOPGAP_MERCHANT_ID: str = ""
+
+    # Rate Limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_DEMO_MAX: int = 10        # max requests for demo tier
+    RATE_LIMIT_DEMO_WINDOW: int = 600    # window in seconds (10 min)
+    RATE_LIMIT_DEFAULT_MAX: int = 100    # max requests for general tier
+    RATE_LIMIT_DEFAULT_WINDOW: int = 60  # window in seconds (1 min)
 
     @property
     def sqlalchemy_database_uri(self) -> str:

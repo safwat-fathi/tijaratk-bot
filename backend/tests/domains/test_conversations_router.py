@@ -44,11 +44,10 @@ async def test_list_conversations_filters_by_merchant_id(db_session, merchant, c
     assert body[0]["id"] == conversation.id
     assert body[0]["merchant_id"] == merchant.id
 
-
-async def test_get_conversations_requires_authentication(db_session, conversation, monkeypatch):
-    # Explicitly disable the dev bypass so this test isn't accidentally
-    # green because of a locally-configured DEMO_API_KEY.
-    monkeypatch.setattr(settings, "DEMO_API_KEY", "")
+async def test_get_conversations_requires_authentication(db_session):
+    from httpx import ASGITransport, AsyncClient
+    from app.main import app
+    from app.core.database import get_db
 
     async def _override_get_db():
         yield db_session

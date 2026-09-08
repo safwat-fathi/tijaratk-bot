@@ -33,24 +33,29 @@ function DemoHeader() {
   );
 }
 
-const DEMO_STOPGAP_MERCHANT_ID = process.env.DEMO_STOPGAP_MERCHANT_ID;
-
 export default async function Home() {
-  if (!DEMO_STOPGAP_MERCHANT_ID) {
-    return (
-      <>
-        <DemoHeader />
-        <main className="mx-auto flex max-w-2xl flex-col gap-4 p-8">
-          <h1 className="text-2xl font-semibold">{m.demo_engine_title()}</h1>
-          <p className="text-sm text-red-600">
-            {m.demo_env_error()}
-          </p>
-        </main>
-      </>
-    );
+  let conversations;
+  let knowledge;
+  try {
+    conversations = await getConversations();
+    knowledge = await getStoreKnowledge();
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes("503")) {
+      return (
+        <>
+          <DemoHeader />
+          <main className="mx-auto flex max-w-2xl flex-col gap-4 p-8">
+            <h1 className="text-2xl font-semibold">{m.demo_engine_title()}</h1>
+            <p className="text-sm text-red-600">
+              {m.demo_env_error()}
+            </p>
+          </main>
+        </>
+      );
+    }
+    throw error;
   }
-  const conversations = await getConversations(DEMO_STOPGAP_MERCHANT_ID);
-  const knowledge = await getStoreKnowledge(DEMO_STOPGAP_MERCHANT_ID);
+
   let conversation = conversations[0];
   let products: Product[] = [];
 
@@ -69,7 +74,7 @@ export default async function Home() {
   }
 
   for (const c of conversations) {
-    const p = await getProducts(c.merchant_id);
+    const p = await getProducts();
     if (p.length > 0) {
       conversation = c;
       products = p;
@@ -79,7 +84,7 @@ export default async function Home() {
 
   if (products.length === 0) {
     // Fallback if none have products
-    products = await getProducts(conversation.merchant_id);
+    products = await getProducts();
   }
 
   return (

@@ -26,6 +26,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from app.core.rate_limit import RateLimitMiddleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -33,6 +35,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(RateLimitMiddleware)
 
 app.include_router(api_router)
 
