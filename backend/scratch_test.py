@@ -22,7 +22,10 @@ async def main():
         matched1 = await match_line_items_to_products(session, merchant_id, items1)
         print("Product matched for 'جاكيت أزرق':", matched1[0].product_id)
         if matched1[0].product_id:
-            variants = (await session.execute(select(ProductVariant).where(ProductVariant.product_id == matched1[0].product_id))).scalars().all()
+            variants = (await session.execute(
+                select(ProductVariant)
+                .where(ProductVariant.product_id == matched1[0].product_id)
+            )).scalars().all()
             candidates = [VariantCandidate(id=v.id, label=v.label, attributes=v.attributes) for v in variants]
             print("  Variant match for 'مقاس L':", match_variant_hint("مقاس L", candidates))
 
@@ -30,7 +33,10 @@ async def main():
         matched2 = await match_line_items_to_products(session, merchant_id, items2)
         print("Product matched for 'جاكيت ازرق':", matched2[0].product_id)
         if matched2[0].product_id:
-            variants = (await session.execute(select(ProductVariant).where(ProductVariant.product_id == matched2[0].product_id))).scalars().all()
+            variants = (await session.execute(
+                select(ProductVariant)
+                .where(ProductVariant.product_id == matched2[0].product_id)
+            )).scalars().all()
             candidates = [VariantCandidate(id=v.id, label=v.label, attributes=v.attributes) for v in variants]
             print("  Variant match for 'مقاس L':", match_variant_hint("مقاس L", candidates))
 
@@ -38,7 +44,10 @@ async def main():
         matched3 = await match_line_items_to_products(session, merchant_id, items3)
         print("Product matched for 'جاكت':", matched3[0].product_id)
         if matched3[0].product_id:
-            variants = (await session.execute(select(ProductVariant).where(ProductVariant.product_id == matched3[0].product_id))).scalars().all()
+            variants = (await session.execute(
+                select(ProductVariant)
+                .where(ProductVariant.product_id == matched3[0].product_id)
+            )).scalars().all()
             candidates = [VariantCandidate(id=v.id, label=v.label, attributes=v.attributes) for v in variants]
             print("  Variant match for 'أزرق مقاس L':", match_variant_hint("أزرق مقاس L", candidates))
             print("  Candidates were:")
