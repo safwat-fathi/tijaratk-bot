@@ -230,6 +230,23 @@ export async function createManualOrderAction(
   return res.json();
 }
 
+// ---------------- ORDER STATUS ACTIONS ----------------
+
+export async function updateOrderStatusAction(
+  orderId: string,
+  status: string,
+  merchantId?: string,
+): Promise<void> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/orders/${orderId}/status`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ status }),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to update order status");
+}
+
 // ---------------- HUMAN TAKEOVER & REPLIES ACTIONS ----------------
 
 export async function takeoverConversationAction(
