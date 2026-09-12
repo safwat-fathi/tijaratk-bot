@@ -221,5 +221,6 @@
   "demo_tab_products": "Product Catalog",
   "demo_tab_knowledge": "Store Knowledge",
   "demo_knowledge_empty": "No knowledge items added yet.",
-  "demo_knowledge_keywords": "Keywords:"
+  "demo_knowledge_keywords": "Keywords:",
+  "whatsapp_widget_tooltip": "Chat with us"
 }

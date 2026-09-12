@@ -90,6 +90,13 @@ export default function Page() {
         "https://www.facebook.com/tijaratk",
         "https://www.instagram.com/tijaratk",
       ],
+      contactPoint: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ? [
+        {
+          "@type": "ContactPoint",
+          telephone: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
+          contactType: "customer service",
+        }
+      ] : undefined,
     },
     {
       "@context": "https://schema.org",

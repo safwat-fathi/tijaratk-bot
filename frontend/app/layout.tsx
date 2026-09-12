@@ -59,6 +59,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+import { WhatsAppWidget } from "@/components/whatsapp-widget";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const lang = languageTag();
   const dir = lang === "ar" ? "rtl" : "ltr";
@@ -74,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NextTopLoader color="#2563eb" showSpinner={false} />
           {children}
           <Analytics />
+          <WhatsAppWidget />
         </body>
       </html>
     </LanguageProvider>
