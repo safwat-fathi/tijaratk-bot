@@ -29,6 +29,10 @@ Run a single test: `uv run pytest tests/engine/test_routing_policy.py::test_esca
 
 Requires Python 3.13, a running Redis instance (`redis://localhost:6379/0` by default), and a running Postgres with the `pgvector` extension available (the initial migration runs `CREATE EXTENSION IF NOT EXISTS vector`). Config comes from `.env` (see `.env.example`) via `app/core/config.py`'s pydantic-settings `Settings`.
 
+## NestJS port (in progress)
+
+`server/` is a TypeScript/NestJS port of `backend/` that runs against the same Postgres/Redis and serves the same REST contract (`docs/contract/openapi.json`). Strangler migration: both servers coexist until route groups are cut over. Migration log + deliberate differences: `docs/nestjs-migration-decisions.md`. Commands (pnpm): `pnpm start:dev`, `pnpm worker:dev`, `pnpm test`, `pnpm typecheck`, `pnpm build` inside `server/`. Alembic is frozen - schema changes go through Drizzle in `server/` once cutover starts; until then do not change the schema in only one place.
+
 ## Architecture
 
 ### Two-stage AI routing

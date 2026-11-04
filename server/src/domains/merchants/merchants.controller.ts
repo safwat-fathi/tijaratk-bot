@@ -1,0 +1,32 @@
+import { Body, Controller, Get, Inject, Patch, UseGuards } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
+import { parse } from '../../core/http.js';
+import { DB } from '../../core/tokens.js';
+import { type Db, schema } from '../../db/index.js';
+import { AuthGuard, CurrentMerchant, type Merchant } from '../auth/auth.guard.js';
+
+const Update = z.object({ auto_learning_enabled: z.boolean().nullish(), welcome_message: z.string().nullish() });
+const read = (m: Merchant) => ({ auto_learning_enabled: m.autoLearningEnabled, welcome_message: m.welcomeMessage });
+
+@Controller('merchants')
+@UseGuards(AuthGuard)
+export class MerchantsController {
+  constructor(@Inject(DB) private readonly db: Db) {}
+
+  @Get('me/settings')
+  get(@CurrentMerchant() m: Merchant) {
+    return read(m);
+  }
+
+  @Patch('me/settings')
+  async update(@CurrentMerchant() m: Merchant, @Body() body: unknown) {
+    const p = parse(Update, body);
+    const set: Partial<typeof schema.merchants.$inferInsert> = {};
+    if (p.auto_learning_enabled != null) set.autoLearningEnabled = p.auto_learning_enabled;
+    if (p.welcome_message != null) set.welcomeMessage = p.welcome_message;
+    if (!Object.keys(set).length) return read(m);
+    const [row] = await this.db.update(schema.merchants).set(set).where(eq(schema.merchants.id, m.id)).returning();
+    return read(row);
+  }
+}

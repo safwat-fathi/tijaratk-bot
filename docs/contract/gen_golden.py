@@ -7,6 +7,8 @@ Run: cd backend && PYTHONPATH=. uv run python ../docs/contract/gen_golden.py
 import hashlib
 import hmac
 import json
+import random
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -15,6 +17,10 @@ from cryptography.fernet import Fernet
 from pydantic import ValidationError
 from twilio.request_validator import RequestValidator
 
+import numpy as np
+from sklearn.cluster import AgglomerativeClustering
+
+from app.engine.classification import _intent_response_schema
 from app.engine.context_budget import build_context_prompt
 from app.engine.cost import estimate_cost
 from app.engine.routing_policy import (
@@ -22,7 +28,7 @@ from app.engine.routing_policy import (
     evaluate_postflight,
     evaluate_preflight,
 )
-from app.engine.schemas import ExtractionResult, IntentClassification, ProposedActionEnvelope
+from app.engine.schemas import ExtractionResult, GeneratedReply, IntentClassification, ProposedActionEnvelope
 from app.engine.tier0_rules import match_tier0
 from app.models.enums import Direction
 
@@ -85,6 +91,39 @@ def validate(model, data):
         return {"input": data, "error": True}
 
 
+def clustering_cases():
+    out = []
+    for seed in (1, 2, 3):
+        rnd = random.Random(seed)
+        centers = [[rnd.uniform(-1, 1) for _ in range(8)] for _ in range(4)]
+        vectors = []
+        for _ in range(40):
+            c = rnd.choice(centers)
+            vectors.append([x + rnd.gauss(0, 0.15) for x in c])
+        for threshold in (0.1, 0.3, 0.6):
+            labels = AgglomerativeClustering(
+                n_clusters=None, distance_threshold=threshold, metric="cosine", linkage="average"
+            ).fit_predict(np.array(vectors))
+            groups: dict[int, list[int]] = {}
+            for i, label in enumerate(labels):
+                groups.setdefault(int(label), []).append(i)
+            out.append({"vectors": vectors, "threshold": threshold, "partition": sorted(groups.values())})
+    return out
+
+
+def money_cases():
+    cases = [
+        [("12.50", 2.0)], [("0.05", 0.5)], [("0.05", 0.5), ("0.05", 0.5)], [("99.99", 1.5)], [("10.00", 0.333)],
+        [("19.99", 3.0), ("5.25", 2.0), ("0.01", 0.5)], [],
+    ]
+    out = []
+    for lines in cases:
+        total = sum((Decimal(p) * Decimal(str(q)) for p, q in lines), Decimal("0.00")).quantize(Decimal("0.01"))
+        each = [str((Decimal(p) * Decimal(str(q))).quantize(Decimal("0.01"))) for p, q in lines]
+        out.append({"lines": lines, "subtotal": str(total), "each": each})
+    return out
+
+
 def main():
     fernet_key = Fernet.generate_key().decode()
     plain_token = "EAAB-page-token-ع"
@@ -130,6 +169,15 @@ def main():
                 {"action": "search_store_knowledge", "confidence": 0.9, "query": "q", "knowledge_type": "bad"},
                 {"action": "create_order", "confidence": 1})],
         },
+        # What pydantic sends upstream as response_format.json_schema.schema - the TS port must describe the same shapes
+        "json_schemas": {
+            "intent": _intent_response_schema(["greeting", "other", "purchase_intent"]).model_json_schema(),
+            "extraction": ExtractionResult.model_json_schema(),
+            "reply": GeneratedReply.model_json_schema(),
+            "action": ProposedActionEnvelope.model_json_schema(),
+        },
+        "clustering": clustering_cases(),
+        "money": money_cases(),
         "crypto": {
             "fernet_key": fernet_key, "plaintext": plain_token,
             "fernet_token": Fernet(fernet_key.encode()).encrypt(plain_token.encode()).decode(),
