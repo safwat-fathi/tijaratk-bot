@@ -1,0 +1,3199 @@
+{
+  "components": {
+    "schemas": {
+      "AuthTokenResponse": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "conflicted_pages": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Conflicted Pages",
+            "type": "array"
+          },
+          "merchant_id": {
+            "title": "Merchant Id",
+            "type": "string"
+          },
+          "merchant_name": {
+            "title": "Merchant Name",
+            "type": "string"
+          },
+          "pages_connected": {
+            "default": 0,
+            "title": "Pages Connected",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "access_token",
+          "merchant_id",
+          "merchant_name"
+        ],
+        "title": "AuthTokenResponse",
+        "type": "object"
+      },
+      "ConnectedChannel": {
+        "properties": {
+          "account_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Name"
+          },
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel",
+          "account_name"
+        ],
+        "title": "ConnectedChannel",
+        "type": "object"
+      },
+      "ConversationRead": {
+        "properties": {
+          "ai_enabled": {
+            "default": true,
+            "title": "Ai Enabled",
+            "type": "boolean"
+          },
+          "customer_ref": {
+            "title": "Customer Ref",
+            "type": "string"
+          },
+          "human_takeover": {
+            "default": false,
+            "title": "Human Takeover",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_message_at": {
+            "format": "date-time",
+            "title": "Last Message At",
+            "type": "string"
+          },
+          "merchant_id": {
+            "title": "Merchant Id",
+            "type": "string"
+          },
+          "slots": {
+            "additionalProperties": true,
+            "title": "Slots",
+            "type": "object"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "merchant_id",
+          "customer_ref",
+          "state",
+          "slots",
+          "last_message_at"
+        ],
+        "title": "ConversationRead",
+        "type": "object"
+      },
+      "DeliveryAreaCreate": {
+        "properties": {
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "delivery_fee": {
+            "title": "Delivery Fee",
+            "type": "number"
+          },
+          "estimated_delivery": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Delivery"
+          }
+        },
+        "required": [
+          "area",
+          "delivery_fee"
+        ],
+        "title": "DeliveryAreaCreate",
+        "type": "object"
+      },
+      "DeliveryAreaRead": {
+        "properties": {
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "delivery_fee": {
+            "title": "Delivery Fee",
+            "type": "string"
+          },
+          "estimated_delivery": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Delivery"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "merchant_id": {
+            "title": "Merchant Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "merchant_id",
+          "area",
+          "delivery_fee",
+          "estimated_delivery",
+          "status"
+        ],
+        "title": "DeliveryAreaRead",
+        "type": "object"
+      },
+      "DeliveryAreaUpdate": {
+        "properties": {
+          "area": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area"
+          },
+          "delivery_fee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Fee"
+          },
+          "estimated_delivery": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Delivery"
+          }
+        },
+        "title": "DeliveryAreaUpdate",
+        "type": "object"
+      },
+      "FacebookCallbackRequest": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token"
+        ],
+        "title": "FacebookCallbackRequest",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HandoffReason": {
+        "enum": [
+          "USER_REQUEST",
+          "AI_ESCALATION",
+          "MERCHANT_TAKEOVER"
+        ],
+        "title": "HandoffReason",
+        "type": "string"
+      },
+      "HandoffReturnRequest": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "title": "HandoffReturnRequest",
+        "type": "object"
+      },
+      "HandoffTakeoverRequest": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/HandoffReason",
+            "default": "MERCHANT_TAKEOVER"
+          }
+        },
+        "title": "HandoffTakeoverRequest",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "LabeledExampleCreate": {
+        "properties": {
+          "extraction": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction"
+          },
+          "intent": {
+            "title": "Intent",
+            "type": "string"
+          },
+          "normalized_text": {
+            "title": "Normalized Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "normalized_text",
+          "intent"
+        ],
+        "title": "LabeledExampleCreate",
+        "type": "object"
+      },
+      "LabeledExampleRead": {
+        "properties": {
+          "extraction": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "title": "Intent",
+            "type": "string"
+          },
+          "merchant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merchant Id"
+          },
+          "normalized_text": {
+            "title": "Normalized Text",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "merchant_id",
+          "normalized_text",
+          "intent",
+          "extraction",
+          "source"
+        ],
+        "title": "LabeledExampleRead",
+        "type": "object"
+      },
+      "LabeledExampleUpdate": {
+        "properties": {
+          "extraction": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "normalized_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized Text"
+          }
+        },
+        "title": "LabeledExampleUpdate",
+        "type": "object"
+      },
+      "ManualOrderCreate": {
+        "properties": {
+          "conversation_id": {
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "customer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Name"
+          },
+          "customer_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Phone"
+          },
+          "delivery_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Address"
+          },
+          "line_items": {
+            "items": {
+              "$ref": "#/components/schemas/ManualOrderLineItem"
+            },
+            "minItems": 1,
+            "title": "Line Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "conversation_id",
+          "line_items"
+        ],
+        "title": "ManualOrderCreate",
+        "type": "object"
+      },
+      "ManualOrderLineItem": {
+        "properties": {
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "quantity": {
+            "default": 1.0,
+            "title": "Quantity",
+            "type": "number"
+          },
+          "variant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant Id"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "title": "ManualOrderLineItem",
+        "type": "object"
+      },
+      "ManualOrderRead": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "order_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Number"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subtotal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtotal"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "id",
+          "order_number",
+          "status",
+          "subtotal",
+          "total"
+        ],
+        "title": "ManualOrderRead",
+        "type": "object"
+      },
+      "MeResponse": {
+        "properties": {
+          "channels": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ConnectedChannel"
+            },
+            "title": "Channels",
+            "type": "array"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "merchant_id": {
+            "title": "Merchant Id",
+            "type": "string"
+          },
+          "merchant_name": {
+            "title": "Merchant Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "merchant_id",
+          "merchant_name",
+          "is_active"
+        ],
+        "title": "MeResponse",
+        "type": "object"
+      },
+      "MerchantSettingsRead": {
+        "properties": {
+          "auto_learning_enabled": {
+            "title": "Auto Learning Enabled",
+            "type": "boolean"
+          },
+          "welcome_message": {
+            "title": "Welcome Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "auto_learning_enabled",
+          "welcome_message"
+        ],
+        "title": "MerchantSettingsRead",
+        "type": "object"
+      },
+      "MerchantSettingsUpdate": {
+        "properties": {
+          "auto_learning_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Learning Enabled"
+          },
+          "welcome_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Welcome Message"
+          }
+        },
+        "title": "MerchantSettingsUpdate",
+        "type": "object"
+      },
+      "MessageIngestRequest": {
+        "properties": {
+          "conversation_id": {
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "normalized_text": {
+            "maxLength": 2000,
+            "title": "Normalized Text",
+            "type": "string"
+          },
+          "raw_text": {
+            "maxLength": 2000,
+            "title": "Raw Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "conversation_id",
+          "raw_text",
+          "normalized_text"
+        ],
+        "title": "MessageIngestRequest",
+        "type": "object"
+      },
+      "MessageIngestResponse": {
+        "properties": {
+          "answer_messages": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Answer Messages",
+            "type": "array"
+          },
+          "escalation_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escalation Reason"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "intent_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Confidence"
+          },
+          "message_id": {
+            "title": "Message Id",
+            "type": "string"
+          },
+          "model_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Tier"
+          },
+          "order": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "order_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Id"
+          },
+          "order_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Status"
+          }
+        },
+        "required": [
+          "message_id",
+          "intent",
+          "intent_confidence",
+          "model_tier",
+          "escalation_reason",
+          "order_id",
+          "order_status"
+        ],
+        "title": "MessageIngestResponse",
+        "type": "object"
+      },
+      "MessageRead": {
+        "properties": {
+          "conversation_id": {
+            "title": "Conversation Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "intent_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Confidence"
+          },
+          "raw_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Text"
+          }
+        },
+        "required": [
+          "id",
+          "conversation_id",
+          "direction",
+          "raw_text",
+          "created_at"
+        ],
+        "title": "MessageRead",
+        "type": "object"
+      },
+      "OrderDetail": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "ambiguous_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ambiguous Fields",
+            "type": "array"
+          },
+          "confidence_score": {
+            "title": "Confidence Score",
+            "type": "number"
+          },
+          "extracted_by_tier": {
+            "title": "Extracted By Tier",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "line_items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineItem"
+            },
+            "title": "Line Items",
+            "type": "array"
+          },
+          "payment_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Method"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "confidence_score",
+          "extracted_by_tier",
+          "line_items",
+          "ambiguous_fields"
+        ],
+        "title": "OrderDetail",
+        "type": "object"
+      },
+      "OrderItemRead": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name_snapshot": {
+            "title": "Name Snapshot",
+            "type": "string"
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "unit_price": {
+            "title": "Unit Price",
+            "type": "number"
+          },
+          "variant_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant Id"
+          },
+          "variant_snapshot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant Snapshot"
+          }
+        },
+        "required": [
+          "id",
+          "product_id",
+          "variant_id",
+          "name_snapshot",
+          "variant_snapshot",
+          "unit_price",
+          "quantity"
+        ],
+        "title": "OrderItemRead",
+        "type": "object"
+      },
+      "OrderLineItem": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id"
+          },
+          "product_name": {
+            "title": "Product Name",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          }
+        },
+        "required": [
+          "product_name",
+          "quantity"
+        ],
+        "title": "OrderLineItem",
+        "type": "object"
+      },
+      "OrderRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "customer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Name"
+          },
+          "customer_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Phone"
+          },
+          "delivery_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Address"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/OrderItemRead"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "order_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Number"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "subtotal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtotal"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "id",
+          "order_number",
+          "status",
+          "customer_name",
+          "customer_phone",
+          "delivery_address",
+          "subtotal",
+          "total",
+          "created_at"
+        ],
+        "title": "OrderRead",
+        "type": "object"
+      },
+      "OrderStatusUpdate": {
+        "properties": {
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "OrderStatusUpdate",
+        "type": "object"
+      },
+      "ProductCreate": {
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/ProductVariantCreate"
+            },
+            "title": "Variants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProductCreate",
+        "type": "object"
+      },
+      "ProductRead": {
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "merchant_id": {
+            "title": "Merchant Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/ProductVariantRead"
+            },
+            "title": "Variants",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "merchant_id",
+          "name",
+          "aliases",
+          "variants"
+        ],
+        "title": "ProductRead",
+        "type": "object"
+      },
+      "ProductUpdate": {
+        "properties": {
+          "aliases": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliases"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          }
+        },
+        "title": "ProductUpdate",
+        "type": "object"
+      },
+      "ProductVariantCreate": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "ProductVariantCreate",
+        "type": "object"
+      },
+      "ProductVariantRead": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "sku": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sku"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock"
+          }
+        },
+        "required": [
+          "id",
+          "product_id",
+          "label",
+          "sku",
+          "price",
+          "stock",
+          "status",
+          "attributes"
+        ],
+        "title": "ProductVariantRead",
+        "type": "object"
+      },
+      "ReplyRequest": {
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "ReplyRequest",
+        "type": "object"
+      },
+      "StoreKnowledgeCreate": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keywords",
+            "type": "array"
+          },
+          "knowledge_type": {
+            "title": "Knowledge Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "knowledge_type",
+          "title",
+          "content"
+        ],
+        "title": "StoreKnowledgeCreate",
+        "type": "object"
+      },
+      "StoreKnowledgeRead": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Keywords",
+            "type": "array"
+          },
+          "knowledge_type": {
+            "title": "Knowledge Type",
+            "type": "string"
+          },
+          "merchant_id": {
+            "title": "Merchant Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "merchant_id",
+          "knowledge_type",
+          "title",
+          "content",
+          "keywords",
+          "created_at"
+        ],
+        "title": "StoreKnowledgeRead",
+        "type": "object"
+      },
+      "StoreKnowledgeUpdate": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "keywords": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keywords"
+          },
+          "knowledge_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Knowledge Type"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "StoreKnowledgeUpdate",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "title": "TijaratkBot",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Root"
+      }
+    },
+    "/auth/facebook/callback": {
+      "post": {
+        "operationId": "facebook_callback_auth_facebook_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FacebookCallbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Facebook Callback",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "description": "Return the currently authenticated merchant based on JWT token.",
+        "operationId": "get_me_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me/verify-tokens": {
+      "get": {
+        "description": "Verify Facebook page tokens in the background.",
+        "operationId": "verify_tokens_auth_me_verify_tokens_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Verify Tokens",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/conversations/": {
+      "get": {
+        "operationId": "get_conversations_conversations__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationRead"
+                  },
+                  "title": "Response Get Conversations Conversations  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Conversations",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/conversations/{conversation_id}/messages": {
+      "get": {
+        "operationId": "get_messages_conversations__conversation_id__messages_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MessageRead"
+                  },
+                  "title": "Response Get Messages Conversations  Conversation Id  Messages Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Messages",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/conversations/{conversation_id}/reply": {
+      "post": {
+        "operationId": "reply_to_conversation_conversations__conversation_id__reply_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reply To Conversation Conversations  Conversation Id  Reply Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reply To Conversation",
+        "tags": [
+          "conversations"
+        ]
+      }
+    },
+    "/conversations/{conversation_id}/return-to-ai": {
+      "post": {
+        "operationId": "return_to_ai_conversations__conversation_id__return_to_ai_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandoffReturnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Return conversation to AI",
+        "tags": [
+          "handoff"
+        ]
+      }
+    },
+    "/conversations/{conversation_id}/takeover": {
+      "post": {
+        "operationId": "takeover_conversation_conversations__conversation_id__takeover_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversation_id",
+            "required": true,
+            "schema": {
+              "title": "Conversation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HandoffTakeoverRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Take over conversation from AI",
+        "tags": [
+          "handoff"
+        ]
+      }
+    },
+    "/delivery-areas/": {
+      "get": {
+        "operationId": "get_delivery_areas_delivery_areas__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeliveryAreaRead"
+                  },
+                  "title": "Response Get Delivery Areas Delivery Areas  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Delivery Areas",
+        "tags": [
+          "delivery"
+        ]
+      },
+      "post": {
+        "operationId": "post_delivery_area_delivery_areas__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryAreaCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryAreaRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Post Delivery Area",
+        "tags": [
+          "delivery"
+        ]
+      }
+    },
+    "/delivery-areas/{area_id}": {
+      "delete": {
+        "operationId": "delete_delivery_area_endpoint_delivery_areas__area_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "area_id",
+            "required": true,
+            "schema": {
+              "title": "Area Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Delivery Area Endpoint",
+        "tags": [
+          "delivery"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_delivery_area_delivery_areas__area_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "area_id",
+            "required": true,
+            "schema": {
+              "title": "Area Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryAreaUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryAreaRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Delivery Area",
+        "tags": [
+          "delivery"
+        ]
+      }
+    },
+    "/demo/conversations/": {
+      "get": {
+        "operationId": "get_demo_conversations_demo_conversations__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationRead"
+                  },
+                  "title": "Response Get Demo Conversations Demo Conversations  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Demo Conversations",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/demo/knowledge/": {
+      "get": {
+        "operationId": "get_demo_knowledge_demo_knowledge__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreKnowledgeRead"
+                  },
+                  "title": "Response Get Demo Knowledge Demo Knowledge  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Demo Knowledge",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/demo/messages/": {
+      "post": {
+        "operationId": "post_demo_message_demo_messages__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageIngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Demo Message",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/demo/products/": {
+      "get": {
+        "operationId": "get_demo_products_demo_products__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductRead"
+                  },
+                  "title": "Response Get Demo Products Demo Products  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Demo Products",
+        "tags": [
+          "demo"
+        ]
+      }
+    },
+    "/health/": {
+      "get": {
+        "description": "Check if the API is running.",
+        "operationId": "health_check_health__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Check",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/labeled-examples/": {
+      "get": {
+        "operationId": "get_labeled_examples_labeled_examples__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LabeledExampleRead"
+                  },
+                  "title": "Response Get Labeled Examples Labeled Examples  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Labeled Examples",
+        "tags": [
+          "labeled-examples"
+        ]
+      },
+      "post": {
+        "operationId": "create_labeled_examples__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabeledExampleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabeledExampleRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "labeled-examples"
+        ]
+      }
+    },
+    "/labeled-examples/intents": {
+      "get": {
+        "operationId": "get_known_intents_labeled_examples_intents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Get Known Intents Labeled Examples Intents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Known Intents",
+        "tags": [
+          "labeled-examples"
+        ]
+      }
+    },
+    "/labeled-examples/{example_id}": {
+      "delete": {
+        "operationId": "delete_labeled_examples__example_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "example_id",
+            "required": true,
+            "schema": {
+              "title": "Example Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete",
+        "tags": [
+          "labeled-examples"
+        ]
+      },
+      "put": {
+        "operationId": "update_labeled_examples__example_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "example_id",
+            "required": true,
+            "schema": {
+              "title": "Example Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabeledExampleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabeledExampleRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update",
+        "tags": [
+          "labeled-examples"
+        ]
+      }
+    },
+    "/merchants/me/settings": {
+      "get": {
+        "operationId": "get_settings_merchants_me_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MerchantSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Settings",
+        "tags": [
+          "merchants"
+        ]
+      },
+      "patch": {
+        "operationId": "update_settings_merchants_me_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MerchantSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MerchantSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Settings",
+        "tags": [
+          "merchants"
+        ]
+      }
+    },
+    "/messages": {
+      "post": {
+        "operationId": "ingest_messages_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageIngestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Ingest",
+        "tags": [
+          "messages"
+        ]
+      }
+    },
+    "/orders/": {
+      "get": {
+        "operationId": "list_orders_orders__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrderRead"
+                  },
+                  "title": "Response List Orders Orders  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Orders",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/manual": {
+      "post": {
+        "operationId": "create_manual_orders_manual_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualOrderCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualOrderRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Manual",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/{order_id}/status": {
+      "patch": {
+        "operationId": "update_order_status_orders__order_id__status_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderStatusUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Order Status",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/products/": {
+      "get": {
+        "operationId": "get_products_products__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductRead"
+                  },
+                  "title": "Response Get Products Products  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Products",
+        "tags": [
+          "products"
+        ]
+      },
+      "post": {
+        "operationId": "create_products__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/products/{product_id}": {
+      "delete": {
+        "operationId": "delete_products__product_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete",
+        "tags": [
+          "products"
+        ]
+      },
+      "put": {
+        "operationId": "update_products__product_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "product_id",
+            "required": true,
+            "schema": {
+              "title": "Product Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update",
+        "tags": [
+          "products"
+        ]
+      }
+    },
+    "/store-knowledge/": {
+      "get": {
+        "operationId": "get_store_knowledge_store_knowledge__get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreKnowledgeRead"
+                  },
+                  "title": "Response Get Store Knowledge Store Knowledge  Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Store Knowledge",
+        "tags": [
+          "store-knowledge"
+        ]
+      },
+      "post": {
+        "operationId": "create_store_knowledge__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreKnowledgeCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreKnowledgeRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create",
+        "tags": [
+          "store-knowledge"
+        ]
+      }
+    },
+    "/store-knowledge/{knowledge_id}": {
+      "delete": {
+        "operationId": "delete_store_knowledge__knowledge_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "knowledge_id",
+            "required": true,
+            "schema": {
+              "title": "Knowledge Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete",
+        "tags": [
+          "store-knowledge"
+        ]
+      },
+      "put": {
+        "operationId": "update_store_knowledge__knowledge_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "knowledge_id",
+            "required": true,
+            "schema": {
+              "title": "Knowledge Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreKnowledgeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreKnowledgeRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update",
+        "tags": [
+          "store-knowledge"
+        ]
+      }
+    },
+    "/webhooks/meta": {
+      "get": {
+        "operationId": "verify_meta_webhook_webhooks_meta_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Verify Meta Webhook",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "post": {
+        "operationId": "receive_meta_webhook_webhooks_meta_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Receive Meta Webhook Webhooks Meta Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Receive Meta Webhook",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/webhooks/whatsapp/twilio": {
+      "post": {
+        "operationId": "receive_twilio_webhook_webhooks_whatsapp_twilio_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Receive Twilio Webhook Webhooks Whatsapp Twilio Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Receive Twilio Webhook",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    }
+  }
+}
