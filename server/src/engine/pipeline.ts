@@ -214,14 +214,15 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     message.modelTier = 'RULE';
     const outbound: OutboundMessage[] = [];
     if (tier0 === 'greeting') {
+      let aiText: string | null = null;
       if (info.aiEnabled && conversation.aiEnabled && !conversation.humanTakeover) {
-        const aiText = await generateAiReply(db, conversation, message, {
+        aiText = await generateAiReply(db, conversation, message, {
           merchantName,
           userPrompt: `customer: ${normalizedText}\nThe customer just greeted you. Greet them back and ask how you can help.`,
         });
-        if (aiText) outbound.push(textMessage(aiText));
       }
-      outbound.push(mainMenuMessage(displayName, welcomeTemplate)); // always append the main menu after a greeting
+      // The menu is only a fallback when the AI gave no reply (AI off or failed); otherwise the AI answers alone.
+      outbound.push(aiText ? textMessage(aiText) : mainMenuMessage(displayName, welcomeTemplate));
     }
     return finish(null, outbound);
   }

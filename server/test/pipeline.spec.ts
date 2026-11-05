@@ -42,7 +42,7 @@ describe('tier 0 and routing without AI classification', () => {
     });
   });
 
-  it('greeting: AI reply + main menu; generation failure degrades to the menu alone', async () => {
+  it('greeting: AI reply only; generation failure falls back to the menu', async () => {
     const ai = fakeAi([{ reply: 'أهلاً بيك!' }, new AICallError('boom')]);
     await withRollback(async (db) => {
       const { c } = await world(db);
@@ -51,13 +51,13 @@ describe('tier 0 and routing without AI classification', () => {
       const conv = { ...c, channelConnectionId: 'cc1' };
 
       const ok = await processMessage(db, conv, msg(c, 'السلام عليكم'));
-      expect(kinds(ok)).toEqual(['text', 'quick_reply']);
+      expect(kinds(ok)).toEqual(['text']);
       expect((ok.messages[0] as any).text).toBe('أهلاً بيك!');
-      expect((ok.messages[1] as any).text).toContain('صفحة النور'); // channel account name wins over merchant name
       expect(ai.calls).toHaveLength(1);
 
       const failed = await processMessage(db, conv, msg(c, 'hello'));
       expect(kinds(failed)).toEqual(['quick_reply']);
+      expect((failed.messages[0] as any).text).toContain('صفحة النور'); // channel account name wins over merchant name
       const events = await db.select().from(schema.aiUsageEvents);
       expect(events.map((e) => e.success).sort()).toEqual([false, true]);
     });
