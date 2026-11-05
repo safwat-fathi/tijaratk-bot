@@ -6,17 +6,20 @@ import { withConversationLock } from '../core/locks.js';
 import { type Db, type DbOrTx, schema } from '../db/index.js';
 import type { Conversation } from '../db/types.js';
 import { type OutboundMessage, textFallback, textMessage } from '../domains/messaging/models.js';
+import { markBotSent } from '../domains/messaging/bot-sent.js';
 import { deliver } from '../domains/messaging/deliver.js';
 import { processMessage } from '../engine/pipeline.js';
 
 const log = new Logger('worker');
 
 /** Send rich messages via the channel and persist each one that went out. */
-async function sendOutbound(db: DbOrTx, conversation: Conversation, outbound: OutboundMessage[]): Promise<void> {
+async function sendOutbound(db: DbOrTx, redis: Redis, conversation: Conversation, outbound: OutboundMessage[]): Promise<void> {
   if (!outbound.length || !conversation.channelConnectionId) return;
   const [conn] = await db.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conversation.channelConnectionId));
   if (!conn) return;
+  await markBotSent(redis, conversation.customerRef); // before AND after: the echo can land at either end of the send
   const results = await deliver(conn, conversation.customerRef, outbound);
+  await markBotSent(redis, conversation.customerRef);
   for (const [i, msg] of outbound.entries()) {
     if (!results[i]) continue;
     await db.insert(schema.messages).values({
@@ -49,7 +52,7 @@ export async function processChannelMessage(db: Db, redis: Redis, messageId: str
         // Shouldn't happen: fall back to a deterministic order confirmation.
         outbound = [textMessage(`تم استلام طلبك #${result.order.orderNumber || result.order.id.slice(0, 8)}. هنتواصل معاك قريب!`)];
       }
-      await sendOutbound(tx, conv, outbound);
+      await sendOutbound(tx, redis, conv, outbound);
     }),
   );
 }

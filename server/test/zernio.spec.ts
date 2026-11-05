@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import type supertest from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authHeader, makeConnection, makeMerchant, queued, schema, setSettingsForTests, withApp } from './harness.js';
+import { authHeader, fakeRedisKeys, makeConnection, makeConversation, makeMerchant, queued, schema, setSettingsForTests, withApp } from './harness.js';
 
 type Http = ReturnType<typeof supertest>;
 
@@ -23,6 +23,23 @@ const event = (o: { account?: string; mid?: string; text?: string | null; platfo
     conversation: { id: 'conv-1' },
     account: { accountId: o.account ?? 'ACC1', profileId: 'p' },
     metadata: null,
+    timestamp: new Date().toISOString(),
+  });
+const sentEvent = (o: { sentVia?: string | null; mid?: string; conv?: string } = {}) =>
+  JSON.stringify({
+    id: 'evt-s',
+    event: 'message.sent',
+    message: {
+      id: 'z2',
+      conversationId: o.conv ?? 'conv-1',
+      platform: 'facebook',
+      platformMessageId: o.mid ?? 'mid.out1',
+      direction: 'outgoing',
+      text: 'أهلاً يا فندم',
+      sentVia: o.sentVia === undefined ? null : o.sentVia,
+    },
+    conversation: { id: o.conv ?? 'conv-1' },
+    account: { accountId: 'ACC1', profileId: 'p' },
     timestamp: new Date().toISOString(),
   });
 const post = (http: Http, body: string, sig = sign(body)) =>
@@ -314,6 +331,71 @@ describe('Zernio connect flow', () => {
       expect(await active(legacy.id)).toBe(false);
       expect(await active(othersLegacy.id)).toBe(true);
       expect((await rows(db, 'ACC1'))[0].isActive).toBe(true);
+    });
+  });
+});
+
+describe('POST /webhooks/zernio: message.sent (a person replied from our side)', () => {
+  const setup = async (db: any) => {
+    const m = await makeMerchant(db);
+    const conn = await makeConnection(db, m.id, { externalAccountId: 'ACC1' });
+    const conv = await makeConversation(db, m.id, { channelConnectionId: conn.id, customerRef: 'conv-1' });
+    return { m, conv };
+  };
+  const state = async (db: any, convId: string) => ({
+    conv: (await db.select().from(schema.conversations).where(eq(schema.conversations.id, convId)))[0],
+    out: await db.select().from(schema.messages).where(eq(schema.messages.conversationId, convId)),
+    handoffs: await db.select().from(schema.humanHandoffs).where(eq(schema.humanHandoffs.conversationId, convId)),
+  });
+
+  it.each(['human', null])('sentVia=%s pauses the AI, stores the reply once, and a redelivery is a no-op', async (sentVia) => {
+    await withApp(async ({ http, db }) => {
+      const { conv } = await setup(db);
+      const body = sentEvent({ sentVia });
+      expect((await post(http, body)).status).toBe(200);
+      await post(http, body);
+      const s = await state(db, conv.id);
+      expect(s.conv.humanTakeover).toBe(true);
+      expect(s.out).toHaveLength(1);
+      expect(s.out[0]).toMatchObject({ direction: 'OUTBOUND', rawText: 'أهلاً يا فندم', externalMessageId: 'mid.out1' });
+      expect(s.handoffs).toHaveLength(1);
+      expect(s.handoffs[0]).toMatchObject({ reason: 'MERCHANT_TAKEOVER', resolvedAt: null });
+      expect(queued).toHaveLength(0); // a reply is never fed back to the AI
+    });
+  });
+
+  it('ignores sends our own bot made (sentVia=api)', async () => {
+    await withApp(async ({ http, db }) => {
+      const { conv } = await setup(db);
+      await post(http, sentEvent({ sentVia: 'api' }));
+      const s = await state(db, conv.id);
+      expect(s.conv.humanTakeover).toBe(false);
+      expect(s.out).toHaveLength(0);
+    });
+  });
+
+  it('treats an unattributed send right after a bot send as the bot echo, but a Zernio-inbox human reply always counts', async () => {
+    await withApp(async ({ http, db }) => {
+      const { conv } = await setup(db);
+      fakeRedisKeys.add('bot_sent:conv-1');
+      await post(http, sentEvent({ sentVia: null, mid: 'mid.echo' }));
+      let s = await state(db, conv.id);
+      expect(s.conv.humanTakeover).toBe(false);
+      expect(s.out).toHaveLength(0);
+
+      await post(http, sentEvent({ sentVia: 'human', mid: 'mid.human' }));
+      s = await state(db, conv.id);
+      expect(s.conv.humanTakeover).toBe(true);
+      expect(s.out.map((o: any) => o.externalMessageId)).toEqual(['mid.human']);
+    });
+  });
+
+  it('never creates a conversation for a send to someone we have no conversation with', async () => {
+    await withApp(async ({ http, db }) => {
+      await setup(db);
+      expect((await post(http, sentEvent({ sentVia: 'human', conv: 'someone-else' }))).status).toBe(200);
+      expect(await db.select().from(schema.conversations)).toHaveLength(1);
+      expect(await db.select().from(schema.messages)).toHaveLength(0);
     });
   });
 });

@@ -6,6 +6,7 @@ import { DB } from '../../core/tokens.js';
 import { type Db, schema } from '../../db/index.js';
 import { AuthGuard, CurrentMerchant, type Merchant } from '../auth/auth.guard.js';
 import { textFallback, textMessage } from '../messaging/models.js';
+import { recordHumanActivity } from '../handoff/service.js';
 import { deliver } from '../messaging/deliver.js';
 import { getConversationMessages, listConversations } from './service.js';
 
@@ -35,6 +36,7 @@ export class ConversationsController {
     return this.db.transaction(async (tx) => {
       const [conv] = await tx.select().from(schema.conversations).where(eq(schema.conversations.id, id));
       if (!conv || conv.merchantId !== m.id) throw notFound('conversation not found');
+      await recordHumanActivity(tx, m.id, conv.id); // a human is in the conversation: pause the AI until they go idle
 
       const msg = textMessage(payload.text);
       const [outbound] = await tx

@@ -1,7 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { type DbOrTx, schema } from '../../db/index.js';
+import { recordHumanActivity } from '../handoff/service.js';
 import type { ParsedInboundMessage } from './meta.js';
+import type { ParsedOutgoingMessage } from './zernio.js';
 
 const log = new Logger('channels.service');
 
@@ -29,13 +31,18 @@ async function findOrCreateConversation(db: DbOrTx, connection: { id: string; me
   return (await db.select({ id: c.id }).from(c).where(where))[0].id;
 }
 
-/** Returns the message id (new or pre-existing for redelivered webhooks), or null if the account is unmapped. */
-export async function ingestChannelMessage(db: DbOrTx, parsed: ParsedInboundMessage): Promise<string | null> {
+async function findConnection(db: DbOrTx, channel: ParsedInboundMessage['channel'], externalAccountId: string) {
   const cc = schema.channelConnections;
   const [connection] = await db
     .select()
     .from(cc)
-    .where(and(eq(cc.channel, parsed.channel), eq(cc.externalAccountId, parsed.externalAccountId), eq(cc.isActive, true)));
+    .where(and(eq(cc.channel, channel), eq(cc.externalAccountId, externalAccountId), eq(cc.isActive, true)));
+  return connection;
+}
+
+/** Returns the message id (new or pre-existing for redelivered webhooks), or null if the account is unmapped. */
+export async function ingestChannelMessage(db: DbOrTx, parsed: ParsedInboundMessage): Promise<string | null> {
+  const connection = await findConnection(db, parsed.channel, parsed.externalAccountId);
   if (!connection) {
     log.warn(`unmapped_channel_account channel=${parsed.channel} external_account_id=${parsed.externalAccountId}`);
     return null;
@@ -59,4 +66,36 @@ export async function ingestChannelMessage(db: DbOrTx, parsed: ParsedInboundMess
 
   const [existing] = await db.select({ id: m.id }).from(m).where(eq(m.externalMessageId, parsed.externalMessageId));
   return existing?.id ?? null;
+}
+
+/**
+ * A person replied from our side outside the portal (Zernio inbox, native FB/IG inbox). Stores it in the history and
+ * pauses the AI for that conversation. Never creates a conversation: an outgoing message to someone we have no
+ * conversation with is not ours to track. Returns true when it was new (a redelivery returns false and changes nothing).
+ */
+export async function ingestHumanReply(db: DbOrTx, parsed: ParsedOutgoingMessage): Promise<boolean> {
+  const connection = await findConnection(db, parsed.channel, parsed.externalAccountId);
+  if (!connection) return false;
+  const c = schema.conversations;
+  const [conversation] = await db
+    .select({ id: c.id })
+    .from(c)
+    .where(and(eq(c.channelConnectionId, connection.id), eq(c.customerRef, parsed.externalCustomerId)));
+  if (!conversation) return false;
+
+  const m = schema.messages;
+  const [inserted] = await db
+    .insert(m)
+    .values({
+      conversationId: conversation.id,
+      direction: 'OUTBOUND',
+      rawText: parsed.text,
+      normalizedText: parsed.text,
+      externalMessageId: parsed.externalMessageId,
+    })
+    .onConflictDoNothing({ target: m.externalMessageId, where: sql`external_message_id IS NOT NULL` })
+    .returning({ id: m.id });
+  if (!inserted) return false;
+  await recordHumanActivity(db, connection.merchantId, conversation.id);
+  return true;
 }

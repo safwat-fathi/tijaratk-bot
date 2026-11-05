@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { Db } from '../src/db/index.js';
 import type { Conversation, Message } from '../src/db/types.js';
 import { AICallError } from '../src/engine/clients.js';
+import { recordHumanActivity } from '../src/domains/handoff/service.js';
 import { processMessage } from '../src/engine/pipeline.js';
 import { fakeAi, makeConversation, makeMerchant, makeProduct, resetAi, schema, unit, withRollback } from './harness.js';
 
@@ -74,6 +75,31 @@ describe('tier 0 and routing without AI classification', () => {
       expect(off.message).toMatchObject({ intent: 'fallback:no_ai', modelTier: 'RULE' });
       expect(kinds(off)).toEqual(['text']);
       expect(ai.calls).toHaveLength(0);
+    });
+  });
+
+  it('human takeover: stays silent (even on a greeting) until the idle window passes, then the AI resumes', async () => {
+    const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
+    await withRollback(async (db) => {
+      const { m, c } = await world(db);
+      await recordHumanActivity(db, m.id, c.id);
+      const paused = { ...c, humanTakeover: true };
+
+      const quiet = await processMessage(db, paused, msg(c, 'السلام عليكم'));
+      expect(quiet.messages).toEqual([]); // no AI reply and no menu while a human has the conversation
+      expect(ai.calls).toHaveLength(0);
+      const [still] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
+      expect(still.humanTakeover).toBe(true);
+
+      const h = schema.humanHandoffs;
+      await db.update(h).set({ updatedAt: new Date(Date.now() - 31 * 60_000) }).where(eq(h.conversationId, c.id)); // idle > 30 min
+      const resumed = await processMessage(db, paused, msg(c, 'السلام عليكم'));
+      expect(kinds(resumed)).toEqual(['text']); // the AI answers a greeting alone
+      expect(ai.calls).toHaveLength(1);
+      const [after] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
+      expect(after.humanTakeover).toBe(false);
+      const [handoff] = await db.select().from(h).where(eq(h.conversationId, c.id));
+      expect(handoff.resolvedAt).not.toBeNull();
     });
   });
 

@@ -162,7 +162,7 @@ describe('worker: processChannelMessage', () => {
         await processChannelMessage(db, redis, inbound.id);
         const [after] = await db.select().from(schema.messages).where(eq(schema.messages.id, inbound.id));
         expect(after).toMatchObject({ intent: 'greeting', modelTier: 'RULE' });
-        expect(sent.map((s) => s.recipient.id)).toEqual(['U9']);
+        expect(sent.map((s) => s.recipient.id)).toEqual(['U9']); // the AI answers a greeting alone
         expect(sent[0].message).toEqual({ text: 'أهلاً بيك' });
         const outbound = await db.select().from(schema.messages).where(eq(schema.messages.direction, 'OUTBOUND'));
         expect(outbound.map((o) => o.messageType)).toEqual(['text']);

@@ -5,7 +5,7 @@ import { type DbOrTx, schema } from '../db/index.js';
 import type { Conversation, Message, Order } from '../db/types.js';
 import { writeOrder } from '../domains/checkout/order-writer.js';
 import { createOrder } from '../domains/checkout/service.js';
-import { takeoverConversation } from '../domains/handoff/service.js';
+import { resumeIfIdle, takeoverConversation } from '../domains/handoff/service.js';
 import {
   type OutboundMessage,
   quickReplyMessage,
@@ -170,6 +170,7 @@ async function setSlots(db: DbOrTx, conversation: Conversation, slots: Slots) {
 
 export async function processMessage(db: DbOrTx, conversation: Conversation, message: Message): Promise<PipelineResult> {
   const s = getSettings();
+  conversation = await resumeIfIdle(db, conversation, s.HUMAN_TAKEOVER_IDLE_MINUTES); // a human who went quiet hands back to the AI
   const finish = async (order: Order | null, messages: OutboundMessage[]): Promise<PipelineResult> => {
     await saveMessage(db, message);
     return { message, order, messages };
@@ -212,9 +213,9 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     message.intentConfidence = 1.0;
     message.modelTier = 'RULE';
     const outbound: OutboundMessage[] = [];
-    if (tier0 === 'greeting') {
+    if (tier0 === 'greeting' && !conversation.humanTakeover) { // a human is in the conversation: no bot greeting or menu
       let aiText: string | null = null;
-      if (info.aiEnabled && conversation.aiEnabled && !conversation.humanTakeover) {
+      if (info.aiEnabled && conversation.aiEnabled) {
         aiText = await generateAiReply(db, conversation, message, {
           merchantName,
           userPrompt: `customer: ${normalizedText}\nThe customer just greeted you. Greet them back and ask how you can help.`,

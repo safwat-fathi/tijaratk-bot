@@ -56,6 +56,8 @@ const schema = z
     JWT_SECRET_KEY: z.string(),
     JWT_ALGORITHM: z.string().default('HS256'),
     JWT_EXPIRE_MINUTES: z.coerce.number().default(10080),
+    // A human takeover (merchant reply or escalation) hands the AI back after this long with no human activity.
+    HUMAN_TAKEOVER_IDLE_MINUTES: z.coerce.number().default(30),
     ENCRYPTION_KEY: z.string().default(''),
     DEMO_STOPGAP_MERCHANT_ID: z.string().default(''),
     RATE_LIMIT_ENABLED: bool.default(true),

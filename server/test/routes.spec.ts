@@ -190,10 +190,15 @@ describe('merchant settings', () => {
     await withApp(async ({ http, db }) => {
       const m = await makeMerchant(db);
       const h = authHeader(m.id);
-      expect((await http.get('/merchants/me/settings').set(h)).body).toMatchObject({ auto_learning_enabled: false });
+      expect((await http.get('/merchants/me/settings').set(h)).body).toMatchObject({ ai_enabled: true, auto_learning_enabled: false });
       const res = await http.patch('/merchants/me/settings').set(h).send({ auto_learning_enabled: true });
       expect(res.body.auto_learning_enabled).toBe(true);
-      expect(res.body).toEqual({ auto_learning_enabled: true });
+      expect(res.body.ai_enabled).toBe(true);
+      const off = await http.patch('/merchants/me/settings').set(h).send({ ai_enabled: false });
+      expect(off.body).toEqual({ ai_enabled: false, auto_learning_enabled: true });
+      const [row] = await db.select().from(schema.merchants).where(eq(schema.merchants.id, m.id));
+      expect(row.aiEnabled).toBe(false);
+      expect((await http.patch('/merchants/me/settings').set(h).send({ ai_enabled: true })).body.ai_enabled).toBe(true);
     });
   });
 });
@@ -226,6 +231,21 @@ describe('conversations & handoff', () => {
       expect(res.body).toEqual({ message_id: expect.any(String), sent: false });
       const [row] = await db.select().from(schema.messages).where(eq(schema.messages.id, res.body.message_id));
       expect(row).toMatchObject({ direction: 'OUTBOUND', rawText: 'أهلاً', messageType: 'text', richPayload: { kind: 'text', text: 'أهلاً' } });
+    });
+  });
+
+  it('merchant reply pauses the AI: takeover flag set, one open handoff reused by later replies', async () => {
+    await withApp(async ({ http, db }) => {
+      const m = await makeMerchant(db);
+      const c = await makeConversation(db, m.id);
+      for (const text of ['one', 'two']) {
+        expect((await http.post(`/conversations/${c.id}/reply`).set(authHeader(m.id)).send({ text })).status).toBe(201);
+      }
+      const [conv] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
+      expect(conv.humanTakeover).toBe(true);
+      const handoffs = await db.select().from(schema.humanHandoffs).where(eq(schema.humanHandoffs.conversationId, c.id));
+      expect(handoffs).toHaveLength(1);
+      expect(handoffs[0]).toMatchObject({ reason: 'MERCHANT_TAKEOVER', resolvedAt: null });
     });
   });
 

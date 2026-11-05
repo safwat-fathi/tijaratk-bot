@@ -5,11 +5,13 @@ import { Logger } from '@nestjs/common';
 import type { Settings } from '../../config.js';
 import { ApiError } from '../../core/http.js';
 import { safeEqual } from '../../core/safe-equal.js';
-import { DB, PROCESS_CHANNEL_MESSAGE, QUEUE, SETTINGS } from '../../core/tokens.js';
+import type { Redis } from 'ioredis';
+import { DB, PROCESS_CHANNEL_MESSAGE, QUEUE, REDIS, SETTINGS } from '../../core/tokens.js';
 import { type Db, schema } from '../../db/index.js';
 import { type Channel, type ParsedInboundMessage, parseMetaPayload, verifyMetaSignature } from './meta.js';
-import { ingestChannelMessage } from './service.js';
-import { parseZernioPayload, verifyZernioSignature } from './zernio.js';
+import { botSentRecently } from '../messaging/bot-sent.js';
+import { ingestChannelMessage, ingestHumanReply } from './service.js';
+import { type ParsedOutgoingMessage, parseZernioPayload, parseZernioSentPayload, verifyZernioSignature } from './zernio.js';
 import { parseTwilioPayload, verifyTwilioSignature } from './twilio.js';
 
 const log = new Logger('channels.router');
@@ -19,6 +21,7 @@ export class ChannelsController {
   constructor(
     @Inject(DB) private readonly db: Db,
     @Inject(QUEUE) private readonly queue: Queue,
+    @Inject(REDIS) private readonly redis: Redis,
     @Inject(SETTINGS) private readonly s: Settings,
   ) {}
 
@@ -81,21 +84,26 @@ export class ChannelsController {
     let payload: any = null;
     let processingError: string | null = null;
     let parsed: ParsedInboundMessage[] = [];
+    let sent: ParsedOutgoingMessage | null = null;
     try {
       payload = JSON.parse(raw.toString('utf8'));
       parsed = parseZernioPayload(payload);
+      sent = parseZernioSentPayload(payload);
     } catch (e) {
       processingError = String(e);
       log.warn(`zernio_webhook_parse_failed error=${e}`);
     }
-    log.log(`zernio_webhook event=${payload?.event} messages=${parsed.length}${processingError ? ' parse_error' : ''}`);
+    log.log(`zernio_webhook event=${payload?.event} messages=${parsed.length}${sent ? ` sent_via=${sent.sentVia ?? "unattributed"}` : ''}${processingError ? ' parse_error' : ''}`);
+    // An unattributed send right after our own send is Meta's echo of the bot, not a person.
+    if (sent && sent.sentVia === null && (await botSentRecently(this.redis, sent.externalCustomerId))) sent = null;
     const ids = await this.db.transaction(async (tx) => {
-      await tx.insert(schema.webhookEvents).values({ channel: parsed[0]?.channel ?? 'FACEBOOK', rawPayload: payload, processingError });
+      await tx.insert(schema.webhookEvents).values({ channel: parsed[0]?.channel ?? sent?.channel ?? 'FACEBOOK', rawPayload: payload, processingError });
       const out: string[] = [];
       for (const p of parsed) {
         const id = await ingestChannelMessage(tx, p);
         if (id) out.push(id);
       }
+      if (sent) await ingestHumanReply(tx, sent);
       return out;
     });
     await this.enqueue(ids);

@@ -29,17 +29,24 @@ export async function withRollback(fn: (db: Db) => Promise<void>): Promise<void>
 }
 
 export const queued: { name: string; data: any; opts?: any }[] = [];
+/** In-memory stand-in for the few Redis calls the HTTP app makes (the bot-sent marker). Cleared per app. */
+export const fakeRedisKeys = new Set<string>();
+const fakeRedis = {
+  set: async (key: string) => (fakeRedisKeys.add(key), 'OK'),
+  exists: async (key: string) => (fakeRedisKeys.has(key) ? 1 : 0),
+};
 const fakeQueue = { add: async (name: string, data: any, opts?: any) => void queued.push({ name, data, opts }) };
 
 /** App wired to the test transaction; Redis/queue stubbed. */
 export async function withApp(fn: (ctx: { app: INestApplication; db: Db; http: ReturnType<typeof supertest> }) => Promise<void>) {
   await withRollback(async (db) => {
     queued.length = 0;
+    fakeRedisKeys.clear();
     const mod = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(DB)
       .useValue(db)
       .overrideProvider(REDIS)
-      .useValue({})
+      .useValue(fakeRedis)
       .overrideProvider(QUEUE)
       .useValue(fakeQueue)
       .compile();

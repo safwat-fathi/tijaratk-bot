@@ -36,3 +36,36 @@ export function parseZernioPayload(payload: any): ParsedInboundMessage[] {
     postbackPayload,
   }];
 }
+
+export type ParsedOutgoingMessage = {
+  channel: Channel;
+  externalAccountId: string;
+  externalCustomerId: string;
+  externalMessageId: string;
+  text: string;
+  /** Zernio's attribution: `human` = Zernio inbox operator, `null` = unknown (native FB/IG inbox, Meta auto-replies, or an echo of our own send). */
+  sentVia: string | null;
+};
+
+/** Sends Zernio attributes to automation. Anything else (`human`, unknown) may be a person replying. */
+const AUTOMATED_SENT_VIA = new Set(['api', 'broadcast', 'sequence', 'workflow', 'comment_automation', 'bulk-api']);
+
+/** `message.sent` -> a message a person (or an unattributed sender) sent from our side; automated sends and other events -> null. */
+export function parseZernioSentPayload(payload: any): ParsedOutgoingMessage | null {
+  if (payload?.event !== 'message.sent' || payload.test) return null;
+  const m = payload.message;
+  const channel = PLATFORM_TO_CHANNEL[m?.platform];
+  const accountId = payload.account?.accountId ?? payload.account?.id;
+  const conversationId = m?.conversationId ?? payload.conversation?.id;
+  if (!channel || m.direction !== 'outgoing' || !accountId || !conversationId || !m.platformMessageId) return null;
+  const sentVia: string | null = typeof m.sentVia === 'string' ? m.sentVia : null;
+  if (sentVia && AUTOMATED_SENT_VIA.has(sentVia)) return null;
+  return {
+    channel,
+    externalAccountId: accountId,
+    externalCustomerId: conversationId,
+    externalMessageId: m.platformMessageId,
+    text: m.text ?? '',
+    sentVia,
+  };
+}
