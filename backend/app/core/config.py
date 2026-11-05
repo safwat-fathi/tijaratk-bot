@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     OPENROUTER_PROVIDERS: list[str] = ["DeepSeek", "Fireworks", "Together"]
     DEEPSEEK_MODEL: str
 
-    # Embeddings route (e.g. to a local Ollama or TEI server)
+    # Embeddings route (OpenRouter by default; any OpenAI-compatible server works)
     EMBEDDING_BASE_URL: str
     EMBEDDING_API_KEY: str
     EMBEDDING_MODEL: str

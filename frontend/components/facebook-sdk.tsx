@@ -30,7 +30,7 @@ export function FacebookSDK() {
     <Script
       id="facebook-jssdk"
       src="https://connect.facebook.net/en_US/sdk.js"
-      strategy="lazyOnload"
+      strategy="afterInteractive"
       onLoad={() => {
         if (!window.FB) return;
         window.FB.init({

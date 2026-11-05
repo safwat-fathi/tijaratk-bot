@@ -24,10 +24,16 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default paraglide({
+const config = paraglide({
   paraglide: {
     project: "./project.inlang",
     outdir: "./paraglide",
   },
   ...nextConfig,
 });
+
+// paraglide-next adds a legacy `experimental.turbo` key that Next 16 rejects;
+// `turbopack.resolveAlias` above already covers it.
+delete (config.experimental as Record<string, unknown> | undefined)?.turbo;
+
+export default config;
