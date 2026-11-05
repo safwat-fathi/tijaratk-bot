@@ -10,7 +10,6 @@ process.env.META_VERIFY_TOKEN = 'verify-me';
 process.env.META_APP_ID = 'app-1';
 process.env.TWILIO_AUTH_TOKEN = 'twilio-token-for-tests';
 process.env.TWILIO_WEBHOOK_URL = 'https://example.test/webhooks/whatsapp/twilio';
-process.env.OPEN_ACCESS_KEY = 'open-key-for-tests';
 process.env.ZERNIO_API_KEY = 'zernio-key-for-tests';
 process.env.ZERNIO_PROFILE_ID = 'profile-for-tests';
 process.env.PUBLIC_API_URL = 'https://api.example.test';

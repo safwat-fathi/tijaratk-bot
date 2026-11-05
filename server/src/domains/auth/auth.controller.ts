@@ -1,13 +1,14 @@
-import { Controller, Get, Headers, HttpCode, Inject, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Post, UseGuards } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 import type { Settings } from '../../config.js';
-import { ApiError } from '../../core/http.js';
-import { safeEqual } from '../../core/safe-equal.js';
+import { ApiError, parse } from '../../core/http.js';
 import { DB, SETTINGS } from '../../core/tokens.js';
 import { type Db, schema } from '../../db/index.js';
 import { AuthGuard, CurrentMerchant, type Merchant } from './auth.guard.js';
-import { findOpenMerchant } from './service.js';
-import { createAccessToken } from './tokens.js';
+import { createAccessToken, merchantIdFromApiKey } from './tokens.js';
+
+const KeyLogin = z.object({ api_key: z.string() });
 
 @Controller('auth')
 export class AuthController {
@@ -16,15 +17,15 @@ export class AuthController {
     @Inject(SETTINGS) private readonly s: Settings,
   ) {}
 
-  /** Called only by the web app's server (never the browser): trades OPEN_ACCESS_KEY for the owner merchant's JWT. */
-  @Post('open')
+  /** The merchant portal login: trades a merchant API key (see scripts/merchant-key.ts) for a session token. */
+  @Post('key-login')
   @HttpCode(200)
-  async open(@Headers('x-open-key') key: string | undefined) {
-    if (!this.s.OPEN_ACCESS_KEY) throw new ApiError(404, 'not found');
-    if (!key || !safeEqual(key, this.s.OPEN_ACCESS_KEY)) throw new ApiError(403, 'invalid key');
-    const merchant = await findOpenMerchant(this.db, this.s);
-    if (!merchant) throw new ApiError(404, 'OPEN_MERCHANT_ID does not match a merchant');
-    if (merchant.status !== 'ACTIVE') throw new ApiError(403, 'merchant suspended');
+  async keyLogin(@Body() body: unknown) {
+    const { api_key } = parse(KeyLogin, body);
+    const id = merchantIdFromApiKey(this.s, api_key);
+    const [merchant] = id ? await this.db.select().from(schema.merchants).where(eq(schema.merchants.id, id)) : [];
+    // One answer for every failure, so the response never reveals which merchants exist.
+    if (!merchant || merchant.status !== 'ACTIVE') throw new ApiError(401, 'invalid api key');
     return { access_token: createAccessToken(this.s, merchant.id), merchant_id: merchant.id, merchant_name: merchant.name };
   }
 

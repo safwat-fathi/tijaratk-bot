@@ -12,7 +12,9 @@ import { ExtractionBase, ProposedAction, jsonSchemaResponseFormat, IntentClassif
 import { ACTION_TASK_BLOCK, buildSystemPrompt, classificationTaskBlock } from '../src/engine/prompts.js';
 import { matchVariantHint } from '../src/engine/product-matching.js';
 import { processChannelMessage } from '../src/worker/processor.js';
-import { authHeader, fakeAi, makeConnection, makeConversation, makeMerchant, resetAi, schema, setSettingsForTests, unit, withApp, withRollback } from './harness.js';
+import { authHeader, fakeAi, makeConnection, makeConversation, makeMerchant, resetAi, schema, unit, withApp, withRollback } from './harness.js';
+import { getSettings } from '../src/config.js';
+import { createMerchantApiKey } from '../src/domains/auth/tokens.js';
 import { z } from 'zod';
 
 afterEach(() => {
@@ -271,58 +273,35 @@ describe('auto-learning clustering job', () => {
   });
 });
 
-describe('open mode auth', () => {
-  const open = (http: any, key = process.env.OPEN_ACCESS_KEY) => http.post('/auth/open').set('x-open-key', key ?? '');
+describe('merchant API key login', () => {
+  const login = (http: any, key: string) => http.post('/auth/key-login').send({ api_key: key });
 
-  it('rejects a wrong or missing key; a right key signs in one owner merchant (created once, reused after)', async () => {
+  it('a merchant key signs in that merchant, and the token works', async () => {
     await withApp(async ({ http, db }) => {
-      expect((await open(http, 'nope')).status).toBe(403);
-      expect((await http.post('/auth/open')).status).toBe(403);
-      expect(await db.select().from(schema.merchants)).toHaveLength(0);
-
-      const res = await open(http);
+      const m = await makeMerchant(db, { name: 'Store A' });
+      const res = await login(http, createMerchantApiKey(getSettings(), m.id));
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ merchant_name: 'My Store' });
+      expect(res.body).toMatchObject({ merchant_id: m.id, merchant_name: 'Store A' });
       const me = await http.get('/auth/me').set('Authorization', `Bearer ${res.body.access_token}`);
-      expect(me.body).toMatchObject({ merchant_id: res.body.merchant_id, channels: [] });
-      expect((await open(http)).body.merchant_id).toBe(res.body.merchant_id);
-      expect(await db.select().from(schema.merchants)).toHaveLength(1);
+      expect(me.body).toMatchObject({ merchant_id: m.id, merchant_name: 'Store A' });
+      expect((await login(http, `  ${createMerchantApiKey(getSettings(), m.id)}\n`)).status).toBe(200); // pasted whitespace
     });
   });
 
-  it('adopts an existing merchant instead of creating one; OPEN_MERCHANT_ID pins it', async () => {
+  it('every bad key gets the same 401: tampered, another merchant\'s signature, malformed, unknown merchant, suspended', async () => {
     await withApp(async ({ http, db }) => {
-      const a = await makeMerchant(db, { name: 'A Store' });
-      await makeMerchant(db, { name: 'B Store' });
-      expect((await open(http)).body.merchant_id).toBe(a.id);
-      expect(await db.select().from(schema.merchants)).toHaveLength(2);
-      const b = (await db.select().from(schema.merchants).where(eq(schema.merchants.name, 'B Store')))[0];
-      await makeConnection(db, a.id, { isActive: false });
-      expect((await open(http)).body.merchant_id).toBe(a.id); // an inactive connection does not count
-      await makeConnection(db, b.id);
-      expect((await open(http)).body.merchant_id).toBe(b.id); // the store with a live channel wins over name order
+      const a = await makeMerchant(db, { name: 'A' });
+      const b = await makeMerchant(db, { name: 'B' });
+      const suspended = await makeMerchant(db, { name: 'S', status: 'SUSPENDED' });
+      const keyA = createMerchantApiKey(getSettings(), a.id);
+      const sigA = keyA.split('.')[1];
+      const bad = [`${keyA}x`, `tk_${b.id}.${sigA}`, 'garbage', '', 'tk_.', createMerchantApiKey(getSettings(), 'no-such-merchant'), createMerchantApiKey(getSettings(), suspended.id)];
+      for (const key of bad) {
+        const res = await login(http, key);
+        expect([res.status, res.body]).toEqual([401, { detail: 'invalid api key' }]);
+      }
+      expect((await http.post('/auth/key-login').send({})).status).toBeGreaterThanOrEqual(400);
     });
-    setSettingsForTests({ OPEN_MERCHANT_ID: 'pinned-b' });
-    try {
-      await withApp(async ({ http, db }) => {
-        await makeMerchant(db, { name: 'A Store' });
-        await makeMerchant(db, { id: 'pinned-b', name: 'B Store' });
-        expect((await open(http)).body.merchant_id).toBe('pinned-b');
-      });
-      setSettingsForTests({ OPEN_MERCHANT_ID: 'missing' });
-      await withApp(async ({ http }) => expect((await open(http)).status).toBe(404));
-    } finally {
-      setSettingsForTests(undefined);
-    }
-  });
-
-  it('is disabled (404) when no key is configured', async () => {
-    setSettingsForTests({ OPEN_ACCESS_KEY: '' });
-    try {
-      await withApp(async ({ http }) => expect((await open(http, 'anything')).status).toBe(404));
-    } finally {
-      setSettingsForTests(undefined);
-    }
   });
 });
 

@@ -48,9 +48,6 @@ const schema = z
     ZERNIO_PROFILE_ID: z.string().default(''),
     PUBLIC_API_URL: z.string().default(''),
     ZERNIO_RETURN_URL: z.string().default('http://localhost:3000/merchant/settings'),
-    // Open mode: the web app signs in the single owner merchant with this key (server-to-server). Empty = disabled.
-    OPEN_ACCESS_KEY: z.string().default(''),
-    OPEN_MERCHANT_ID: z.string().default(''),
     ZERNIO_WEBHOOK_SECRET: z.string().default(''),
     // Optional: id of our own Meta app saved in Zernio, so the consent screen says TijaratkBot instead of Zernio's app.
     ZERNIO_OAUTH_APP_ID: z.string().default(''),
