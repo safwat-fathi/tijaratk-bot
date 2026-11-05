@@ -1,7 +1,7 @@
 {
   "name": "tijaratk-bot-server",
   "version": "0.0.1",
-  "description": "TijaratkBot API server (NestJS port of backend/)",
+  "description": "TijaratkBot API server (NestJS)",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -22,7 +22,8 @@
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "start:worker": "node dist/worker/main.js",
     "worker:dev": "nest start --watch --entryFile worker/main",
-    "typecheck": "tsc --noEmit -p tsconfig.build.json"
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

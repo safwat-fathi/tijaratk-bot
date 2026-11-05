@@ -35,7 +35,7 @@ beforeAll(async () => {
     if (rows[0].n !== 0) {
       throw new Error(
         `Test database ${new URL(process.env.DATABASE_URL!).pathname} has ${rows[0].n} committed merchants. ` +
-          'Point TEST_DATABASE_URL at an empty, disposable database (Alembic- or Drizzle-migrated).',
+          'Point TEST_DATABASE_URL at an empty, disposable database (run `pnpm db:migrate` against it first).',
       );
     }
   } finally {

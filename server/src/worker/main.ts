@@ -15,7 +15,7 @@ const { db, pool } = createDb(databaseUrl(s));
 const connection = new Redis(s.REDIS_URL, { maxRetriesPerRequest: null });
 const lockRedis = new Redis(s.REDIS_URL);
 
-// Replaces arq's cron(run_auto_learning, hour=3, minute=0)
+// Nightly auto-learning at 03:00 (server local time)
 const queue = new Queue(CHANNEL_QUEUE_NAME, { connection });
 await queue.upsertJobScheduler('auto-learning', { pattern: '0 3 * * *' }, { name: 'run_auto_learning' });
 

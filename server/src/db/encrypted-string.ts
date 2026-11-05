@@ -9,7 +9,7 @@ const getFernet = () => {
   return fernet;
 };
 
-/** Mirrors backend/app/models/types.py EncryptedString: legacy plaintext rows pass through on read. */
+/** EncryptedString column type: legacy plaintext rows pass through on read. */
 export const encryptedString = customType<{ data: string; driverData: string }>({
   dataType: () => 'varchar',
   toDriver: (value) => getFernet().encrypt(value),

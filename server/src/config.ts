@@ -12,7 +12,7 @@ const bool = z.string().transform((v, ctx) => {
 });
 const csvOrJson = z.string().transform((v) => (v.trim().startsWith('[') ? (JSON.parse(v) as string[]) : v.split(',').map((s) => s.trim()).filter(Boolean)));
 
-// Required vs optional mirrors backend/app/core/config.py: no defaults for secrets, DB, models or provider URLs
+// Required vs optional: no defaults for secrets, DB, models or provider URLs
 // (a missing value must stop startup, not silently fall back to a made-up one).
 const schema = z
   .object({

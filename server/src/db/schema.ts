@@ -100,7 +100,7 @@ export const messages = pgTable("messages", {
 	richPayload: json("rich_payload"),
 	postbackPayload: json("postback_payload"),
 }, (table) => [
-	index("ix_messages_conversation_id_created_at").using("btree", table.conversationId.asc().nullsLast().op("text_ops"), table.createdAt.asc().nullsLast().op("text_ops")),
+	index("ix_messages_conversation_id_created_at").using("btree", table.conversationId.asc().nullsLast().op("text_ops"), table.createdAt.asc().nullsLast()),
 	uniqueIndex("ix_messages_external_message_id_unique").using("btree", table.externalMessageId.asc().nullsLast().op("text_ops")).where(sql`(external_message_id IS NOT NULL)`),
 	index("ix_messages_intent").using("btree", table.intent.asc().nullsLast().op("text_ops")),
 	index("messages_embedding_hnsw_idx").using("hnsw", table.embedding.asc().nullsLast().op("vector_cosine_ops")),

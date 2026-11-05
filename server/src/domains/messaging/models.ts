@@ -1,4 +1,4 @@
-/** Channel-neutral outbound message types (zod port of backend/app/domains/messaging/models.py). */
+/** Channel-neutral outbound message types. */
 import { z } from 'zod';
 import { pyFloat } from '../../core/pystr.js';
 
