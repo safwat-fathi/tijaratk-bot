@@ -81,10 +81,12 @@ export async function listProducts(db: DbOrTx, merchantId: string): Promise<Prod
 
 export async function searchProducts(db: DbOrTx, merchantId: string, query: string, _filters: unknown): Promise<ProductRead[]> {
   const t = schema.products;
-  const rows = await db
+  let rows = await db
     .select()
     .from(t)
     .where(and(eq(t.merchantId, merchantId), or(ilike(t.name, `%${query}%`), sql`${query} = ANY(${t.aliases})`)));
+  // Generic asks ("what do you have?") match no name: fall back to a catalog sample.
+  if (!rows.length) rows = await db.select().from(t).where(eq(t.merchantId, merchantId)).orderBy(asc(t.name)).limit(10);
   return withVariants(db, rows);
 }
 
