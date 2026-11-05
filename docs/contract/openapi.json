@@ -613,15 +613,10 @@
           "auto_learning_enabled": {
             "title": "Auto Learning Enabled",
             "type": "boolean"
-          },
-          "welcome_message": {
-            "title": "Welcome Message",
-            "type": "string"
           }
         },
         "required": [
-          "auto_learning_enabled",
-          "welcome_message"
+          "auto_learning_enabled"
         ],
         "title": "MerchantSettingsRead",
         "type": "object"
@@ -638,17 +633,6 @@
               }
             ],
             "title": "Auto Learning Enabled"
-          },
-          "welcome_message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Welcome Message"
           }
         },
         "title": "MerchantSettingsUpdate",

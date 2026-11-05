@@ -162,13 +162,13 @@ describe('worker: processChannelMessage', () => {
         await processChannelMessage(db, redis, inbound.id);
         const [after] = await db.select().from(schema.messages).where(eq(schema.messages.id, inbound.id));
         expect(after).toMatchObject({ intent: 'greeting', modelTier: 'RULE' });
-        expect(sent.map((s) => s.recipient.id)).toEqual(['U9', 'U9']);
+        expect(sent.map((s) => s.recipient.id)).toEqual(['U9']);
         expect(sent[0].message).toEqual({ text: 'أهلاً بيك' });
         const outbound = await db.select().from(schema.messages).where(eq(schema.messages.direction, 'OUTBOUND'));
-        expect(outbound.map((o) => o.messageType).sort()).toEqual(['quick_reply', 'text']);
+        expect(outbound.map((o) => o.messageType)).toEqual(['text']);
 
         await processChannelMessage(db, redis, inbound.id); // redelivery: nothing new is sent
-        expect(sent).toHaveLength(2);
+        expect(sent).toHaveLength(1);
         await processChannelMessage(db, redis, 'does-not-exist'); // no-op
       }),
     );
@@ -186,9 +186,9 @@ describe('worker: processChannelMessage', () => {
           const conv = await makeConversation(db, m.id, { channelConnectionId: conn.id, customerRef: 'zconv-1', state: 'NEW' });
           const [inbound] = await db.insert(schema.messages).values({ conversationId: conv.id, direction: 'INBOUND', rawText: 'hi', normalizedText: 'hi' }).returning();
           await processChannelMessage(db, redis, inbound.id);
-          expect(calls.map((c) => c.path)).toEqual(Array(2).fill('/api/v1/inbox/conversations/zconv-1/messages'));
+          expect(calls.map((c) => c.path)).toEqual(['/api/v1/inbox/conversations/zconv-1/messages']);
           expect(calls[0].body).toEqual({ accountId: 'ACC1', message: 'أهلاً بيك' });
-          expect(await db.select().from(schema.messages).where(eq(schema.messages.direction, 'OUTBOUND'))).toHaveLength(2);
+          expect(await db.select().from(schema.messages).where(eq(schema.messages.direction, 'OUTBOUND'))).toHaveLength(1);
         }),
       );
     } finally {

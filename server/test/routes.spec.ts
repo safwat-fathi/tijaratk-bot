@@ -193,9 +193,7 @@ describe('merchant settings', () => {
       expect((await http.get('/merchants/me/settings').set(h)).body).toMatchObject({ auto_learning_enabled: false });
       const res = await http.patch('/merchants/me/settings').set(h).send({ auto_learning_enabled: true });
       expect(res.body.auto_learning_enabled).toBe(true);
-      expect(res.body.welcome_message).toContain('{store_name}');
-      const res2 = await http.patch('/merchants/me/settings').set(h).send({ welcome_message: 'hello {store_name}' });
-      expect(res2.body).toEqual({ auto_learning_enabled: true, welcome_message: 'hello {store_name}' });
+      expect(res.body).toEqual({ auto_learning_enabled: true });
     });
   });
 });

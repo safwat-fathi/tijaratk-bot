@@ -21,7 +21,7 @@ import { embedText, findSimilarExamples } from './embeddings.js';
 import { extractOrder } from './extraction.js';
 import type { CallUsage } from './gateway.js';
 import { generateReply } from './generation.js';
-import { handlePostback, mainMenuMessage } from './postback-router.js';
+import { handlePostback } from './postback-router.js';
 import {
   buildResolvedOrderLines,
   matchLineItemsToProducts,
@@ -31,7 +31,8 @@ import { matchTier0 } from './tier0-rules.js';
 
 const log = new Logger('pipeline');
 const DEFAULT_INTENTS = ['greeting', 'spam', 'reaction', 'purchase_intent', 'question', 'other'];
-const DEFAULT_WELCOME = 'أهلاً بيك في {store_name}! 👋\nتحب تعمل إيه؟';
+
+const greetingFallback = (storeName: string) => `أهلاً بيك في ${storeName}! 👋\nتحب أساعدك إزاي؟`;
 
 export interface PipelineResult {
   message: Message;
@@ -181,12 +182,10 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
       name: schema.merchants.name,
       toolOrdering: schema.merchants.aiToolOrderingEnabled,
       aiEnabled: schema.merchants.aiEnabled,
-      welcome: schema.merchants.welcomeMessage,
     })
     .from(schema.merchants)
     .where(eq(schema.merchants.id, conversation.merchantId));
   const merchantName = info.name;
-  const welcomeTemplate = info.welcome || DEFAULT_WELCOME;
 
   let ccName: string | null = null;
   if (conversation.channelConnectionId) {
@@ -221,8 +220,8 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
           userPrompt: `customer: ${normalizedText}\nThe customer just greeted you. Greet them back and ask how you can help.`,
         });
       }
-      // The menu is only a fallback when the AI gave no reply (AI off or failed); otherwise the AI answers alone.
-      outbound.push(aiText ? textMessage(aiText) : mainMenuMessage(displayName, welcomeTemplate));
+      // Plain-text fallback when the AI gave no reply (AI off or failed); no buttons.
+      outbound.push(textMessage(aiText ?? greetingFallback(displayName)));
     }
     return finish(null, outbound);
   }
@@ -236,10 +235,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
         message.intent = 'fallback:no_ai';
         message.intentConfidence = 1.0;
         message.modelTier = 'RULE';
-        outbound = [
-          textMessage('أهلاً بك! تقدر تستخدم القائمة تحت عشان تختار اللي انت محتاجه.'),
-          mainMenuMessage(displayName, welcomeTemplate),
-        ];
+        outbound = [textMessage(greetingFallback(displayName))];
       }
     }
     return finish(null, outbound);

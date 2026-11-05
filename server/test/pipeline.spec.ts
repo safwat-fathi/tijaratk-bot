@@ -42,7 +42,7 @@ describe('tier 0 and routing without AI classification', () => {
     });
   });
 
-  it('greeting: AI reply only; generation failure falls back to the menu', async () => {
+  it('greeting: AI reply only; generation failure falls back to a plain text greeting', async () => {
     const ai = fakeAi([{ reply: 'أهلاً بيك!' }, new AICallError('boom')]);
     await withRollback(async (db) => {
       const { c } = await world(db);
@@ -56,14 +56,14 @@ describe('tier 0 and routing without AI classification', () => {
       expect(ai.calls).toHaveLength(1);
 
       const failed = await processMessage(db, conv, msg(c, 'hello'));
-      expect(kinds(failed)).toEqual(['quick_reply']);
+      expect(kinds(failed)).toEqual(['text']);
       expect((failed.messages[0] as any).text).toContain('صفحة النور'); // channel account name wins over merchant name
       const events = await db.select().from(schema.aiUsageEvents);
       expect(events.map((e) => e.success).sort()).toEqual([false, true]);
     });
   });
 
-  it('human takeover / AI disabled: no AI, no reply; menu fallback otherwise', async () => {
+  it('human takeover / AI disabled: no AI, no reply; plain text fallback otherwise', async () => {
     const ai = fakeAi([]);
     await withRollback(async (db) => {
       const { m, c } = await world(db);
@@ -72,7 +72,7 @@ describe('tier 0 and routing without AI classification', () => {
       await db.update(schema.merchants).set({ aiEnabled: false }).where(eq(schema.merchants.id, m.id));
       const off = await processMessage(db, c, msg(c, 'عايز اطلب'));
       expect(off.message).toMatchObject({ intent: 'fallback:no_ai', modelTier: 'RULE' });
-      expect(kinds(off)).toEqual(['text', 'quick_reply']);
+      expect(kinds(off)).toEqual(['text']);
       expect(ai.calls).toHaveLength(0);
     });
   });
@@ -85,6 +85,8 @@ describe('tier 0 and routing without AI classification', () => {
       const r = await processMessage(db, c, msg(c, 'x', { postbackPayload: { action: 'browse_categories' } }));
       expect(r.message).toMatchObject({ intent: 'postback:browse_categories', modelTier: 'RULE' });
       expect((r.messages[0] as any).quick_replies[0]).toEqual({ title: 'ملابس', payload: { action: 'view_category', category: 'ملابس' } });
+      const menu = await processMessage(db, c, msg(c, 'x', { postbackPayload: { action: 'main_menu' } }));
+      expect(kinds(menu)).toEqual(['text']); // no buttons
       const unknown = await processMessage(db, c, msg(c, 'x', { postbackPayload: { action: 'zzz' } }));
       expect((unknown.messages[0] as any).text).toContain('مش متأكد');
       expect(ai.calls).toHaveLength(0);

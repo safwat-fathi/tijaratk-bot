@@ -42,9 +42,6 @@ export const getMerchantSettings = cache(async () => {
   if (!res.ok) {
     throw new Error(`Failed to fetch merchant settings: ${res.status}`);
   }
-  const data = (await res.json()) as { auto_learning_enabled: boolean; welcome_message: string };
-  return { 
-    autoLearningEnabled: data.auto_learning_enabled,
-    welcomeMessage: data.welcome_message
-  };
+  const data = (await res.json()) as { auto_learning_enabled: boolean };
+  return { autoLearningEnabled: data.auto_learning_enabled };
 });

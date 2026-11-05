@@ -426,7 +426,6 @@ export const merchants = pgTable("merchants", {
 	facebookUserId: varchar("facebook_user_id"),
 	aiEnabled: boolean("ai_enabled").default(true).notNull(),
 	autoLearningEnabled: boolean("auto_learning_enabled").default(false).notNull(),
-	welcomeMessage: varchar("welcome_message").default('أهلاً بيك في {store_name}! 👋\nتحب تعمل إيه؟').notNull(),
 }, (table) => [
 	unique("uq_merchants_facebook_user_id").on(table.facebookUserId),
 ]);

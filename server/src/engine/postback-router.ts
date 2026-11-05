@@ -19,17 +19,8 @@ import {
 
 const log = new Logger('postback_router');
 const PAGE_SIZE = 10; // Facebook limits carousels to 10 elements
-const DEFAULT_WELCOME = 'أهلاً بيك في {store_name}! 👋\nتحب تعمل إيه؟';
 
 type Payload = Record<string, any>;
-
-export function mainMenuMessage(merchantName: string, welcomeTemplate: string = DEFAULT_WELCOME) {
-  return quickReplyMessage(welcomeTemplate.replaceAll('{store_name}', merchantName), [
-    { title: '🛍️ تصفح المنتجات', payload: { action: 'browse_categories' } },
-    { title: '🔍 ابحث عن منتج', payload: { action: 'search_prompt' } },
-    { title: '🛒 السلة', payload: { action: 'view_cart' } },
-  ]);
-}
 
 const menuButton = (text: string) => quickReplyMessage(text, [{ title: '🏠 القائمة', payload: { action: 'main_menu' } }]);
 
@@ -51,8 +42,6 @@ export async function handlePostback(db: DbOrTx, merchantId: string, conversatio
         return await handleAddToCart(db, merchantId, conversationId, payload);
       case 'view_cart':
         return await handleViewCart(db, merchantId, conversationId);
-      case 'search_prompt':
-        return [textMessage('اكتب اسم المنتج أو وصفه وأنا هبحثلك 🔍')];
       case 'escalate':
         await takeoverConversation(db, merchantId, conversationId, 'AI_ESCALATION', payload.reason ?? 'customer_requested');
         return [textMessage('تم تحويلك لخدمة العملاء. فريقنا هيرد عليك في أقرب وقت!')];
@@ -77,14 +66,7 @@ async function clearDeterministicCheckoutState(db: DbOrTx, conversationId: strin
 
 async function handleMainMenu(db: DbOrTx, conversationId: string) {
   await clearDeterministicCheckoutState(db, conversationId);
-  const [row] = await db
-    .select({ accountName: schema.channelConnections.accountName, merchantName: schema.merchants.name })
-    .from(schema.conversations)
-    .leftJoin(schema.channelConnections, eq(schema.conversations.channelConnectionId, schema.channelConnections.id))
-    .innerJoin(schema.merchants, eq(schema.merchants.id, schema.conversations.merchantId))
-    .where(eq(schema.conversations.id, conversationId));
-  const displayName = row ? row.accountName || row.merchantName || 'المتجر' : 'المتجر';
-  return [mainMenuMessage(displayName)];
+  return [textMessage('تحب أساعدك إزاي؟')];
 }
 
 async function handleBrowseCategories(db: DbOrTx, merchantId: string, conversationId: string) {

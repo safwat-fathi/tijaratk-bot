@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" DROP COLUMN "welcome_message";

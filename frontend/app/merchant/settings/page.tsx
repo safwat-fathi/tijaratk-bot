@@ -1,7 +1,6 @@
 import { getCurrentMerchant, getMerchantSettings } from "@/lib/dal";
 import { connectFacebookAction } from "../actions";
 import { AutoLearningToggle } from "./auto-learning-toggle";
-import { WelcomeMessageEditor } from "./welcome-message-editor";
 
 const CONNECT_ERRORS: Record<string, string> = {
   account_in_use: "هذه الصفحة مرتبطة بحساب تاجر آخر.",
@@ -108,15 +107,6 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </div>
         <div className="p-6">
           <AutoLearningToggle initialEnabled={settings.autoLearningEnabled} />
-        </div>
-      </div>
-
-      <div className="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-900">إعدادات المتجر</h2>
-        </div>
-        <div className="p-6">
-          <WelcomeMessageEditor initialMessage={settings.welcomeMessage || "أهلاً بيك في {store_name}! 👋\nتحب تعمل إيه؟"} />
         </div>
       </div>
 
