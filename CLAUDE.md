@@ -21,7 +21,7 @@ pnpm test          # vitest; needs Postgres (empty, migrated test DB) + Redis
 pnpm lint          # oxlint
 pnpm typecheck
 pnpm build
-pnpm db:migrate    # apply drizzle/ migrations to a FRESH database
+pnpm build && pnpm db:migrate    # apply pending drizzle/ migrations (fresh or existing DB)
 ```
 
 Run a single test: `pnpm exec vitest run src/engine/pure.spec.ts -t "<name>"`
@@ -30,7 +30,7 @@ Requires Node, a running Redis (`redis://localhost:6379/0` by default), and Post
 
 ## Schema
 
-`server/src/db/schema.ts` (Drizzle) is the single source of truth; migrations are in `server/drizzle/`. Change the schema with `pnpm exec drizzle-kit generate` and commit the new file. `0000_baseline.sql` is for fresh databases; the production database already has those tables, so do not run the baseline against it (see `server/README.md`).
+`server/src/db/schema.ts` (Drizzle) is the single source of truth; migrations are in `server/drizzle/`. Change the schema with `pnpm exec drizzle-kit generate` and commit the new file. `pnpm db:migrate` (`src/scripts/migrate.ts`) records migrations already present in a database without history (production) before applying the rest, so run it everywhere.
 
 ## Architecture
 

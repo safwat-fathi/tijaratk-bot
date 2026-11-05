@@ -23,7 +23,7 @@
     "start:worker": "node dist/worker/main.js",
     "worker:dev": "nest start --watch --entryFile worker/main",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node dist/scripts/migrate.js",
     "merchant:key": "node dist/scripts/merchant-key.js"
   },
   "dependencies": {

@@ -6,7 +6,7 @@ TypeScript API server and worker. Postgres + Redis, REST contract in `../docs/co
 ```bash
 pnpm install
 cp .env.example .env
-pnpm db:migrate          # fresh database only - see "Schema changes"
+pnpm build && pnpm db:migrate   # any database: applies pending migrations
 pnpm start:dev           # API (PORT, default 8000)
 pnpm worker:dev          # BullMQ worker: channel messages + nightly auto-learning (03:00)
 pnpm test                # needs local Postgres (TEST_DATABASE_URL, default: local db `tijaratk_nest`) + Redis
@@ -24,7 +24,5 @@ pnpm typecheck && pnpm build
 
 ## Schema changes
 Edit `src/db/schema.ts`, then `pnpm exec drizzle-kit generate` and commit the new file in `drizzle/`.
-`drizzle/0000_baseline.sql` creates the whole schema (plus the `vector` extension) for a **fresh** database.
-The existing production database already has these tables (it was built by the old Alembic migrations), so do not run
-the baseline against it. Record it as applied instead: insert its hash into `drizzle.__drizzle_migrations`, or
-create the first real migration from a fresh-DB baseline and apply only that one in production.
+`pnpm db:migrate` (needs `pnpm build` first) works on fresh and existing databases: a database without migration
+history (production, built by Alembic) gets its already-present migrations recorded on first run, then the rest apply.
