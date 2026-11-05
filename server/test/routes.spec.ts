@@ -74,6 +74,32 @@ describe('products', () => {
     });
   });
 
+  it('image upload: stored, served publicly, scoped to the merchant, clearable', async () => {
+    await withApp(async ({ http, db }) => {
+      const m = await makeMerchant(db);
+      const other = await makeMerchant(db, { name: 'Other' });
+      const p = await makeProduct(db, m.id);
+      const png = Buffer.from('89504e470d0a1a0a00', 'hex');
+      const put = (h: Record<string, string>, type: string, body: Buffer) => http.put(`/products/${p.id}/image`).set(h).set('Content-Type', type).send(body);
+
+      const up = await put(authHeader(m.id), 'image/png', png);
+      expect(up.status).toBe(200);
+      expect(up.body.image_url).toMatch(new RegExp(`^https://api\\.example\\.test/product-images/${p.id}\\?v=\\d+$`));
+
+      const pub = await http.get(`/product-images/${p.id}`).buffer(true).parse((r, cb) => { const c: Buffer[] = []; r.on('data', (d) => c.push(d)); r.on('end', () => cb(null, Buffer.concat(c))); });
+      expect(pub.status).toBe(200);
+      expect(pub.headers['content-type']).toBe('image/png');
+      expect(pub.body.equals(png)).toBe(true);
+
+      expect((await put(authHeader(other.id), 'image/png', png)).status).toBe(404);
+      expect((await put(authHeader(m.id), 'image/gif', png)).status).toBe(415);
+      expect((await http.delete(`/products/${p.id}/image`).set(authHeader(other.id))).status).toBe(404);
+
+      expect((await http.delete(`/products/${p.id}/image`).set(authHeader(m.id))).body.image_url).toBeNull();
+      expect((await http.get(`/product-images/${p.id}`)).status).toBe(404);
+    });
+  });
+
   it('422 in FastAPI shape on invalid body', async () => {
     await withApp(async ({ http, db }) => {
       const m = await makeMerchant(db);

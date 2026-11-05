@@ -4,7 +4,15 @@ import { useState } from "react";
 import Image from "next/image";
 import type { Product, ProductVariant } from "@/lib/products";
 import * as m from "@/paraglide/messages";
-import { createProductAction, deleteProductAction, updateProductAction } from "./actions";
+import {
+  createProductAction,
+  deleteProductAction,
+  deleteProductImageAction,
+  updateProductAction,
+  uploadProductImageAction,
+} from "./actions";
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 function formatVariants(variants: ProductVariant[] | Record<string, unknown> | null) {
   if (!variants) return [];
@@ -59,6 +67,27 @@ export function ProductCatalog({
   const [variantLabel, setVariantLabel] = useState("");
   const [variantPrice, setVariantPrice] = useState("");
   const [variantStock, setVariantStock] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null); // blob URL or the saved image_url
+  const [removeImage, setRemoveImage] = useState(false);
+
+  const pickImage = (file: File | null) => {
+    if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("حجم الصورة يجب ألا يتجاوز 5 ميجابايت");
+      return;
+    }
+    setError(null);
+    setImageFile(file);
+    setRemoveImage(false);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(true);
+  };
 
   const openAddModal = () => {
     setEditingProduct(null);
@@ -68,6 +97,9 @@ export function ProductCatalog({
     setVariantLabel("");
     setVariantPrice("");
     setVariantStock("");
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(false);
     setError(null);
     setModalOpen(true);
   };
@@ -80,6 +112,9 @@ export function ProductCatalog({
     setVariantLabel("");
     setVariantPrice("");
     setVariantStock("");
+    setImageFile(null);
+    setImagePreview(p.image_url ?? null);
+    setRemoveImage(false);
     setError(null);
     setModalOpen(true);
   };
@@ -96,7 +131,9 @@ export function ProductCatalog({
     const parsedPrice = price ? parseFloat(price) : null;
 
     try {
+      let productId: string;
       if (editingProduct) {
+        productId = editingProduct.id;
         await updateProductAction(
           editingProduct.id,
           {
@@ -117,7 +154,7 @@ export function ProductCatalog({
             ]
           : [];
 
-        await createProductAction(
+        const created = await createProductAction(
           {
             name,
             aliases: parsedAliases,
@@ -126,6 +163,15 @@ export function ProductCatalog({
           },
           merchantId
         );
+        productId = created.id;
+      }
+
+      if (imageFile) {
+        const fd = new FormData();
+        fd.set("image", imageFile);
+        await uploadProductImageAction(productId, fd);
+      } else if (removeImage && editingProduct?.image_url) {
+        await deleteProductImageAction(productId);
       }
 
       setModalOpen(false);
@@ -212,14 +258,19 @@ export function ProductCatalog({
               )}
 
               <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
-                <Image
-                  src={getImageForProduct(product.name)}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                  priority
-                  className="object-cover"
-                />
+                {product.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- remote API URL, avoids next/image remotePatterns config
+                  <img src={product.image_url} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <Image
+                    src={getImageForProduct(product.name)}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 50vw"
+                    priority
+                    className="object-cover"
+                  />
+                )}
               </div>
 
               <div className="flex flex-1 flex-col p-4">
@@ -320,6 +371,30 @@ export function ProductCatalog({
                   placeholder="مثال: 750"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">صورة المنتج (اختياري)</label>
+                <div className="flex items-center gap-3">
+                  {imagePreview && (
+                    // eslint-disable-next-line @next/next/no-img-element -- blob/remote preview
+                    <img src={imagePreview} alt="" className="h-16 w-16 rounded-lg border border-gray-200 object-cover" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => {
+                      pickImage(e.target.files?.[0] ?? null);
+                      e.target.value = "";
+                    }}
+                    className="min-w-0 flex-1 text-xs text-gray-600 file:me-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-xs file:font-medium file:text-gray-700 hover:file:bg-gray-200"
+                  />
+                  {imagePreview && (
+                    <button type="button" onClick={clearImage} className="text-xs font-medium text-red-600 hover:underline">
+                      إزالة
+                    </button>
+                  )}
+                </div>
               </div>
 
               {!editingProduct && (

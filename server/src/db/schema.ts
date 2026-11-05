@@ -1,4 +1,4 @@
-import { pgTable, varchar, index, foreignKey, integer, doublePrecision, boolean, timestamp, json, uniqueIndex, vector, numeric, unique, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, customType, varchar, index, foreignKey, integer, doublePrecision, boolean, timestamp, json, uniqueIndex, vector, numeric, unique, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 import { encryptedString } from "./encrypted-string.js"
@@ -153,6 +153,22 @@ export const products = pgTable("products", {
 			foreignColumns: [merchants.id],
 			name: "products_merchant_id_fkey"
 		}),
+]);
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' });
+
+// One image per product, served publicly by GET /product-images/:id (Meta/Zernio fetch it by URL).
+export const productImages = pgTable("product_images", {
+	productId: varchar("product_id").primaryKey().notNull(),
+	contentType: varchar("content_type").notNull(),
+	data: bytea().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.productId],
+			foreignColumns: [products.id],
+			name: "product_images_product_id_fkey"
+		}).onDelete("cascade"),
 ]);
 
 export const storeKnowledge = pgTable("store_knowledge", {

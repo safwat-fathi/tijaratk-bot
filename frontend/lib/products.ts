@@ -13,6 +13,7 @@ export interface Product {
   aliases: string[];
   variants: ProductVariant[] | Record<string, unknown>;
   price: number | null;
+  image_url?: string | null;
 }
 
 export async function getProducts(): Promise<Product[]> {

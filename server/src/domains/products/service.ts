@@ -1,4 +1,5 @@
 import { and, asc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { getSettings } from '../../config.js';
 import { num } from '../../core/serialize.js';
 import { type DbOrTx, schema } from '../../db/index.js';
 import type { Product, ProductVariant } from '../../db/types.js';
@@ -151,4 +152,32 @@ export async function deleteProduct(db: DbOrTx, merchantId: string, productId: s
   if (!p || p.merchantId !== merchantId) return false;
   await db.delete(schema.products).where(eq(schema.products.id, productId));
   return true;
+}
+
+/** Stores the image and points products.image_url at its public URL. Null when the product isn't the merchant's. */
+export async function setProductImage(db: DbOrTx, merchantId: string, productId: string, contentType: string, data: Buffer): Promise<ProductRead | null> {
+  const [p] = await db.select().from(schema.products).where(eq(schema.products.id, productId));
+  if (!p || p.merchantId !== merchantId) return null;
+  const updatedAt = new Date();
+  await db
+    .insert(schema.productImages)
+    .values({ productId, contentType, data, updatedAt })
+    .onConflictDoUpdate({ target: schema.productImages.productId, set: { contentType, data, updatedAt } });
+  const host = getSettings().PUBLIC_API_URL.trim().replace(/\/+$/, ''); // a bare host means https, as in zernio-connect
+  const imageUrl = `${host.includes('://') ? host : `https://${host}`}/product-images/${productId}?v=${updatedAt.getTime()}`;
+  const [updated] = await db.update(schema.products).set({ imageUrl }).where(eq(schema.products.id, productId)).returning();
+  return (await withVariants(db, [updated]))[0];
+}
+
+export async function clearProductImage(db: DbOrTx, merchantId: string, productId: string): Promise<ProductRead | null> {
+  const [p] = await db.select().from(schema.products).where(eq(schema.products.id, productId));
+  if (!p || p.merchantId !== merchantId) return null;
+  await db.delete(schema.productImages).where(eq(schema.productImages.productId, productId));
+  const [updated] = await db.update(schema.products).set({ imageUrl: null }).where(eq(schema.products.id, productId)).returning();
+  return (await withVariants(db, [updated]))[0];
+}
+
+export async function getProductImage(db: DbOrTx, productId: string) {
+  const [row] = await db.select().from(schema.productImages).where(eq(schema.productImages.productId, productId));
+  return row ?? null;
 }

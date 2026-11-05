@@ -13,6 +13,7 @@ export function configureHttp(app: NestExpressApplication): void {
   app.enableCors({ origin: getSettings().CORS_ORIGINS, credentials: true });
   app.useGlobalFilters(new DetailExceptionFilter());
   app.use(['/webhooks/meta', '/webhooks/zernio'], raw({ type: () => true, limit: '5mb' }));
+  app.use('/products', raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '5mb' })); // image uploads
   app.useBodyParser('json');
   app.useBodyParser('urlencoded', { extended: true });
 }

@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
+  // Product photo uploads go through a server action (API limit is 5 MB).
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
   async rewrites() {
     return [
       {

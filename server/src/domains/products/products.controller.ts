@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Post, Put, Req, Res, UseGuards } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { notFound, parse } from '../../core/http.js';
+import { getSettings } from '../../config.js';
+import { ApiError, notFound, parse } from '../../core/http.js';
 import { DB } from '../../core/tokens.js';
 import type { Db } from '../../db/index.js';
 import { AuthGuard, CurrentMerchant, type Merchant } from '../auth/auth.guard.js';
-import { createProduct, deleteProduct, listProducts, updateProduct } from './service.js';
+import { clearProductImage, createProduct, deleteProduct, getProductImage, listProducts, setProductImage, updateProduct } from './service.js';
 
 const Variant = z.object({
   label: z.string(),
@@ -55,9 +57,39 @@ export class ProductsController {
     return r;
   }
 
+  @Put(':id/image')
+  async setImage(@CurrentMerchant() m: Merchant, @Param('id') id: string, @Req() req: Request) {
+    if (!getSettings().PUBLIC_API_URL) throw new ApiError(500, 'PUBLIC_API_URL is not configured');
+    // The raw parser (http-setup.ts) only fills the body for jpeg/png/webp up to 5mb.
+    if (!Buffer.isBuffer(req.body) || !req.body.length) throw new ApiError(415, 'send a jpeg, png or webp image (max 5 MB) as the request body');
+    const r = await this.db.transaction((tx) => setProductImage(tx, m.id, id, req.headers['content-type']!, req.body));
+    if (!r) throw notFound('product not found');
+    return r;
+  }
+
+  @Delete(':id/image')
+  async clearImage(@CurrentMerchant() m: Merchant, @Param('id') id: string) {
+    const r = await this.db.transaction((tx) => clearProductImage(tx, m.id, id));
+    if (!r) throw notFound('product not found');
+    return r;
+  }
+
   @Delete(':id')
   @HttpCode(204)
   async remove(@CurrentMerchant() m: Merchant, @Param('id') id: string) {
     if (!(await this.db.transaction((tx) => deleteProduct(tx, m.id, id)))) throw notFound('product not found');
+  }
+}
+
+/** Public: Meta/Zernio and the browser fetch product photos by URL without credentials. Ids are unguessable UUIDs. */
+@Controller('product-images')
+export class ProductImagesController {
+  constructor(@Inject(DB) private readonly db: Db) {}
+
+  @Get(':id')
+  async get(@Param('id') id: string, @Res() res: Response) {
+    const img = await getProductImage(this.db, id);
+    if (!img) throw notFound('image not found');
+    res.set({ 'Content-Type': img.contentType, 'Cache-Control': 'public, max-age=31536000, immutable' }).send(img.data);
   }
 }

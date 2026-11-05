@@ -126,6 +126,31 @@ export async function updateProductAction(
   return res.json();
 }
 
+export async function uploadProductImageAction(productId: string, formData: FormData): Promise<Product> {
+  const file = formData.get("image");
+  if (!(file instanceof File)) throw new Error("No image selected");
+  const headers = await getAuthHeaders();
+  headers["Content-Type"] = file.type;
+  const res = await fetch(`${getBaseUrl()}/products/${productId}/image`, {
+    method: "PUT",
+    headers,
+    body: Buffer.from(await file.arrayBuffer()),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to upload image");
+  return res.json();
+}
+
+export async function deleteProductImageAction(productId: string): Promise<Product> {
+  const res = await fetch(`${getBaseUrl()}/products/${productId}/image`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to remove image");
+  return res.json();
+}
+
 export async function deleteProductAction(productId: string, merchantId?: string): Promise<void> {
   const baseUrl = getBaseUrl();
   const res = await fetch(`${baseUrl}/products/${productId}`, {
