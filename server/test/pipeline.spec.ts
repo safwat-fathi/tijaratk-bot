@@ -64,7 +64,7 @@ describe('tier 0 and routing without AI classification', () => {
     });
   });
 
-  it('human takeover / AI disabled: no AI, no reply; plain text fallback otherwise', async () => {
+  it('human takeover / AI disabled: no AI, no reply', async () => {
     const ai = fakeAi([]);
     await withRollback(async (db) => {
       const { m, c } = await world(db);
@@ -73,7 +73,7 @@ describe('tier 0 and routing without AI classification', () => {
       await db.update(schema.merchants).set({ aiEnabled: false }).where(eq(schema.merchants.id, m.id));
       const off = await processMessage(db, c, msg(c, 'عايز اطلب'));
       expect(off.message).toMatchObject({ intent: 'fallback:no_ai', modelTier: 'RULE' });
-      expect(kinds(off)).toEqual(['text']);
+      expect(off.messages).toEqual([]);
       expect(ai.calls).toHaveLength(0);
     });
   });
