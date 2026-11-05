@@ -1,0 +1,5 @@
+version: 2
+secret:
+  ignored_paths:
+    # Frozen FastAPI parity vectors: fake JWT secret, Fernet key and tokens used only by tests.
+    - docs/contract/golden.json
