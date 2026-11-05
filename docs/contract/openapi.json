@@ -610,12 +610,17 @@
       },
       "MerchantSettingsRead": {
         "properties": {
+          "ai_enabled": {
+            "title": "Ai Enabled",
+            "type": "boolean"
+          },
           "auto_learning_enabled": {
             "title": "Auto Learning Enabled",
             "type": "boolean"
           }
         },
         "required": [
+          "ai_enabled",
           "auto_learning_enabled"
         ],
         "title": "MerchantSettingsRead",
@@ -623,6 +628,17 @@
       },
       "MerchantSettingsUpdate": {
         "properties": {
+          "ai_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Enabled"
+          },
           "auto_learning_enabled": {
             "anyOf": [
               {

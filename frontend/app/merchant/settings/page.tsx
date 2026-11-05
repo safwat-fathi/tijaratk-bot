@@ -1,6 +1,7 @@
 import { getCurrentMerchant, getMerchantSettings } from "@/lib/dal";
 import { connectFacebookAction } from "../actions";
-import { AutoLearningToggle } from "./auto-learning-toggle";
+import { updateAiEnabledAction, updateAutoLearningAction } from "@/app/demo/actions";
+import { SettingToggle } from "./setting-toggle";
 
 const CONNECT_ERRORS: Record<string, string> = {
   account_in_use: "هذه الصفحة مرتبطة بحساب تاجر آخر.",
@@ -105,8 +106,21 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <div className="px-6 py-4 border-b border-slate-100">
           <h2 className="font-semibold text-slate-900">الذكاء الاصطناعي</h2>
         </div>
-        <div className="p-6">
-          <AutoLearningToggle initialEnabled={settings.autoLearningEnabled} />
+        <div className="p-6 space-y-6">
+          <SettingToggle
+            title="الرد الآلي بالذكاء الاصطناعي"
+            description="عند الإيقاف لن يرد الـ AI على رسائل العملاء، وستظهر لهم قائمة الاختيارات فقط."
+            initialEnabled={settings.aiEnabled}
+            onChange={updateAiEnabledAction}
+          />
+          <div className="pt-6 border-t border-slate-100">
+            <SettingToggle
+              title="التعلم المستمر"
+              description="يتعلم الـ AI تلقائيًا من محادثاتك السابقة ويضيف أمثلة تدريب جديدة (تظهر في صفحة تدريب الـ AI)."
+              initialEnabled={settings.autoLearningEnabled}
+              onChange={updateAutoLearningAction}
+            />
+          </div>
         </div>
       </div>
 

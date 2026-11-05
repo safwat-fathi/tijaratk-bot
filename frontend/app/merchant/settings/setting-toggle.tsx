@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { updateAutoLearningAction } from "@/app/demo/actions";
 
-export function AutoLearningToggle({ initialEnabled }: { initialEnabled: boolean }) {
+type SettingToggleProps = {
+  title: string;
+  description: string;
+  initialEnabled: boolean;
+  onChange: (enabled: boolean) => Promise<unknown>;
+};
+
+export function SettingToggle({ title, description, initialEnabled, onChange }: SettingToggleProps) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +20,7 @@ export function AutoLearningToggle({ initialEnabled }: { initialEnabled: boolean
     setSaving(true);
     setError(null);
     try {
-      await updateAutoLearningAction(next);
+      await onChange(next);
     } catch (err) {
       setEnabled(!next);
       setError(err instanceof Error ? err.message : "فشل حفظ الإعداد");
@@ -24,12 +30,10 @@ export function AutoLearningToggle({ initialEnabled }: { initialEnabled: boolean
   }
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-4">
       <div>
-        <p className="font-medium text-slate-900">التعلم المستمر</p>
-        <p className="text-sm text-slate-500">
-          يتعلم الـ AI تلقائيًا من محادثاتك السابقة ويضيف أمثلة تدريب جديدة (تظهر في صفحة تدريب الـ AI).
-        </p>
+        <p className="font-medium text-slate-900">{title}</p>
+        <p className="text-sm text-slate-500">{description}</p>
         {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
       </div>
       <button
@@ -37,7 +41,8 @@ export function AutoLearningToggle({ initialEnabled }: { initialEnabled: boolean
         disabled={saving}
         role="switch"
         aria-checked={enabled}
-        className={`relative w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${
+        aria-label={title}
+        className={`relative shrink-0 w-11 h-6 rounded-full transition-colors disabled:opacity-50 ${
           enabled ? "bg-blue-600" : "bg-slate-300"
         }`}
       >

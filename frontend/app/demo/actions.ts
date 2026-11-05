@@ -428,6 +428,20 @@ export async function deleteExampleAction(exampleId: string): Promise<void> {
   await checkResponse(res, "Failed to delete training example");
 }
 
+export async function updateAiEnabledAction(
+  enabled: boolean,
+): Promise<{ ai_enabled: boolean }> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/merchants/me/settings`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify({ ai_enabled: enabled }),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to update settings");
+  return res.json();
+}
+
 export async function updateAutoLearningAction(
   enabled: boolean,
 ): Promise<{ auto_learning_enabled: boolean }> {
