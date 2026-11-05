@@ -12,7 +12,7 @@ import { DetailExceptionFilter } from './core/http.js';
 export function configureHttp(app: NestExpressApplication): void {
   app.enableCors({ origin: getSettings().CORS_ORIGINS, credentials: true });
   app.useGlobalFilters(new DetailExceptionFilter());
-  app.use('/webhooks/meta', raw({ type: () => true, limit: '5mb' }));
+  app.use(['/webhooks/meta', '/webhooks/zernio'], raw({ type: () => true, limit: '5mb' }));
   app.useBodyParser('json');
   app.useBodyParser('urlencoded', { extended: true });
 }

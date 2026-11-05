@@ -1,18 +1,18 @@
 import { Controller, Get, Inject, Post, Query, Req, Res } from '@nestjs/common';
-import { timingSafeEqual } from 'node:crypto';
 import type { Queue } from 'bullmq';
 import type { Request, Response } from 'express';
 import { Logger } from '@nestjs/common';
 import type { Settings } from '../../config.js';
 import { ApiError } from '../../core/http.js';
+import { safeEqual } from '../../core/safe-equal.js';
 import { DB, PROCESS_CHANNEL_MESSAGE, QUEUE, SETTINGS } from '../../core/tokens.js';
 import { type Db, schema } from '../../db/index.js';
 import { type Channel, type ParsedInboundMessage, parseMetaPayload, verifyMetaSignature } from './meta.js';
 import { ingestChannelMessage } from './service.js';
+import { parseZernioPayload, verifyZernioSignature } from './zernio.js';
 import { parseTwilioPayload, verifyTwilioSignature } from './twilio.js';
 
 const log = new Logger('channels.router');
-const safeEqual = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
 @Controller('webhooks')
 export class ChannelsController {
@@ -58,6 +58,39 @@ export class ChannelsController {
     const channel: Channel = payload && typeof payload === 'object' && payload.object === 'instagram' ? 'INSTAGRAM' : 'FACEBOOK';
     const ids = await this.db.transaction(async (tx) => {
       await tx.insert(schema.webhookEvents).values({ channel, rawPayload: payload, processingError });
+      const out: string[] = [];
+      for (const p of parsed) {
+        const id = await ingestChannelMessage(tx, p);
+        if (id) out.push(id);
+      }
+      return out;
+    });
+    await this.enqueue(ids);
+    return { status: 'received' };
+  }
+
+  @Post('zernio')
+  async receiveZernio(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    res.status(200);
+    const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    const signature = req.headers['x-zernio-signature'] as string | undefined;
+    if (!verifyZernioSignature(raw, signature, this.s.ZERNIO_WEBHOOK_SECRET)) {
+      log.warn(`zernio_webhook_rejected signature=${signature ? 'present' : 'missing'} secret_configured=${!!this.s.ZERNIO_WEBHOOK_SECRET} body_bytes=${raw.length}`);
+      throw new ApiError(403, 'invalid signature');
+    }
+    let payload: any = null;
+    let processingError: string | null = null;
+    let parsed: ParsedInboundMessage[] = [];
+    try {
+      payload = JSON.parse(raw.toString('utf8'));
+      parsed = parseZernioPayload(payload);
+    } catch (e) {
+      processingError = String(e);
+      log.warn(`zernio_webhook_parse_failed error=${e}`);
+    }
+    log.log(`zernio_webhook event=${payload?.event} messages=${parsed.length}${processingError ? ' parse_error' : ''}`);
+    const ids = await this.db.transaction(async (tx) => {
+      await tx.insert(schema.webhookEvents).values({ channel: parsed[0]?.channel ?? 'FACEBOOK', rawPayload: payload, processingError });
       const out: string[] = [];
       for (const p of parsed) {
         const id = await ingestChannelMessage(tx, p);

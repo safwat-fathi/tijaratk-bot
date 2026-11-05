@@ -4,6 +4,7 @@ import { CoreModule } from './core/core.module.js';
 import { AuthController } from './domains/auth/auth.controller.js';
 import { AuthGuard } from './domains/auth/auth.guard.js';
 import { ChannelsController } from './domains/channels/channels.controller.js';
+import { ZernioConnectController } from './domains/channels/zernio-connect.controller.js';
 import { CheckoutController } from './domains/checkout/checkout.controller.js';
 import { ConversationsController } from './domains/conversations/conversations.controller.js';
 import { DeliveryController } from './domains/delivery/delivery.controller.js';
@@ -33,6 +34,7 @@ import { StoreKnowledgeController } from './domains/store-knowledge/store-knowle
     CheckoutController,
     DemoController,
     ChannelsController,
+    ZernioConnectController,
   ],
   providers: [AuthGuard],
 })
