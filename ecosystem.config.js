@@ -1,3 +1,6 @@
+// Production pm2 config. Build first:
+//   (cd server && pnpm install --frozen-lockfile && pnpm build) && (cd frontend && pnpm install --frozen-lockfile && pnpm build)
+// Run exactly one worker: BullMQ schedules the 03:00 auto-learning job, so two workers would duplicate its rows.
 module.exports = {
   apps: [
     {
@@ -11,25 +14,23 @@ module.exports = {
       }
     },
     {
-      name: 'tijaratk-bot-backend',
-      script: 'make',
-      args: 'run',
-      cwd: './backend',
+      name: 'tijaratk-bot-server',
+      script: 'pnpm',
+      args: 'start:prod',
+      cwd: './server',
       interpreter: 'none',
       env: {
         NODE_ENV: 'production',
-        PORT: 8000 // You can change this port to whatever your Nginx proxy expects for the backend
+        PORT: 8001 // Must match the port your Nginx proxy expects for the API
       }
     },
     {
-      name: 'tijaratk-bot-worker',
-      script: 'uv',
-      args: 'run arq app.worker.WorkerSettings',
-      cwd: './backend',
+      name: 'tijaratk-bot-server-worker',
+      script: 'pnpm',
+      args: 'start:worker',
+      cwd: './server',
       interpreter: 'none',
-      env: {
-        NODE_ENV: 'production'
-      }
+      env: { NODE_ENV: 'production' }
     }
   ]
 };
