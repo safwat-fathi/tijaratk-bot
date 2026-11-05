@@ -14,6 +14,11 @@ import {
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+type VariantRow = { label: string; price: string; stock: string };
+
+const inputClass =
+  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none";
+
 function formatVariants(variants: ProductVariant[] | Record<string, unknown> | null) {
   if (!variants) return [];
 
@@ -64,9 +69,7 @@ export function ProductCatalog({
   const [name, setName] = useState("");
   const [aliases, setAliases] = useState("");
   const [price, setPrice] = useState("");
-  const [variantLabel, setVariantLabel] = useState("");
-  const [variantPrice, setVariantPrice] = useState("");
-  const [variantStock, setVariantStock] = useState("");
+  const [variants, setVariants] = useState<VariantRow[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null); // blob URL or the saved image_url
   const [removeImage, setRemoveImage] = useState(false);
@@ -94,9 +97,7 @@ export function ProductCatalog({
     setName("");
     setAliases("");
     setPrice("");
-    setVariantLabel("");
-    setVariantPrice("");
-    setVariantStock("");
+    setVariants([]);
     setImageFile(null);
     setImagePreview(null);
     setRemoveImage(false);
@@ -109,9 +110,7 @@ export function ProductCatalog({
     setName(p.name);
     setAliases((p.aliases || []).join(", "));
     setPrice(p.price !== null ? String(p.price) : "");
-    setVariantLabel("");
-    setVariantPrice("");
-    setVariantStock("");
+    setVariants([]);
     setImageFile(null);
     setImagePreview(p.image_url ?? null);
     setRemoveImage(false);
@@ -144,22 +143,20 @@ export function ProductCatalog({
           merchantId
         );
       } else {
-        const variants = variantLabel.trim()
-          ? [
-              {
-                label: variantLabel.trim(),
-                price: variantPrice ? parseFloat(variantPrice) : parsedPrice || undefined,
-                stock: variantStock ? parseInt(variantStock, 10) : 10,
-              },
-            ]
-          : [];
+        const parsedVariants = variants
+          .filter((v) => v.label.trim())
+          .map((v) => ({
+            label: v.label.trim(),
+            price: v.price ? parseFloat(v.price) : parsedPrice || undefined,
+            stock: v.stock ? parseInt(v.stock, 10) : 10,
+          }));
 
         const created = await createProductAction(
           {
             name,
             aliases: parsedAliases,
             price: parsedPrice,
-            variants,
+            variants: parsedVariants,
           },
           merchantId
         );
@@ -380,15 +377,26 @@ export function ProductCatalog({
                     // eslint-disable-next-line @next/next/no-img-element -- blob/remote preview
                     <img src={imagePreview} alt="" className="h-16 w-16 rounded-lg border border-gray-200 object-cover" />
                   )}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(e) => {
-                      pickImage(e.target.files?.[0] ?? null);
-                      e.target.value = "";
-                    }}
-                    className="min-w-0 flex-1 text-xs text-gray-600 file:me-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-xs file:font-medium file:text-gray-700 hover:file:bg-gray-200"
-                  />
+                  <div className="min-w-0 flex-1">
+                    {/* Native file input text follows the browser locale, so hide it and use our own Arabic label */}
+                    <label
+                      htmlFor="product-image"
+                      className="inline-flex cursor-pointer items-center rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-200 focus-within:ring-2 focus-within:ring-emerald-500"
+                    >
+                      {imagePreview ? "تغيير الصورة" : "اختيار صورة"}
+                      <input
+                        id="product-image"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(e) => {
+                          pickImage(e.target.files?.[0] ?? null);
+                          e.target.value = "";
+                        }}
+                        className="sr-only"
+                      />
+                    </label>
+                    <p className="mt-1 text-[11px] text-gray-500">JPG أو PNG أو WebP، حتى 5 ميجابايت</p>
+                  </div>
                   {imagePreview && (
                     <button type="button" onClick={clearImage} className="text-xs font-medium text-red-600 hover:underline">
                       إزالة
@@ -398,31 +406,77 @@ export function ProductCatalog({
               </div>
 
               {!editingProduct && (
-                <div className="rounded-lg bg-gray-50 p-3 border border-gray-200/60 mt-1">
-                  <p className="text-xs font-semibold text-gray-700 mb-2">النوع الأول (اختياري)</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      value={variantLabel}
-                      onChange={(e) => setVariantLabel(e.target.value)}
-                      placeholder="النوع (مثل: أزرق / كبير)"
-                      className="col-span-3 rounded-md border border-gray-300 px-2.5 py-1.5 text-xs bg-white focus:outline-none"
-                    />
-                    <input
-                      type="number"
-                      value={variantPrice}
-                      onChange={(e) => setVariantPrice(e.target.value)}
-                      placeholder="السعر"
-                      className="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs bg-white focus:outline-none"
-                    />
-                    <input
-                      type="number"
-                      value={variantStock}
-                      onChange={(e) => setVariantStock(e.target.value)}
-                      placeholder="الكمية (10)"
-                      className="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs bg-white focus:outline-none"
-                    />
+                <div className="mt-1">
+                  <p className="text-xs font-semibold text-gray-700">الأنواع (اختياري)</p>
+                  <p className="mb-2 mt-0.5 text-[11px] text-gray-500">
+                    مثل المقاس أو اللون. لو تركت السعر فارغًا يُستخدم سعر المنتج، ولو تركت الكمية فارغة تُحسب 10.
+                  </p>
+                  <div className="flex max-h-56 flex-col gap-2 overflow-y-auto">
+                    {variants.map((v, i) => {
+                      const update = (patch: Partial<VariantRow>) =>
+                        setVariants((rows) => rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+                      return (
+                        <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                          <div className="flex items-end gap-2">
+                            <div className="min-w-0 flex-1">
+                              <label className="mb-1 block text-[11px] font-medium text-gray-600">اسم النوع</label>
+                              <input
+                                type="text"
+                                value={v.label}
+                                onChange={(e) => update({ label: e.target.value })}
+                                placeholder="مثال: أزرق / كبير"
+                                className={inputClass}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              aria-label="حذف النوع"
+                              title="حذف النوع"
+                              onClick={() => setVariants((rows) => rows.filter((_, j) => j !== i))}
+                              className="mb-0.5 rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="mb-1 block text-[11px] font-medium text-gray-600">السعر (جنيه)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={v.price}
+                                onChange={(e) => update({ price: e.target.value })}
+                                placeholder={price || "سعر المنتج"}
+                                className={inputClass}
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-[11px] font-medium text-gray-600">الكمية</label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={v.stock}
+                                onChange={(e) => update({ stock: e.target.value })}
+                                placeholder="10"
+                                className={inputClass}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setVariants((rows) => [...rows, { label: "", price: "", stock: "" }])}
+                    className="mt-2 w-full rounded-lg border border-dashed border-gray-300 py-2 text-xs font-medium text-gray-600 hover:border-emerald-500 hover:text-emerald-700"
+                  >
+                    + إضافة نوع
+                  </button>
                 </div>
               )}
 
