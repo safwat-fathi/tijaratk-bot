@@ -4,15 +4,17 @@ import { z } from 'zod';
 import { parse } from '../../core/http.js';
 import { DB } from '../../core/tokens.js';
 import { type Db, schema } from '../../db/index.js';
+import { conversationUsage } from '../usage/service.js';
 import { AuthGuard, CurrentMerchant, type Merchant } from '../auth/auth.guard.js';
 
 const Update = z.object({
   ai_enabled: z.boolean().nullish(),
   auto_learning_enabled: z.boolean().nullish(),
 });
-const read = (m: Merchant) => ({
+const read = async (db: Db, m: Merchant) => ({
   ai_enabled: m.aiEnabled,
   auto_learning_enabled: m.autoLearningEnabled,
+  ...(await conversationUsage(db, m.id)),
 });
 
 @Controller('merchants')
@@ -22,7 +24,7 @@ export class MerchantsController {
 
   @Get('me/settings')
   get(@CurrentMerchant() m: Merchant) {
-    return read(m);
+    return read(this.db, m);
   }
 
   @Patch('me/settings')
@@ -31,8 +33,8 @@ export class MerchantsController {
     const set: Partial<typeof schema.merchants.$inferInsert> = {};
     if (p.ai_enabled != null) set.aiEnabled = p.ai_enabled;
     if (p.auto_learning_enabled != null) set.autoLearningEnabled = p.auto_learning_enabled;
-    if (!Object.keys(set).length) return read(m);
+    if (!Object.keys(set).length) return read(this.db, m);
     const [row] = await this.db.update(schema.merchants).set(set).where(eq(schema.merchants.id, m.id)).returning();
-    return read(row);
+    return read(this.db, row);
   }
 }

@@ -107,6 +107,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <h2 className="font-semibold text-slate-900">الذكاء الاصطناعي</h2>
         </div>
         <div className="p-6 space-y-6">
+          <p className="text-sm text-slate-600">
+            المحادثات هذا الشهر: {settings.conversationsUsed} / {settings.conversationsLimit}
+            {settings.conversationsUsed >= settings.conversationsLimit &&
+              " — الباقة المجانية انتهت، لن يرد الـ AI على محادثات جديدة حتى الشهر القادم."}
+          </p>
           <SettingToggle
             title="الرد الآلي بالذكاء الاصطناعي"
             description="عند الإيقاف لن يرد الـ AI على رسائل العملاء، وستظهر لهم قائمة الاختيارات فقط."

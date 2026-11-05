@@ -28,6 +28,53 @@ async function world(db: Db, o: { toolOrdering?: boolean; productEmbedding?: num
   return { m, c, p };
 }
 
+describe('free plan conversation limit', () => {
+  const inbound = (db: Db, c: Conversation, createdAt: Date) =>
+    db.insert(schema.messages).values({ conversationId: c.id, direction: 'INBOUND', rawText: 'hi', normalizedText: 'hi', createdAt });
+  const daysAgo = (n: number) => new Date(Date.now() - n * 864e5);
+
+  it('past 10 conversations this month the AI stays silent; counted ones keep working', async () => {
+    const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db);
+      const other = await makeMerchant(db);
+      const convs: Conversation[] = [];
+      for (let i = 0; i < 10; i++) {
+        const c = await makeConversation(db, m.id);
+        await inbound(db, c, new Date(Date.now() - (20 - i) * 1000));
+        convs.push(c);
+      }
+      // last month and other merchants don't count
+      const old = await makeConversation(db, m.id);
+      await inbound(db, old, new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 0)));
+      const foreign = await makeConversation(db, other.id);
+      await inbound(db, foreign, new Date());
+
+      const eleventh = await makeConversation(db, m.id);
+      const blocked = await processMessage(db, eleventh, msg(eleventh, 'السلام عليكم'));
+      expect(blocked.messages).toEqual([]);
+      const blockedText = await processMessage(db, eleventh, msg(eleventh, 'عايز قميص'));
+      expect(blockedText).toMatchObject({ messages: [], message: { intent: 'fallback:no_ai' } });
+      expect(ai.calls).toHaveLength(0);
+
+      const first = await processMessage(db, convs[0], msg(convs[0], 'السلام عليكم'));
+      expect(kinds(first)).toEqual(['text']);
+      expect(ai.calls).toHaveLength(1);
+    });
+  });
+
+  it('a conversation from last month is covered again when its customer writes this month', async () => {
+    fakeAi([{ reply: 'أهلاً' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db);
+      const c = await makeConversation(db, m.id);
+      await inbound(db, c, daysAgo(40));
+      const r = await processMessage(db, c, msg(c, 'السلام عليكم'));
+      expect(kinds(r)).toEqual(['text']);
+    });
+  });
+});
+
 describe('tier 0 and routing without AI classification', () => {
   it('spam / reactions short-circuit with no AI call and no reply', async () => {
     const ai = fakeAi([]);

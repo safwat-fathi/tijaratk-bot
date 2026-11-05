@@ -195,7 +195,7 @@ describe('merchant settings', () => {
       expect(res.body.auto_learning_enabled).toBe(true);
       expect(res.body.ai_enabled).toBe(true);
       const off = await http.patch('/merchants/me/settings').set(h).send({ ai_enabled: false });
-      expect(off.body).toEqual({ ai_enabled: false, auto_learning_enabled: true });
+      expect(off.body).toEqual({ ai_enabled: false, auto_learning_enabled: true, conversations_used: 0, conversations_limit: 10 });
       const [row] = await db.select().from(schema.merchants).where(eq(schema.merchants.id, m.id));
       expect(row.aiEnabled).toBe(false);
       expect((await http.patch('/merchants/me/settings').set(h).send({ ai_enabled: true })).body.ai_enabled).toBe(true);

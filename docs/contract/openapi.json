@@ -617,11 +617,21 @@
           "auto_learning_enabled": {
             "title": "Auto Learning Enabled",
             "type": "boolean"
+          },
+          "conversations_limit": {
+            "title": "Conversations Limit",
+            "type": "integer"
+          },
+          "conversations_used": {
+            "title": "Conversations Used",
+            "type": "integer"
           }
         },
         "required": [
           "ai_enabled",
-          "auto_learning_enabled"
+          "auto_learning_enabled",
+          "conversations_used",
+          "conversations_limit"
         ],
         "title": "MerchantSettingsRead",
         "type": "object"

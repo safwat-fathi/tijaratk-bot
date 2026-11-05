@@ -42,6 +42,16 @@ export const getMerchantSettings = cache(async () => {
   if (!res.ok) {
     throw new Error(`Failed to fetch merchant settings: ${res.status}`);
   }
-  const data = (await res.json()) as { ai_enabled: boolean; auto_learning_enabled: boolean };
-  return { aiEnabled: data.ai_enabled, autoLearningEnabled: data.auto_learning_enabled };
+  const data = (await res.json()) as {
+    ai_enabled: boolean;
+    auto_learning_enabled: boolean;
+    conversations_used: number;
+    conversations_limit: number;
+  };
+  return {
+    aiEnabled: data.ai_enabled,
+    autoLearningEnabled: data.auto_learning_enabled,
+    conversationsUsed: data.conversations_used,
+    conversationsLimit: data.conversations_limit,
+  };
 });

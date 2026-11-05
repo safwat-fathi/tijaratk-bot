@@ -12,6 +12,7 @@ import {
   textMessage,
 } from '../domains/messaging/models.js';
 import * as knowledge from '../domains/store-knowledge/service.js';
+import { isOverConversationLimit } from '../domains/usage/service.js';
 import { resolveAction } from './action-resolution.js';
 import { classifyMessage } from './classification.js';
 import { AICallError } from './clients.js';
@@ -187,6 +188,8 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     .from(schema.merchants)
     .where(eq(schema.merchants.id, conversation.merchantId));
   const merchantName = info.name;
+  // Past the plan's monthly quota: behave like AI off (the message is saved; the merchant answers by hand).
+  if (info.aiEnabled && (await isOverConversationLimit(db, conversation.merchantId, conversation.id))) info.aiEnabled = false;
 
   let ccName: string | null = null;
   if (conversation.channelConnectionId) {
