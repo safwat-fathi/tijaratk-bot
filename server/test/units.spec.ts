@@ -3,16 +3,16 @@ import { eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runClustering, representativeMessages } from '../src/clustering/job.js';
 import { withConversationLock } from '../src/core/locks.js';
-import { http as metaHttp } from '../src/domains/auth/meta-client.js';
 import { buildButtonsFixture } from './fixtures.js';
-import { textFallback } from '../src/domains/messaging/models.js';
+import { deliver, zernioBody } from '../src/domains/messaging/deliver.js';
+import { buttonMessage, genericTemplateMessage, mediaMessage, quickReplyMessage, textFallback, textMessage } from '../src/domains/messaging/models.js';
 import { renderFacebook } from '../src/domains/messaging/renderer.js';
 import { http as senderHttp, sendFacebookMessages } from '../src/domains/messaging/sender.js';
 import { ExtractionBase, ProposedAction, jsonSchemaResponseFormat, IntentClassification } from '../src/engine/schemas.js';
 import { ACTION_TASK_BLOCK, buildSystemPrompt, classificationTaskBlock } from '../src/engine/prompts.js';
 import { matchVariantHint } from '../src/engine/product-matching.js';
 import { processChannelMessage } from '../src/worker/processor.js';
-import { authHeader, fakeAi, makeConnection, makeConversation, makeMerchant, resetAi, schema, unit, withApp, withRollback } from './harness.js';
+import { authHeader, fakeAi, makeConnection, makeConversation, makeMerchant, resetAi, schema, setSettingsForTests, unit, withApp, withRollback } from './harness.js';
 import { z } from 'zod';
 
 afterEach(() => {
@@ -172,7 +172,29 @@ describe('worker: processChannelMessage', () => {
     );
   });
 
-  it('does not send for connections without a page token, but still records the intent', async () => {
+  it('replies through Zernio for connections without a page token (customerRef is the Zernio conversation id)', async () => {
+    fakeAi([{ reply: 'أهلاً بيك' }]);
+    const calls: { path: string; body: any }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init: any) => (calls.push({ path: new URL(url).pathname, body: JSON.parse(init.body) }), new Response('{}', { status: 200 })));
+    try {
+      await withRedis((redis) =>
+        withRollback(async (db) => {
+          const m = await makeMerchant(db);
+          const conn = await makeConnection(db, m.id, { externalAccountId: 'ACC1' });
+          const conv = await makeConversation(db, m.id, { channelConnectionId: conn.id, customerRef: 'zconv-1', state: 'NEW' });
+          const [inbound] = await db.insert(schema.messages).values({ conversationId: conv.id, direction: 'INBOUND', rawText: 'hi', normalizedText: 'hi' }).returning();
+          await processChannelMessage(db, redis, inbound.id);
+          expect(calls.map((c) => c.path)).toEqual(Array(2).fill('/api/v1/inbox/conversations/zconv-1/messages'));
+          expect(calls[0].body).toEqual({ accountId: 'ACC1', message: 'أهلاً بيك' });
+          expect(await db.select().from(schema.messages).where(eq(schema.messages.direction, 'OUTBOUND'))).toHaveLength(2);
+        }),
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('a reaction gets no reply but still records the intent', async () => {
     fakeAi([{ reply: 'x' }]);
     const spy = vi.spyOn(senderHttp, 'fetch');
     await withRedis((redis) =>
@@ -249,92 +271,101 @@ describe('auto-learning clustering job', () => {
   });
 });
 
-describe('facebook login', () => {
-  const ok = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
-  const debug = (o: Record<string, unknown> = {}) => ({ data: { is_valid: true, app_id: process.env.META_APP_ID, scopes: ['pages_manage_metadata', 'pages_messaging', 'pages_show_list'], ...o } });
+describe('open mode auth', () => {
+  const open = (http: any, key = process.env.OPEN_ACCESS_KEY) => http.post('/auth/open').set('x-open-key', key ?? '');
 
-  const route = (handlers: Record<string, (url: URL, init?: RequestInit) => Response>) =>
-    vi.spyOn(metaHttp, 'fetch').mockImplementation(async (input, init) => {
-      const url = new URL(String(input));
-      const h = handlers[url.pathname];
-      if (!h) throw new Error(`unexpected fetch ${url}`);
-      return h(url, init as RequestInit);
-    });
-
-  it('signs up a new merchant, provisions pages (subscribing each), and returns a usable JWT', async () => {
-    const calls: string[] = [];
-    route({
-      '/debug_token': () => ok(debug()),
-      '/me': () => ok({ id: 'fb-1', name: 'Safwat' }),
-      '/me/accounts': () => ok({ data: [{ id: 'PG1', name: 'Page One', access_token: 'ptok1' }, { name: 'no id' }] }),
-      '/PG1/subscribed_apps': (u, init) => (calls.push(`${u.search}|${String(init?.body)}`), ok({ success: true })),
-    });
+  it('rejects a wrong or missing key; a right key signs in one owner merchant (created once, reused after)', async () => {
     await withApp(async ({ http, db }) => {
-      const res = await http.post('/auth/facebook/callback').send({ access_token: 'user-token' });
+      expect((await open(http, 'nope')).status).toBe(403);
+      expect((await http.post('/auth/open')).status).toBe(403);
+      expect(await db.select().from(schema.merchants)).toHaveLength(0);
+
+      const res = await open(http);
       expect(res.status).toBe(200);
-      expect(res.body).toMatchObject({ merchant_name: 'Safwat', pages_connected: 1, conflicted_pages: [] });
-      expect(calls).toEqual(['?access_token=ptok1|subscribed_fields=messages%2Cmessaging_postbacks%2Cmessaging_optins']);
-      const [conn] = await db.select().from(schema.channelConnections);
-      expect(conn).toMatchObject({ externalAccountId: 'PG1', accountName: 'Page One', pageAccessToken: 'ptok1', isActive: true });
-
+      expect(res.body).toMatchObject({ merchant_name: 'My Store' });
       const me = await http.get('/auth/me').set('Authorization', `Bearer ${res.body.access_token}`);
-      expect(me.body).toMatchObject({ merchant_name: 'Safwat', channels: [{ channel: 'FACEBOOK', account_name: 'Page One' }] });
-
-      // logging in again is a login, not a second merchant
-      const again = await http.post('/auth/facebook/callback').send({ access_token: 'user-token' });
-      expect(again.body.merchant_id).toBe(res.body.merchant_id);
+      expect(me.body).toMatchObject({ merchant_id: res.body.merchant_id, channels: [] });
+      expect((await open(http)).body.merchant_id).toBe(res.body.merchant_id);
       expect(await db.select().from(schema.merchants)).toHaveLength(1);
     });
   });
 
-  it('401 for invalid / foreign-app / under-scoped tokens; 502 when Graph is down; pages owned by someone else are conflicts; unchecked pages deactivate', async () => {
+  it('adopts an existing merchant instead of creating one; OPEN_MERCHANT_ID pins it', async () => {
     await withApp(async ({ http, db }) => {
-      route({ '/debug_token': () => ok(debug({ is_valid: false })) });
-      expect((await http.post('/auth/facebook/callback').send({ access_token: 't' })).body).toEqual({ detail: 'invalid facebook access token' });
-      vi.restoreAllMocks();
-      route({ '/debug_token': () => ok(debug({ app_id: 'other-app' })) });
-      expect((await http.post('/auth/facebook/callback').send({ access_token: 't' })).status).toBe(401);
-      vi.restoreAllMocks();
-      route({ '/debug_token': () => ok(debug({ scopes: ['pages_show_list'] })) });
-      expect((await http.post('/auth/facebook/callback').send({ access_token: 't' })).status).toBe(401);
-      vi.restoreAllMocks();
-      route({ '/debug_token': () => ok({}, 503) });
-      const down = await http.post('/auth/facebook/callback').send({ access_token: 't' });
-      expect(down.status).toBe(502);
-      expect(down.body).toEqual({ detail: 'Facebook Graph API unavailable' });
-      vi.restoreAllMocks();
-
-      const owner = await makeMerchant(db, { name: 'Owner' });
-      await makeConnection(db, owner.id, { externalAccountId: 'TAKEN' });
-      const me = await makeMerchant(db, { name: 'Me', facebookUserId: 'fb-me' });
-      const stale = await makeConnection(db, me.id, { externalAccountId: 'STALE' });
-      route({
-        '/debug_token': () => ok(debug()),
-        '/me': () => ok({ id: 'fb-me', name: 'Me' }),
-        '/me/accounts': () => ok({ data: [{ id: 'TAKEN', name: 'T', access_token: 'x' }] }),
-      });
-      const res = await http.post('/auth/facebook/callback').send({ access_token: 't' });
-      expect(res.body).toMatchObject({ pages_connected: 0, conflicted_pages: ['TAKEN'] });
-      const [s] = await db.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, stale.id));
-      expect(s.isActive).toBe(false);
+      const a = await makeMerchant(db, { name: 'A Store' });
+      await makeMerchant(db, { name: 'B Store' });
+      expect((await open(http)).body.merchant_id).toBe(a.id);
+      expect(await db.select().from(schema.merchants)).toHaveLength(2);
+      const b = (await db.select().from(schema.merchants).where(eq(schema.merchants.name, 'B Store')))[0];
+      await makeConnection(db, a.id, { isActive: false });
+      expect((await open(http)).body.merchant_id).toBe(a.id); // an inactive connection does not count
+      await makeConnection(db, b.id);
+      expect((await open(http)).body.merchant_id).toBe(b.id); // the store with a live channel wins over name order
     });
+    setSettingsForTests({ OPEN_MERCHANT_ID: 'pinned-b' });
+    try {
+      await withApp(async ({ http, db }) => {
+        await makeMerchant(db, { name: 'A Store' });
+        await makeMerchant(db, { id: 'pinned-b', name: 'B Store' });
+        expect((await open(http)).body.merchant_id).toBe('pinned-b');
+      });
+      setSettingsForTests({ OPEN_MERCHANT_ID: 'missing' });
+      await withApp(async ({ http }) => expect((await open(http)).status).toBe(404));
+    } finally {
+      setSettingsForTests(undefined);
+    }
   });
 
-  it('verify-tokens deactivates revoked page tokens and 401s when none remain', async () => {
-    await withApp(async ({ http, db }) => {
-      const m = await makeMerchant(db);
-      const good = await makeConnection(db, m.id, { pageAccessToken: 'good' });
-      const bad = await makeConnection(db, m.id, { pageAccessToken: 'bad' });
-      route({ '/debug_token': (u) => ok(debug({ is_valid: u.searchParams.get('input_token') === 'good' })) });
-      expect((await http.get('/auth/me/verify-tokens').set(authHeader(m.id))).body).toEqual({ status: 'ok' });
-      const rows = await db.select().from(schema.channelConnections);
-      expect(rows.find((r) => r.id === good.id)!.isActive).toBe(true);
-      expect(rows.find((r) => r.id === bad.id)!.isActive).toBe(false);
+  it('is disabled (404) when no key is configured', async () => {
+    setSettingsForTests({ OPEN_ACCESS_KEY: '' });
+    try {
+      await withApp(async ({ http }) => expect((await open(http, 'anything')).status).toBe(404));
+    } finally {
+      setSettingsForTests(undefined);
+    }
+  });
+});
 
-      await db.update(schema.channelConnections).set({ pageAccessToken: 'bad' }).where(eq(schema.channelConnections.id, good.id));
-      const gone = await http.get('/auth/me/verify-tokens').set(authHeader(m.id));
-      expect(gone.status).toBe(401);
-      expect(gone.body).toEqual({ detail: 'Facebook token expired. Please log in again.' });
+describe('deliver: one send path per connection type', () => {
+  const zernioCalls = (status = 200) => {
+    const calls: { url: URL; auth?: string; body: any }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init: any) => {
+      calls.push({ url: new URL(url), auth: init.headers.authorization, body: JSON.parse(init.body) });
+      return new Response('{}', { status });
     });
+    return calls;
+  };
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('connections without a page token go through Zernio, addressed by account + conversation id', async () => {
+    const calls = zernioCalls();
+    const conn = { channel: 'FACEBOOK', externalAccountId: 'ACC1', pageAccessToken: null };
+    const out = await deliver(conn, 'conv-9', [textMessage('hi'), quickReplyMessage('pick', [{ title: 'Menu', payload: { action: 'main_menu' } }])]);
+    expect(out).toEqual([true, true]);
+    expect(calls.map((c) => c.url.pathname)).toEqual(Array(2).fill('/api/v1/inbox/conversations/conv-9/messages'));
+    expect(calls[0].auth).toBe('Bearer zernio-key-for-tests');
+    expect(calls[0].body).toEqual({ accountId: 'ACC1', message: 'hi' });
+    expect(calls[1].body).toEqual({ accountId: 'ACC1', message: 'pick', quickReplies: [{ title: 'Menu', payload: '{"action":"main_menu"}' }] });
+  });
+
+  it('a failed Zernio send is reported false, not thrown', async () => {
+    zernioCalls(500);
+    expect(await deliver({ channel: 'INSTAGRAM', externalAccountId: 'A', pageAccessToken: null }, 'c', [textMessage('x')])).toEqual([false]);
+  });
+
+  it('legacy token-bearing Facebook connections keep the Graph path; channels with no path send nothing', async () => {
+    const calls = zernioCalls();
+    const graph = vi.spyOn(senderHttp, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+    expect(await deliver({ channel: 'FACEBOOK', externalAccountId: 'PG', pageAccessToken: 'tok' }, 'psid', [textMessage('hi')])).toEqual([true]);
+    expect(graph).toHaveBeenCalledOnce();
+    expect(await deliver({ channel: 'WHATSAPP', externalAccountId: '+20', pageAccessToken: null }, 'x', [textMessage('hi')])).toEqual([false]);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('maps buttons to quick replies, cards to a text list, media to an attachment', () => {
+    const b = buttonMessage('detail', [{ type: 'postback', title: 'Add', payload: { a: 1 } }, { type: 'web_url', title: 'Site', url: 'https://x.test' }]);
+    expect(zernioBody('A', b)).toEqual({ accountId: 'A', message: 'detail\nSite: https://x.test', quickReplies: [{ title: 'Add', payload: '{"a":1}' }] });
+    expect(zernioBody('A', genericTemplateMessage([{ title: 'Shirt', subtitle: '100 EGP' }, { title: 'Hat' }]))).toEqual({ accountId: 'A', message: 'Shirt — 100 EGP\nHat' });
+    expect(zernioBody('A', mediaMessage('https://x.test/a.png'))).toEqual({ accountId: 'A', attachmentUrl: 'https://x.test/a.png', attachmentType: 'image' });
   });
 });

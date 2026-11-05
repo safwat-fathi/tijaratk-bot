@@ -6,7 +6,7 @@ import { withConversationLock } from '../core/locks.js';
 import { type Db, type DbOrTx, schema } from '../db/index.js';
 import type { Conversation } from '../db/types.js';
 import { type OutboundMessage, textFallback, textMessage } from '../domains/messaging/models.js';
-import { sendFacebookMessages } from '../domains/messaging/sender.js';
+import { deliver } from '../domains/messaging/deliver.js';
 import { processMessage } from '../engine/pipeline.js';
 
 const log = new Logger('worker');
@@ -15,12 +15,8 @@ const log = new Logger('worker');
 async function sendOutbound(db: DbOrTx, conversation: Conversation, outbound: OutboundMessage[]): Promise<void> {
   if (!outbound.length || !conversation.channelConnectionId) return;
   const [conn] = await db.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conversation.channelConnectionId));
-  if (!conn?.pageAccessToken) {
-    log.warn(`no_page_token conversation_id=${conversation.id}`);
-    return;
-  }
-  if (conn.channel !== 'FACEBOOK') return;
-  const results = await sendFacebookMessages(conn.pageAccessToken, conversation.customerRef, outbound);
+  if (!conn) return;
+  const results = await deliver(conn, conversation.customerRef, outbound);
   for (const [i, msg] of outbound.entries()) {
     if (!results[i]) continue;
     await db.insert(schema.messages).values({

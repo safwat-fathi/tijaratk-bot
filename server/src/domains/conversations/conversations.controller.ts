@@ -6,7 +6,7 @@ import { DB } from '../../core/tokens.js';
 import { type Db, schema } from '../../db/index.js';
 import { AuthGuard, CurrentMerchant, type Merchant } from '../auth/auth.guard.js';
 import { textFallback, textMessage } from '../messaging/models.js';
-import { sendFacebookMessages } from '../messaging/sender.js';
+import { deliver } from '../messaging/deliver.js';
 import { getConversationMessages, listConversations } from './service.js';
 
 const Reply = z.object({ text: z.string() });
@@ -52,10 +52,7 @@ export class ConversationsController {
       let sent = false;
       if (conv.channelConnectionId) {
         const [conn] = await tx.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conv.channelConnectionId));
-        if (conn?.pageAccessToken && conn.channel === 'FACEBOOK') {
-          const results = await sendFacebookMessages(conn.pageAccessToken, conv.customerRef, [msg]);
-          if (results.length) sent = results[0];
-        }
+        if (conn) sent = (await deliver(conn, conv.customerRef, [msg]))[0] ?? false;
       }
       return { message_id: outbound.id, sent };
     });

@@ -8,7 +8,7 @@ import { type Db, type DbOrTx, schema } from '../../db/index.js';
 import type { Order, OrderItem } from '../../db/types.js';
 import { AuthGuard, CurrentMerchant, type Merchant } from '../auth/auth.guard.js';
 import { textFallback, textMessage } from '../messaging/models.js';
-import { sendFacebookMessages } from '../messaging/sender.js';
+import { deliver } from '../messaging/deliver.js';
 import { ConversationNotFoundError, ProductNotFoundError, createManualOrder } from './manual-order.js';
 
 const ManualOrder = z.object({
@@ -106,7 +106,7 @@ export class CheckoutController {
         const [conv] = await tx.select().from(schema.conversations).where(eq(schema.conversations.id, order.conversationId));
         if (conv?.channelConnectionId) {
           const [conn] = await tx.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conv.channelConnectionId));
-          if (conn?.pageAccessToken && conn.channel === 'FACEBOOK') {
+          if (conn) {
             const msg = textMessage(messages[status]);
             await tx.insert(schema.messages).values({
               conversationId: conv.id,
@@ -116,7 +116,7 @@ export class CheckoutController {
               messageType: msg.kind,
               richPayload: msg,
             });
-            await sendFacebookMessages(conn.pageAccessToken, conv.customerRef, [msg]);
+            await deliver(conn, conv.customerRef, [msg]);
           }
         }
       }

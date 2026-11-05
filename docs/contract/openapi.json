@@ -1706,47 +1706,6 @@
         "summary": "Root"
       }
     },
-    "/auth/facebook/callback": {
-      "post": {
-        "operationId": "facebook_callback_auth_facebook_callback_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FacebookCallbackRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Facebook Callback",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
     "/auth/me": {
       "get": {
         "description": "Return the currently authenticated merchant based on JWT token.",
@@ -1769,31 +1728,6 @@
           }
         ],
         "summary": "Get Me",
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/auth/me/verify-tokens": {
-      "get": {
-        "description": "Verify Facebook page tokens in the background.",
-        "operationId": "verify_tokens_auth_me_verify_tokens_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Verify Tokens",
         "tags": [
           "auth"
         ]
