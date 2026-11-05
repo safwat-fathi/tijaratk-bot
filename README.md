@@ -11,17 +11,17 @@ Full product/architecture definition lives in [`TijaratkBot_PRD.md`](./TijaratkB
 This repo currently implements the **AI message-classification/routing engine** (the SRD's L0/L1/L2 pipeline, §14–§22) plus an early, flag-gated commerce layer (cart, checkout, order creation — reachable only through the AI tool layer, not yet through any dashboard). It does **not** yet implement the full commerce platform described in the PRD/SRD — billing, multi-tenancy, delivery, and a merchant dashboard are still missing.
 
 **Built:**
-- Tier 0 rule-based short-circuit (`app/engine/tier0_rules.py`)
-- DeepSeek v4 Flash for all classification and extraction, with a dialect-aware system prompt, self-reported confidence, and structured-output schemas (`app/engine/classification.py`, `extraction.py`, `schemas.py`, `prompts.py`)
-- Pre/post-flight checks (`evaluate_preflight`, `evaluate_postflight` in `app/engine/routing_policy.py`) flag ambiguous or low-confidence results for human review (`escalation_reason`, `OrderStatus.PENDING_REVIEW`)
-- End-to-end pipeline (`app/engine/pipeline.py::process_message`) wired into a real endpoint: `POST /messages` ingests a message for an existing conversation, runs it through the full tiered pipeline, and persists intent/order/escalation data
+- Tier 0 rule-based short-circuit (`server/src/engine/tier0-rules.ts`)
+- DeepSeek v4 Flash for all classification and extraction, with a dialect-aware system prompt, self-reported confidence, and structured-output schemas (`server/src/engine/classification.ts`, `extraction.ts`, `schemas.ts`, `prompts.ts`)
+- Pre/post-flight checks (`evaluatePreflight`, `evaluatePostflight` in `server/src/engine/routing-policy.ts`) flag ambiguous or low-confidence results for human review (`escalation_reason`, `OrderStatus.PENDING_REVIEW`)
+- End-to-end pipeline (`server/src/engine/pipeline.ts`) wired into a real endpoint: `POST /messages` ingests a message for an existing conversation, runs it through the full tiered pipeline, and persists intent/order/escalation data
 - Core data models: `merchant`, `conversation`, `message`, `product`, `order`, `labeled_example`
-- Product search domain (`app/domains/products`), conversation domain (`app/domains/conversations`)
-- Offline clustering job and seed/dev scripts (`backend/scripts/`)
+- Product search domain (`server/src/domains/products`), conversation domain (`server/src/domains/conversations`)
+- Offline clustering job (`server/src/clustering/`), run nightly by the worker
 - A demo frontend workspace at `/demo` (product catalog + message composer + AI insights panel)
-- Channel/webhook ingestion: webhook endpoints at `/webhooks/meta` (Facebook + Instagram) and `/webhooks/whatsapp/twilio` (WhatsApp via Twilio) verify, deduplicate, and persist inbound messages, then enqueue them to an `arq`/Redis worker that runs the existing classification pipeline — `ChannelConnection` rows must be provisioned manually (no onboarding UI yet); outbound replies are not implemented.
+- Channel/webhook ingestion: webhook endpoints at `/webhooks/meta` (Facebook + Instagram) and `/webhooks/whatsapp/twilio` (WhatsApp via Twilio) verify, deduplicate, and persist inbound messages, then enqueue them to a BullMQ/Redis worker that runs the existing classification pipeline — `ChannelConnection` rows must be provisioned manually (no onboarding UI yet); outbound replies are not implemented.
 - **AI action validator + tool layer** — validator, registry, `AIAction` audit trail; all 9 tool contracts fully functional (`search_products`/`get_product`/`add_to_cart`/`update_cart`/`remove_from_cart`/`get_checkout_state`/`update_customer_info`/`create_order`/`search_store_knowledge`). Opt-in per merchant via `Merchant.ai_tool_ordering_enabled` (off by default); the existing classify→extract→auto-order flow is unchanged for merchants that don't opt in. (SRD §20-21, PRD §14-15)
-- **Cart, checkout & order creation** — `Cart`/`CartItem` models (one active cart per conversation), add/update/remove item, checkout-state subtotal, and order creation with product/price snapshotting, atomic order numbers, and retry-idempotency (`app/domains/cart`, `app/domains/checkout`; SRD §25–§27). Reachable only through the AI tool layer above — no HTTP router — and only for merchants with `ai_tool_ordering_enabled=True`. Not built: variant/stock validation, delivery fee calculation, order-status transitions after creation.
+- **Cart, checkout & order creation** — `Cart`/`CartItem` models (one active cart per conversation), add/update/remove item, checkout-state subtotal, and order creation with product/price snapshotting, atomic order numbers, and retry-idempotency (`server/src/domains/cart`, `server/src/domains/checkout`; SRD §25–§27). Reachable only through the AI tool layer above — no HTTP router — and only for merchants with `ai_tool_ordering_enabled=True`. Not built: variant/stock validation, delivery fee calculation, order-status transitions after creation.
 - **Store knowledge retrieval (keyword-match MVP)** — `StoreKnowledge` model + keyword-substring search per merchant (SRD §23); answers FAQ/shipping/returns/payment questions from `POST /messages` when no order is produced, and via the `search_store_knowledge` AI tool. Not built: full-text/semantic retrieval, an authoring UI.
 
 **Not yet built** (see `ROADMAP.md` for the full breakdown against PRD MVP scope):
@@ -47,39 +47,34 @@ Customer Message
 ```
 
 - **DeepSeek v4 Flash** (via OpenRouter): sole LLM engine for classification and extraction, driven by a system prompt providing Egyptian Arabic / Arabizi dialect guidance. Low confidence, ambiguous extraction, repeated correction, or reasoning-heavy content flags the order for review. Each reason is a stable string persisted to `Message.escalation_reason`.
-- **Embeddings — BAAI/bge-m3** (1024-dim, via OpenRouter): separate from the chat-completion engine, used for semantic search/clustering (`app/engine/embeddings.py`, `app/clustering/`).
-- `app/engine/clients.py` builds two `AsyncOpenAI` clients (DeepSeek, embeddings) to communicate with the OpenAI-compatible OpenRouter API.
-
-**Reading the SRD against this repo:** the SRD's suggested module names (`CartModule`, `CheckoutModule`, `AIModule`, etc., §53) are NestJS-flavored — this repo doesn't use NestJS. The equivalent boundary here is `app/domains/<name>/` for feature routers (FastAPI) and `app/engine/` for the AI pipeline. Don't expect the SRD's literal module names to exist in the code.
+- **Embeddings — BAAI/bge-m3** (1024-dim, via OpenRouter): separate from the chat-completion engine, used for semantic search/clustering (`server/src/engine/embeddings.ts`, `server/src/clustering/`).
+- `server/src/engine/clients.ts` builds two OpenAI-SDK clients (DeepSeek, embeddings) to communicate with the OpenAI-compatible OpenRouter API.
 
 ## Tech stack
 
-**Backend:** Python 3.13, FastAPI, SQLAlchemy 2.0 (asyncio), Alembic, PostgreSQL + pgvector, `uv` for dependency management.
+**Server:** TypeScript, NestJS, Drizzle ORM, PostgreSQL + pgvector, BullMQ (Redis), pnpm.
 **Frontend:** Next.js 16, React 19, Tailwind CSS 4, pnpm.
-
-The SRD's technology baseline (§3) suggests NestJS/TypeScript for the backend; that recommendation was explicitly non-binding ("may be changed without changing the product requirements") and this is what actually got built instead.
 
 ## Getting started
 
 ### Prerequisites
 
-- Python 3.13 and [`uv`](https://docs.astral.sh/uv/)
-- A running PostgreSQL instance with the `pgvector` extension available (the initial migration runs `CREATE EXTENSION IF NOT EXISTS vector`)
-- Node.js + `pnpm` for the frontend
+- Node.js and `pnpm`
+- PostgreSQL with the `pgvector` extension available (the baseline migration runs `CREATE EXTENSION IF NOT EXISTS vector`)
+- Redis
 
-### Backend
+### Server
 
 ```bash
-cd backend
+cd server
+pnpm install
 cp .env.example .env   # then fill in DB credentials and AI endpoint/keys
-uv sync
-make upgrade            # run migrations
-make dev                # uvicorn --reload
+pnpm db:migrate        # fresh database only, see server/README.md
+pnpm start:dev         # API
+pnpm worker:dev        # worker: channel messages + nightly auto-learning
 ```
 
-Other backend commands: `make run` (no reload), `make test`, `make lint`, `make format`, `make migrate` (new Alembic revision), `make seed` (seed demo data via `scripts/seed.py`).
-
-Config is loaded from `.env` via `app/core/config.py`'s pydantic-settings `Settings`. See `backend/.env.example` for every variable, including the OpenRouter endpoint/model settings and the classification confidence threshold.
+Config is loaded from `.env` by `server/src/config.ts`. See `server/.env.example` for every variable.
 
 ### Frontend
 
@@ -92,33 +87,30 @@ pnpm dev
 ## Testing
 
 ```bash
-cd backend
-make test
+cd server
+pnpm test              # needs Postgres (empty, migrated test DB) + Redis
+pnpm typecheck
+pnpm lint
 ```
 
-Run a single test: `uv run pytest tests/engine/test_routing_policy.py::test_escalates_on_low_confidence`
-
-- `tests/conftest.py` wraps each test in an outer transaction + `SAVEPOINT`, so tests can call `session.commit()` without leaking rows into the dev database.
-- Engine-layer unit tests (`tests/engine/`) test the pure functions directly, without a DB or network dependency.
-- A `mock_ai` fixture (respx) mocks AI HTTP calls for domain-level tests.
+Tests run inside rolled-back transactions and use a scripted fake for AI calls. Pure engine logic is checked against frozen vectors in `docs/contract/golden.json`.
 
 ## Project structure
 
 ```text
-backend/
-  app/
-    core/       # settings, async SQLAlchemy engine/session, logging
-    models/     # merchant, conversation, message, product, order, order_item, cart, cart_item, ai_action, labeled_example, channel_connection, webhook_event
-    engine/     # tier0_rules, classification, extraction, routing_policy, pipeline, embeddings, clients, schemas, action_validator, action_resolution, tools/
-    domains/    # health, messages, products, conversations, channels, cart, checkout, store_knowledge — feature routers + schemas (cart/checkout/store_knowledge are service-only, no router — reached via the AI tool layer)
-    api/        # assembles domain routers
+server/
+  src/
+    core/       # shared helpers, HTTP error shape
+    db/         # Drizzle schema (source of truth)
+    engine/     # tier0-rules, classification, extraction, routing-policy, pipeline, embeddings, clients, schemas, action-validator, action-resolution, tools/
+    domains/    # auth, messages, products, conversations, channels, cart, checkout, store-knowledge, ... (cart/checkout/store-knowledge are reached via the AI tool layer)
     clustering/ # offline clustering job
-  alembic/      # migrations
-  scripts/      # seed.py, run_clustering.py, view_orders.py, test_engine.py
-  tests/
+    worker/     # BullMQ worker entry + job logic
+  drizzle/      # migrations
+  test/         # integration tests
 frontend/
-  app/          # layout, home page, /demo workspace (catalog, composer, AI insights)
-docs/           # engineering debugging/review notes and implementation plans
+  app/          # layout, home page, /demo workspace, merchant dashboard
+docs/           # contract specs, migration log, reviews
 ```
 
 ## Documentation

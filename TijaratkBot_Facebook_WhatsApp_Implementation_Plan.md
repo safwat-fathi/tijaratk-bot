@@ -2,7 +2,7 @@
 
 **Version:** 1.0\
 **Date:** 2026-09-07\
-**Implementation stack:** Next.js + Python FastAPI + PostgreSQL + Redis\
+**Implementation stack:** Next.js + NestJS (TypeScript) + PostgreSQL + Redis\
 **Phase 1:** Facebook Messenger\
 **Phase 2:** WhatsApp\
 **Primary design pillar:** Customer-facing UI/UX inside the messaging
@@ -643,7 +643,7 @@ Recommended architecture:
                   Meta Webhook
                          |
                          v
-                 FastAPI Webhook
+                 NestJS Webhook
                          |
                          v
                 Message Normalizer
@@ -735,7 +735,7 @@ Implement the following first:
 
 # 19. Facebook Webhook Design
 
-FastAPI endpoint:
+NestJS endpoint:
 
 ``` text
 GET /webhooks/facebook
@@ -852,7 +852,7 @@ Use a timeout to avoid deadlocks.
 Recommended queue architecture:
 
 ``` text
-FastAPI
+NestJS
   |
 Redis
   |
@@ -876,23 +876,23 @@ Do not introduce Kafka at this stage.
 
 ------------------------------------------------------------------------
 
-# 24. FastAPI Application Structure
+# 24. NestJS Application Structure
 
 Recommended:
 
 ``` text
-app/
-├── main.py
-├── config.py
+src/
+├── main.ts
+├── config.ts
 ├── api/
-│   ├── auth.py
-│   ├── merchants.py
-│   ├── products.py
-│   ├── conversations.py
-│   ├── orders.py
-│   ├── ai.py
+│   ├── auth.ts
+│   ├── merchants.ts
+│   ├── products.ts
+│   ├── conversations.ts
+│   ├── orders.ts
+│   ├── ai.ts
 │   └── webhooks/
-│       └── facebook.py
+│       └── facebook.ts
 │
 ├── domain/
 │   ├── merchants/
@@ -911,11 +911,11 @@ app/
 │
 ├── integrations/
 │   ├── meta/
-│   │   └── facebook.py
+│   │   └── facebook.ts
 │   ├── ai/
-│   │   ├── gateway.py
-│   │   ├── nile_chat.py
-│   │   └── deepseek.py
+│   │   ├── gateway.ts
+│   │   ├── nile_chat.ts
+│   │   └── deepseek.ts
 │   └── storage/
 │
 ├── workers/
@@ -983,7 +983,7 @@ Next.js should provide:
 -   AI settings
 -   Human takeover
 
-FastAPI provides:
+NestJS provides:
 
 -   Webhooks
 -   Commerce APIs
@@ -1292,7 +1292,7 @@ L3 — Human
 The source roadmap already calls for a two-stage AI
 classification/extraction pipeline and escalation telemetry. The
 implementation should preserve that idea while adapting the application
-to FastAPI.
+to NestJS.
 
 ------------------------------------------------------------------------
 
@@ -1971,7 +1971,7 @@ Browser
 Next.js
   |
   v
-FastAPI
+NestJS
 ```
 
 The browser should authenticate against the application.
@@ -2376,7 +2376,7 @@ Initial production:
                  Next.js
                      |
                      v
-                 FastAPI
+                 NestJS
                      |
           +----------+----------+
           |                     |
@@ -2411,12 +2411,12 @@ GPU instance
 
 Keep the model server private.
 
-Only FastAPI/AI Gateway should reach it.
+Only NestJS/AI Gateway should reach it.
 
 Example:
 
 ``` text
-FastAPI -> http://nile-chat:8000
+NestJS -> http://nile-chat:8000
 ```
 
 not:
@@ -2468,7 +2468,7 @@ tijaratkbot/
 │   └── Next.js
 │
 ├── api/
-│   └── FastAPI
+│   └── NestJS
 │
 ├── worker/
 │   └── background jobs
@@ -2600,7 +2600,7 @@ The product should optimize these metrics.
 
 Build:
 
--   FastAPI
+-   NestJS
 -   Next.js
 -   PostgreSQL
 -   Redis
@@ -2672,7 +2672,7 @@ Build:
 Deliverable:
 
 ``` text
-Facebook customer message -> FastAPI -> response
+Facebook customer message -> NestJS -> response
 ```
 
 ------------------------------------------------------------------------
@@ -3341,7 +3341,7 @@ The recommended final architecture is:
                          Merchant Dashboard
                               Next.js
                                    |
-                              FastAPI API
+                              NestJS API
 ```
 
 ------------------------------------------------------------------------

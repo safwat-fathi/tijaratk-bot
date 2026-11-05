@@ -2,6 +2,7 @@
 
 Date: 2026-09-03
 Scope: merchant dashboard + related screens, APIs, DB, and auth.
+Note: `backend/` references below point at the removed FastAPI app; see git history before the `chore/remove-fastapi` branch.
 Status: review only — no implementation in this pass.
 
 ## 1. Why login goes to dashboard with no Facebook login

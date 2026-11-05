@@ -7,9 +7,9 @@ Sourced from `TijaratkBot_PRD.md` (§4–§5, §35, §37) and `TijaratkBot_SRD.m
 - Two-stage AI classification + extraction pipeline (Tier 0 rules + DeepSeek), with escalation telemetry fields (`Message.escalation_reason`)
 - Core models: `merchant`, `conversation`, `message`, `product`, `order`, `labeled_example`
 - API domains: `health`, `messages` (message ingest → full pipeline), `products`, `conversations`
-- Offline clustering job, seed/dev scripts
+- Offline clustering job
 - Demo frontend workspace (`/demo`): product catalog, message composer, AI insights panel
-- **Channel/webhook ingestion** — Facebook, Instagram, WhatsApp (via Twilio) text webhooks with signature verification, deduplication, and an arq worker queue. `ChannelConnection` provisioned manually; outbound replies not implemented. (SRD §7, §35–§37)
+- **Channel/webhook ingestion** — Facebook, Instagram, WhatsApp (via Twilio) text webhooks with signature verification, deduplication, and a BullMQ worker queue. `ChannelConnection` provisioned manually; outbound replies not implemented. (SRD §7, §35–§37)
 
 ## Near-term — MVP gap-closers
 
