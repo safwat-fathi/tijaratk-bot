@@ -1,0 +1,494 @@
+{
+  "nodes": [
+    {
+      "id": "frontend_app_apple_icon_apple_icon",
+      "label": "Apple Touch Icon",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/apple-icon.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_app_icon0_icon0",
+      "label": "Favicon SVG (icon0)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/icon0.svg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_app_icon1_icon1",
+      "label": "Brand Icon / Favicon (icon1)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/icon1.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_app_opengraph_image_opengraph_image",
+      "label": "Open Graph Social Preview Image",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/opengraph-image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_app_twitter_image_twitter_image",
+      "label": "Twitter Card Social Preview Image",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/twitter-image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_app_icon_dark_app_icon_dark",
+      "label": "App Icon (Dark)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-dark.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_app_icon_green_app_icon_green",
+      "label": "App Icon (Green)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-green.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_app_icon_light_app_icon_light",
+      "label": "App Icon (Light)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-light.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_horizontal_logo_dark_horizontal_logo_dark",
+      "label": "Horizontal Brand Logo (Dark)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/horizontal-logo-dark.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_horizontal_logo_light_horizontal_logo_light",
+      "label": "Horizontal Brand Logo (Light)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/horizontal-logo-light.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_images_black_tshirt_black_tshirt",
+      "label": "Product Image: Black T-Shirt",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/black_tshirt.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_images_denim_jacket_denim_jacket",
+      "label": "Product Image: Denim Jacket",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/denim_jacket.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_images_linen_dress_linen_dress",
+      "label": "Product Image: Linen Dress",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/linen_dress.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_web_app_manifest_192x192_web_app_manifest_192x192",
+      "label": "Web App Manifest Icon (192x192)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/web-app-manifest-192x192.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "frontend_public_web_app_manifest_512x512_web_app_manifest_512x512",
+      "label": "Web App Manifest Icon (512x512)",
+      "file_type": "image",
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/web-app-manifest-512x512.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "frontend_app_apple_icon_apple_icon",
+      "target": "frontend_app_layout",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/apple-icon.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_apple_icon_apple_icon",
+      "target": "frontend_app_icon1_icon1",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/apple-icon.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_icon0_icon0",
+      "target": "frontend_app_layout",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/icon0.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_icon0_icon0",
+      "target": "frontend_app_icon1_icon1",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/icon0.svg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_icon1_icon1",
+      "target": "frontend_lib_content_blog_content_blog_posts",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/icon1.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_icon1_icon1",
+      "target": "frontend_public_app_icon_dark_app_icon_dark",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/icon1.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_opengraph_image_opengraph_image",
+      "target": "frontend_app_layout",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/opengraph-image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_opengraph_image_opengraph_image",
+      "target": "frontend_app_twitter_image_twitter_image",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/opengraph-image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_twitter_image_twitter_image",
+      "target": "frontend_app_layout",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/twitter-image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_app_twitter_image_twitter_image",
+      "target": "frontend_app_opengraph_image_opengraph_image",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/app/twitter-image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_app_icon_dark_app_icon_dark",
+      "target": "frontend_app_logo_brandmark",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-dark.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_app_icon_dark_app_icon_dark",
+      "target": "frontend_public_app_icon_light_app_icon_light",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-dark.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_app_icon_dark_app_icon_dark",
+      "target": "frontend_public_app_icon_green_app_icon_green",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-dark.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_app_icon_green_app_icon_green",
+      "target": "frontend_public_app_icon_dark_app_icon_dark",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-green.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_app_icon_green_app_icon_green",
+      "target": "frontend_public_app_icon_light_app_icon_light",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-green.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_app_icon_light_app_icon_light",
+      "target": "frontend_public_app_icon_dark_app_icon_dark",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/app-icon-light.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_horizontal_logo_dark_horizontal_logo_dark",
+      "target": "frontend_public_horizontal_logo_light_horizontal_logo_light",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/horizontal-logo-dark.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_horizontal_logo_dark_horizontal_logo_dark",
+      "target": "frontend_app_logo",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/horizontal-logo-dark.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_horizontal_logo_light_horizontal_logo_light",
+      "target": "frontend_app_layout_generatemetadata",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/horizontal-logo-light.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_horizontal_logo_light_horizontal_logo_light",
+      "target": "frontend_public_horizontal_logo_dark_horizontal_logo_dark",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/horizontal-logo-light.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_black_tshirt_black_tshirt",
+      "target": "frontend_app_demo_demo_product_catalog_getimageforproduct",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/black_tshirt.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_black_tshirt_black_tshirt",
+      "target": "frontend_components_landing_hero_hero",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/black_tshirt.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_black_tshirt_black_tshirt",
+      "target": "frontend_public_images_denim_jacket_denim_jacket",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/black_tshirt.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_black_tshirt_black_tshirt",
+      "target": "frontend_public_images_linen_dress_linen_dress",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/black_tshirt.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_denim_jacket_denim_jacket",
+      "target": "frontend_app_demo_demo_product_catalog_getimageforproduct",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/denim_jacket.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_denim_jacket_denim_jacket",
+      "target": "frontend_public_images_black_tshirt_black_tshirt",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/denim_jacket.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_linen_dress_linen_dress",
+      "target": "frontend_app_demo_demo_product_catalog_getimageforproduct",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/linen_dress.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_images_linen_dress_linen_dress",
+      "target": "frontend_public_images_black_tshirt_black_tshirt",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/images/linen_dress.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_web_app_manifest_192x192_web_app_manifest_192x192",
+      "target": "frontend_app_manifest_manifest",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/web-app-manifest-192x192.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_web_app_manifest_192x192_web_app_manifest_192x192",
+      "target": "frontend_public_web_app_manifest_512x512_web_app_manifest_512x512",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/web-app-manifest-192x192.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_web_app_manifest_512x512_web_app_manifest_512x512",
+      "target": "frontend_app_manifest_manifest",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/web-app-manifest-512x512.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "frontend_public_web_app_manifest_512x512_web_app_manifest_512x512",
+      "target": "frontend_public_web_app_manifest_192x192_web_app_manifest_192x192",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/safwat/Coding/Projects/side-projects/tijaratk-bot/frontend/public/web-app-manifest-512x512.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
