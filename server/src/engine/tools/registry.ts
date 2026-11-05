@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { type DbOrTx, schema } from '../../db/index.js';
 import { addItem, CartItemNotFoundError, removeItem, updateItem } from '../../domains/cart/service.js';
 import { createOrder, getCheckoutState, validateDeliveryArea } from '../../domains/checkout/service.js';
-import { getProduct, searchProducts } from '../../domains/products/service.js';
+import { getProduct, listActiveOffers, searchProducts } from '../../domains/products/service.js';
 import { search as searchKnowledge } from '../../domains/store-knowledge/service.js';
 import { eq } from 'drizzle-orm';
 import { type ValidationError, evaluateAction } from '../action-validator.js';
@@ -74,6 +74,16 @@ const HANDLERS: HandlerMap = {
   },
   async search_store_knowledge(db, a, c) {
     return { results: await searchKnowledge(db, c.merchantId, a.query, a.knowledge_type) };
+  },
+  async get_offers(db, _a, c) {
+    const offers = (await listActiveOffers(db, c.merchantId)).map((p) => ({
+      product_id: p.id,
+      name: p.name,
+      regular_price: p.price,
+      offer_price: p.offer_price,
+      offer_ends_at: p.offer_ends_at,
+    }));
+    return { offers };
   },
   async get_delivery_info(db, a, c) {
     return { ...(await validateDeliveryArea(db, c.merchantId, a.address)) };

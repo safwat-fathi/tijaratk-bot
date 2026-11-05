@@ -88,5 +88,6 @@ export const ProposedAction = z.discriminatedUnion('action', [
     knowledge_type: z.enum(KNOWLEDGE_TYPES).nullable().default(null),
   }),
   action('get_delivery_info', { address: z.string().nullable().default(null) }),
+  action('get_offers', {}),
 ]);
 export type ProposedAction = z.infer<typeof ProposedAction>;

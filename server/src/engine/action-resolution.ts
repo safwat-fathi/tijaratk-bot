@@ -35,6 +35,11 @@ function renderResponse(outcome: ActionOutcome, action: ProposedAction): string 
       const note = result.delivery_validation.status === 'unavailable' ? ' سأقوم بتأكيد رسوم التوصيل لمنطقتك بشكل منفصل.' : '';
       return `تمام، حفظت بياناتك.${note}`;
     }
+    case 'get_offers': {
+      const offers: { name: string; offer_price: number }[] = result.offers ?? [];
+      if (!offers.length) return 'مفيش عروض متاحة حالياً.';
+      return `العروض المتاحة: ${offers.slice(0, 5).map((o) => `${o.name} بـ ${o.offer_price}`).join('، ')}`;
+    }
     case 'search_store_knowledge': {
       const results: { content: string }[] = result.results ?? [];
       return results.length ? results[0].content : 'لم أتمكن من العثور على أي معلومات حول ذلك.';

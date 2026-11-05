@@ -61,7 +61,7 @@ describe('structured-output JSON schema parity with pydantic', () => {
     const a = byName(mine);
     const b = byName(pyBranches);
     expect(Object.keys(a).sort()).toEqual(Object.keys(b).sort());
-    expect(Object.keys(a)).toHaveLength(10);
+    expect(Object.keys(a)).toHaveLength(11);
     for (const name of Object.keys(b)) {
       expect(objectSig(a[name], {}), name).toEqual(objectSig(b[name], defs));
     }

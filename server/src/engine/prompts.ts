@@ -99,6 +99,7 @@ Available actions (respond with exactly one action, matching its argument shape)
 8. create_order(confirm) - customer explicitly confirmed they want to place the order
 9. search_store_knowledge(query, knowledge_type) - customer asked about policy, FAQ, shipping, or returns
 10. get_delivery_info(address) - customer is asking about delivery availability, fee, or timing for an area
+11. get_offers() - customer is asking what offers, deals, discounts or sales are running (not about one specific product)
 
 CRITICAL RULES:
 1. Choose exactly one action per turn - never propose more than one.

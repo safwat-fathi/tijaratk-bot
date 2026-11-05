@@ -38,7 +38,7 @@ describe('prompts', () => {
     const p = buildSystemPrompt({ taskBlock: '{merchant_name} {"reply": "..."}', merchantName: 'X', convState: 'NEW', slots: {} });
     expect(p.endsWith('{merchant_name} {"reply": "..."}')).toBe(true);
     expect(classificationTaskBlock(['a', 'b'])).toContain('Known intents so far: a, b.');
-    for (const n of ['search_products', 'get_delivery_info', 'create_order']) expect(ACTION_TASK_BLOCK).toContain(n);
+    for (const n of ['search_products', 'get_delivery_info', 'get_offers', 'create_order']) expect(ACTION_TASK_BLOCK).toContain(n);
   });
 });
 
@@ -54,7 +54,7 @@ describe('structured-output JSON schemas', () => {
       expect(JSON.stringify(f.json_schema.schema).length).toBeGreaterThan(20);
     }
     const action = jsonSchemaResponseFormat(ProposedAction, 'a').json_schema.schema as any;
-    expect((action.oneOf ?? action.anyOf)).toHaveLength(10);
+    expect((action.oneOf ?? action.anyOf)).toHaveLength(11);
     const extraction = jsonSchemaResponseFormat(ExtractionBase, 'e').json_schema.schema as any;
     expect(extraction.properties.payment_method.description).toContain('InstaPay');
   });

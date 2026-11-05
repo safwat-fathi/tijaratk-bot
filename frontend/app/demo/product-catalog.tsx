@@ -14,6 +14,13 @@ import {
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+// yyyy-mm-dd in the browser's local time, for <input type="date">
+const toDateInput = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString("ar-EG", { day: "numeric", month: "long" });
+
 type VariantRow = { label: string; price: string; stock: string };
 
 const inputClass =
@@ -69,6 +76,8 @@ export function ProductCatalog({
   const [name, setName] = useState("");
   const [aliases, setAliases] = useState("");
   const [price, setPrice] = useState("");
+  const [offerPrice, setOfferPrice] = useState("");
+  const [offerEndsAt, setOfferEndsAt] = useState(""); // yyyy-mm-dd, offer runs through the end of that day
   const [variants, setVariants] = useState<VariantRow[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null); // blob URL or the saved image_url
@@ -97,6 +106,8 @@ export function ProductCatalog({
     setName("");
     setAliases("");
     setPrice("");
+    setOfferPrice("");
+    setOfferEndsAt("");
     setVariants([]);
     setImageFile(null);
     setImagePreview(null);
@@ -110,6 +121,8 @@ export function ProductCatalog({
     setName(p.name);
     setAliases((p.aliases || []).join(", "));
     setPrice(p.price !== null ? String(p.price) : "");
+    setOfferPrice(p.offer_price != null ? String(p.offer_price) : "");
+    setOfferEndsAt(p.offer_ends_at ? toDateInput(p.offer_ends_at) : "");
     setVariants([]);
     setImageFile(null);
     setImagePreview(p.image_url ?? null);
@@ -120,7 +133,6 @@ export function ProductCatalog({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
     const parsedAliases = aliases
@@ -128,6 +140,17 @@ export function ProductCatalog({
       .map((s) => s.trim())
       .filter(Boolean);
     const parsedPrice = price ? parseFloat(price) : null;
+    const parsedOffer = offerPrice ? parseFloat(offerPrice) : null;
+    if (parsedOffer !== null) {
+      if (parsedPrice === null) return setError("حدد سعر المنتج أولاً قبل إضافة عرض");
+      if (!(parsedOffer > 0 && parsedOffer < parsedPrice)) return setError("سعر العرض يجب أن يكون أقل من سعر المنتج");
+    }
+    setLoading(true);
+    // Offer runs through the end of the chosen day (local time); both are cleared together when no offer price.
+    const offerFields = {
+      offer_price: parsedOffer,
+      offer_ends_at: parsedOffer !== null && offerEndsAt ? new Date(`${offerEndsAt}T23:59:59`).toISOString() : null,
+    };
 
     try {
       let productId: string;
@@ -139,6 +162,7 @@ export function ProductCatalog({
             name,
             aliases: parsedAliases,
             price: parsedPrice,
+            ...offerFields,
           },
           merchantId
         );
@@ -147,7 +171,7 @@ export function ProductCatalog({
           .filter((v) => v.label.trim())
           .map((v) => ({
             label: v.label.trim(),
-            price: v.price ? parseFloat(v.price) : parsedPrice || undefined,
+            price: v.price ? parseFloat(v.price) : undefined, // blank = follows the product price (and its offer)
             stock: v.stock ? parseInt(v.stock, 10) : 10,
           }));
 
@@ -156,6 +180,7 @@ export function ProductCatalog({
             name,
             aliases: parsedAliases,
             price: parsedPrice,
+            ...offerFields,
             variants: parsedVariants,
           },
           merchantId
@@ -273,12 +298,25 @@ export function ProductCatalog({
               <div className="flex flex-1 flex-col p-4">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-medium text-gray-900">{product.name}</h3>
-                  {product.price !== null && (
-                    <span className="font-semibold text-gray-900">
-                      {product.price} {m.demo_catalog_egp()}
-                    </span>
-                  )}
+                  {product.price !== null &&
+                    (product.offer_active && product.offer_price != null ? (
+                      <span className="flex flex-col items-end leading-tight">
+                        <span className="font-semibold text-emerald-700">
+                          {product.offer_price} {m.demo_catalog_egp()}
+                        </span>
+                        <span className="text-xs text-gray-400 line-through">{product.price}</span>
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-gray-900">
+                        {product.price} {m.demo_catalog_egp()}
+                      </span>
+                    ))}
                 </div>
+                {product.offer_active && (
+                  <p className="mt-1 text-xs font-medium text-amber-700">
+                    عرض{product.offer_ends_at ? ` حتى ${formatDate(product.offer_ends_at)}` : ""}
+                  </p>
+                )}
                 {product.aliases && product.aliases.length > 0 && (
                   <p className="mt-1 text-xs text-gray-500">
                     {m.demo_catalog_aka()} {product.aliases.join(", ")}
@@ -370,6 +408,44 @@ export function ProductCatalog({
                 />
               </div>
 
+              <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                <p className="text-xs font-semibold text-gray-700">عرض خاص (اختياري)</p>
+                <p className="mb-2 mt-0.5 text-[11px] text-gray-500">
+                  يظهر السعر القديم مشطوبًا، والبوت يذكر سعر العرض ويحسب به الطلب طوال مدة العرض.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">سعر العرض (جنيه)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={offerPrice}
+                      onChange={(e) => setOfferPrice(e.target.value)}
+                      placeholder="مثال: 600"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-medium text-gray-600">ينتهي في</label>
+                    <input
+                      type="date"
+                      value={offerEndsAt}
+                      min={toDateInput(new Date().toISOString())}
+                      disabled={!offerPrice}
+                      onChange={(e) => setOfferEndsAt(e.target.value)}
+                      className={`${inputClass} disabled:opacity-50`}
+                    />
+                  </div>
+                </div>
+                {offerPrice && price && Number(offerPrice) > 0 && Number(offerPrice) < Number(price) && (
+                  <p className="mt-2 text-[11px] font-medium text-emerald-700">
+                    خصم {Math.round((1 - Number(offerPrice) / Number(price)) * 100)}٪
+                    {offerEndsAt ? "" : " — بدون تاريخ انتهاء (يستمر حتى تحذفه)"}
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">صورة المنتج (اختياري)</label>
                 <div className="flex items-center gap-3">
@@ -409,7 +485,7 @@ export function ProductCatalog({
                 <div className="mt-1">
                   <p className="text-xs font-semibold text-gray-700">الأنواع (اختياري)</p>
                   <p className="mb-2 mt-0.5 text-[11px] text-gray-500">
-                    مثل المقاس أو اللون. لو تركت السعر فارغًا يُستخدم سعر المنتج، ولو تركت الكمية فارغة تُحسب 10.
+                    مثل المقاس أو اللون. لو تركت السعر فارغًا يُستخدم سعر المنتج (ويشمل العرض)، ولو تركت الكمية فارغة تُحسب 10. النوع الذي له سعر خاص لا يتأثر بالعرض.
                   </p>
                   <div className="flex max-h-56 flex-col gap-2 overflow-y-auto">
                     {variants.map((v, i) => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { addItem, CartItemNotFoundError, removeItem, updateItem } from '../src/domains/cart/service.js';
 import { createOrder, getCheckoutState, validateDeliveryArea } from '../src/domains/checkout/service.js';
 import { ActionArgumentError } from '../src/engine/tools/errors.js';
+import { dispatchAction } from '../src/engine/tools/registry.js';
 import { makeConversation, makeMerchant, makeProduct, schema, withRollback } from './harness.js';
 
 const setup = async (db: any, o: { price?: string | null } = {}) => {
@@ -117,7 +118,7 @@ describe('checkout service', () => {
       await addItem(db, m.id, c.id, p.id, 2, null, v.id);
 
       const preview = await createOrder(db, m.id, c.id, false, msg.id);
-      expect(preview).toMatchObject({ confirmed: false, subtotal: '200.00' }); // product price (variants ignored by get_checkout_state, as in Python)
+      expect(preview).toMatchObject({ confirmed: false, subtotal: '240.00' }); // preview uses the same price rule as the order: the variant's own price wins
       expect(await db.select().from(schema.orders)).toHaveLength(0);
 
       const first = (await createOrder(db, m.id, c.id, true, msg.id)) as any;
@@ -148,6 +149,35 @@ describe('checkout service', () => {
       ).rejects.toThrow('delivery not available: no_matching_area');
       const [cart] = await db.select().from(schema.carts);
       expect(cart.status).toBe('ACTIVE');
+    });
+  });
+});
+
+describe('offers', () => {
+  it('an active offer sets the product unit price in the checkout state; an ended one does not', async () => {
+    await withRollback(async (db) => {
+      const { m, c, p } = await setup(db, { price: '100.00' });
+      await addItem(db, m.id, c.id, p.id, 2);
+
+      await db.update(schema.products).set({ offerPrice: '80.00', offerEndsAt: new Date(Date.now() + 86_400_000) }).where(eq(schema.products.id, p.id));
+      expect((await getCheckoutState(db, m.id, c.id)).items[0]).toMatchObject({ unit_price: '80.00', line_total: '160.00' });
+
+      await db.update(schema.products).set({ offerEndsAt: new Date(Date.now() - 1000) }).where(eq(schema.products.id, p.id));
+      expect((await getCheckoutState(db, m.id, c.id)).items[0]).toMatchObject({ unit_price: '100.00', line_total: '200.00' });
+    });
+  });
+
+  it('get_offers lists only this merchant\'s running offers', async () => {
+    await withRollback(async (db) => {
+      const { m, c, p, msg } = await setup(db, { price: '100.00' });
+      await makeProduct(db, m.id, { name: 'no offer', price: '50.00' } as any);
+      await db.update(schema.products).set({ offerPrice: '75.00' }).where(eq(schema.products.id, p.id));
+
+      const out = await dispatchAction(db, { action: 'get_offers', confidence: 0.9 }, { merchantId: m.id, conversationId: c.id, messageId: msg.id });
+      expect(out.status).toBe('executed');
+      expect((out.result as any).offers).toEqual([
+        expect.objectContaining({ product_id: p.id, regular_price: 100, offer_price: 75, offer_ends_at: null }),
+      ]);
     });
   });
 });

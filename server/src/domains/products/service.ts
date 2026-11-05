@@ -1,9 +1,10 @@
 import { and, asc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { getSettings } from '../../config.js';
-import { num } from '../../core/serialize.js';
+import { iso, num } from '../../core/serialize.js';
 import { type DbOrTx, schema } from '../../db/index.js';
 import type { Product, ProductVariant } from '../../db/types.js';
 import { embedText } from '../../engine/embeddings.js';
+import { isOfferActive } from './offers.js';
 
 export interface ProductVariantRead {
   id: string;
@@ -25,6 +26,10 @@ export interface ProductRead {
   category: string | null;
   description: string | null;
   image_url: string | null;
+  /** Sale price and optional end; offer_active is false once the end has passed. */
+  offer_price: number | null;
+  offer_ends_at: string | null;
+  offer_active: boolean;
 }
 
 export interface ProductCreate {
@@ -34,9 +39,11 @@ export interface ProductCreate {
   category: string | null;
   description: string | null;
   image_url: string | null;
+  offer_price: number | null;
+  offer_ends_at: string | null;
   variants: { label: string; sku: string | null; price: number | null; stock: number | null; attributes: Record<string, unknown> }[];
 }
-export type ProductUpdate = Partial<Pick<ProductCreate, 'name' | 'aliases' | 'price' | 'category' | 'description' | 'image_url'>>;
+export type ProductUpdate = Partial<Pick<ProductCreate, 'name' | 'aliases' | 'price' | 'category' | 'description' | 'image_url' | 'offer_price' | 'offer_ends_at'>>;
 
 const toVariantRead = (v: ProductVariant): ProductVariantRead => ({
   id: v.id,
@@ -59,6 +66,9 @@ export const toProductRead = (p: Product, variants: ProductVariant[]): ProductRe
   category: p.category,
   description: p.description,
   image_url: p.imageUrl,
+  offer_price: num(p.offerPrice),
+  offer_ends_at: iso(p.offerEndsAt),
+  offer_active: isOfferActive(p),
 });
 
 async function withVariants(db: DbOrTx, products: Product[]): Promise<ProductRead[]> {
@@ -91,6 +101,17 @@ export async function searchProducts(db: DbOrTx, merchantId: string, query: stri
   return withVariants(db, rows);
 }
 
+/** Products with a running offer, for the AI's get_offers tool. */
+export async function listActiveOffers(db: DbOrTx, merchantId: string): Promise<ProductRead[]> {
+  const t = schema.products;
+  const rows = await db
+    .select()
+    .from(t)
+    .where(and(eq(t.merchantId, merchantId), sql`${t.offerPrice} IS NOT NULL`, or(sql`${t.offerEndsAt} IS NULL`, sql`${t.offerEndsAt} > now()`)))
+    .orderBy(asc(t.name));
+  return withVariants(db, rows);
+}
+
 export async function getProduct(db: DbOrTx, merchantId: string, productId: string): Promise<ProductRead | null> {
   const [p] = await db.select().from(schema.products).where(eq(schema.products.id, productId));
   if (!p || p.merchantId !== merchantId) return null;
@@ -109,6 +130,8 @@ export async function createProduct(db: DbOrTx, merchantId: string, payload: Pro
       category: payload.category,
       description: payload.description,
       imageUrl: payload.image_url,
+      offerPrice: payload.offer_price != null ? String(payload.offer_price) : null,
+      offerEndsAt: payload.offer_ends_at ? new Date(payload.offer_ends_at) : null,
       embedding,
     })
     .returning();
@@ -138,6 +161,9 @@ export async function updateProduct(db: DbOrTx, merchantId: string, productId: s
   if (payload.category != null) set.category = payload.category;
   if (payload.description != null) set.description = payload.description;
   if (payload.image_url != null) set.imageUrl = payload.image_url;
+  // Offer fields: null clears the offer, undefined leaves it alone.
+  if (payload.offer_price !== undefined) set.offerPrice = payload.offer_price == null ? null : String(payload.offer_price);
+  if (payload.offer_ends_at !== undefined) set.offerEndsAt = payload.offer_ends_at ? new Date(payload.offer_ends_at) : null;
   if (payload.name != null || payload.aliases != null) {
     set.embedding = await embedText(embeddingText(set.name ?? existing.name, set.aliases ?? existing.aliases));
   }

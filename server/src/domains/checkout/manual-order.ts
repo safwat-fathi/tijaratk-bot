@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { type DbOrTx, schema } from '../../db/index.js';
+import { resolveUnitPrice } from '../products/offers.js';
 import { type ResolvedOrderLine, writeOrder } from './order-writer.js';
 
 export class ProductNotFoundError extends Error {
@@ -28,16 +29,17 @@ export async function createManualOrder(db: DbOrTx, merchantId: string, p: Manua
     if (!product || product.merchantId !== merchantId) throw new ProductNotFoundError(item.product_id);
 
     let variantId: string | null = null;
-    let unitPrice = product.price ?? '0.00';
+    let variantPrice: string | null = null;
     let variantSnapshot: string | null = null;
     if (item.variant_id) {
       const [variant] = await db.select().from(schema.productVariants).where(eq(schema.productVariants.id, item.variant_id));
       if (variant && variant.productId === product.id) {
         variantId = variant.id;
-        if (variant.price !== null) unitPrice = variant.price;
+        variantPrice = variant.price;
         variantSnapshot = variant.label;
       }
     }
+    const unitPrice = resolveUnitPrice(product, { price: variantPrice }) ?? '0.00';
     lines.push({ productId: product.id, variantId, nameSnapshot: product.name, variantSnapshot, unitPrice, quantity: item.quantity });
     extractedItems.push({ product_name: product.name, product_id: product.id, variant_id: variantId, quantity: item.quantity });
   }

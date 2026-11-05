@@ -3,6 +3,7 @@ import { centsToString, lineTotalCents, quantize2 } from '../../core/money.js';
 import { cpLen } from '../../core/pystr.js';
 import { type DbOrTx, schema } from '../../db/index.js';
 import { ActionArgumentError } from '../../engine/tools/errors.js';
+import { resolveUnitPrice } from '../products/offers.js';
 import { type ResolvedOrderLine, writeOrder } from './order-writer.js';
 
 export type DeliveryValidation =
@@ -40,8 +41,8 @@ export async function getCheckoutState(db: DbOrTx, merchantId: string, conversat
   const [merchant] = await db.select().from(schema.merchants).where(eq(schema.merchants.id, merchantId));
   const rows = await activeCartRows(db, merchantId, conversationId);
   let subtotal = 0n;
-  const items = rows.map(({ item, product }) => {
-    const price = product.price ?? '0.00';
+  const items = rows.map(({ item, product, variant }) => {
+    const price = resolveUnitPrice(product, variant) ?? '0.00';
     const line = lineTotalCents(price, item.quantity);
     subtotal += line;
     return {
@@ -49,7 +50,7 @@ export async function getCheckoutState(db: DbOrTx, merchantId: string, conversat
       product_id: product.id,
       name: product.name,
       quantity: item.quantity,
-      unit_price: String(product.price),
+      unit_price: String(price),
       line_total: centsToString(line),
     };
   });
@@ -114,13 +115,13 @@ export async function createOrder(
     throw new ActionArgumentError([`delivery not available: ${delivery.reason ?? 'unknown'}`]);
   }
 
-  // Price-fallback: a variant's own price wins when set; otherwise the parent product's price.
+  // Price-fallback: a variant's own price wins when set; otherwise the product price (or its active offer).
   const lines: ResolvedOrderLine[] = rows.map(({ item, product, variant }) => ({
     productId: product.id,
     variantId: item.variantId,
     nameSnapshot: product.name,
     variantSnapshot: variant ? variant.label : null,
-    unitPrice: (variant && variant.price !== null ? variant.price : product.price)!,
+    unitPrice: resolveUnitPrice(product, variant)!,
     quantity: item.quantity,
   }));
 

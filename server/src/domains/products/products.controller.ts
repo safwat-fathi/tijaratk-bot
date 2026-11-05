@@ -22,6 +22,8 @@ const ProductCreate = z.object({
   category: z.string().nullable().default(null),
   description: z.string().nullable().default(null),
   image_url: z.string().nullable().default(null),
+  offer_price: z.number().positive().nullable().default(null),
+  offer_ends_at: z.iso.datetime({ offset: true }).nullable().default(null),
   variants: z.array(Variant).default([]),
 });
 const ProductUpdate = z.object({
@@ -31,6 +33,8 @@ const ProductUpdate = z.object({
   category: z.string().nullish(),
   description: z.string().nullish(),
   image_url: z.string().nullish(),
+  offer_price: z.number().positive().nullish(),
+  offer_ends_at: z.iso.datetime({ offset: true }).nullish(),
 });
 
 @Controller('products')

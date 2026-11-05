@@ -144,6 +144,8 @@ export const products = pgTable("products", {
 	category: varchar(),
 	description: varchar(),
 	imageUrl: varchar("image_url"),
+	offerPrice: numeric("offer_price", { precision: 10, scale:  2 }),
+	offerEndsAt: timestamp("offer_ends_at", { withTimezone: true, mode: 'date' }),
 }, (table) => [
 	index("ix_products_category").using("btree", table.category.asc().nullsLast().op("text_ops")),
 	index("ix_products_merchant_id").using("btree", table.merchantId.asc().nullsLast().op("text_ops")),

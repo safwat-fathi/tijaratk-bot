@@ -14,6 +14,9 @@ export interface Product {
   variants: ProductVariant[] | Record<string, unknown>;
   price: number | null;
   image_url?: string | null;
+  offer_price?: number | null;
+  offer_ends_at?: string | null;
+  offer_active?: boolean;
 }
 
 export async function getProducts(): Promise<Product[]> {

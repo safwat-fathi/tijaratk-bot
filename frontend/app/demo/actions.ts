@@ -95,6 +95,8 @@ export async function createProductAction(
     name: string;
     aliases: string[];
     price?: number | null;
+    offer_price?: number | null;
+    offer_ends_at?: string | null;
     variants?: Array<{ label: string; sku?: string; price?: number; stock?: number }>;
   },
   merchantId?: string,
@@ -112,7 +114,7 @@ export async function createProductAction(
 
 export async function updateProductAction(
   productId: string,
-  data: { name?: string; aliases?: string[]; price?: number | null },
+  data: { name?: string; aliases?: string[]; price?: number | null; offer_price?: number | null; offer_ends_at?: string | null },
   merchantId?: string,
 ): Promise<Product> {
   const baseUrl = getBaseUrl();

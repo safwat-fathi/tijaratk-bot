@@ -916,6 +916,27 @@
           "title": "GetDeliveryInfoAction",
           "type": "object"
         },
+        "GetOffersAction": {
+          "properties": {
+            "confidence": {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "title": "Confidence",
+              "type": "number"
+            },
+            "action": {
+              "const": "get_offers",
+              "title": "Action",
+              "type": "string"
+            }
+          },
+          "required": [
+            "confidence",
+            "action"
+          ],
+          "title": "GetOffersAction",
+          "type": "object"
+        },
         "GetProductAction": {
           "properties": {
             "confidence": {
@@ -1155,6 +1176,7 @@
           "create_order": "#/$defs/CreateOrderAction",
           "get_checkout_state": "#/$defs/GetCheckoutStateAction",
           "get_delivery_info": "#/$defs/GetDeliveryInfoAction",
+          "get_offers": "#/$defs/GetOffersAction",
           "get_product": "#/$defs/GetProductAction",
           "remove_from_cart": "#/$defs/RemoveFromCartAction",
           "search_products": "#/$defs/SearchProductsAction",
@@ -1194,6 +1216,9 @@
         },
         {
           "$ref": "#/$defs/GetDeliveryInfoAction"
+        },
+        {
+          "$ref": "#/$defs/GetOffersAction"
         }
       ],
       "title": "ProposedActionEnvelope"
