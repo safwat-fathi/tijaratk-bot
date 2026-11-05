@@ -220,8 +220,9 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
           userPrompt: `customer: ${normalizedText}\nThe customer just greeted you. Greet them back and ask how you can help.`,
         });
       }
-      // Plain-text fallback when the AI gave no reply (AI off or failed); no buttons.
-      outbound.push(textMessage(aiText ?? greetingFallback(displayName)));
+      // Plain-text fallback only when AI is on but the call failed; AI off = stay silent.
+      const aiOn = info.aiEnabled && conversation.aiEnabled && !conversation.humanTakeover;
+      if (aiText ?? aiOn) outbound.push(textMessage(aiText ?? greetingFallback(displayName)));
     }
     return finish(null, outbound);
   }
@@ -235,7 +236,6 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
         message.intent = 'fallback:no_ai';
         message.intentConfidence = 1.0;
         message.modelTier = 'RULE';
-        outbound = [textMessage(greetingFallback(displayName))];
       }
     }
     return finish(null, outbound);
