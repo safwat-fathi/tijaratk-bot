@@ -160,11 +160,11 @@ export function Nav() {
 
               <div className="mt-3 border-t border-gray-100 pt-3">
                 <Link
-                  href="/login"
+                  href="/merchant"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex w-full items-center justify-center rounded-xl border border-gray-300 bg-gray-50 px-4 py-2.5 text-xs font-bold text-gray-800"
                 >
-                  تسجيل دخول التجار
+                  لوحة التحكم
                 </Link>
               </div>
             </div>

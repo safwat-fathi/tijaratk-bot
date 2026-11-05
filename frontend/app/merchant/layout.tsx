@@ -1,5 +1,4 @@
 import { SidebarClient } from "./sidebar-client";
-import { TokenVerifier } from "@/components/token-verifier";
 
 export default function MerchantLayout({
   children,
@@ -8,7 +7,6 @@ export default function MerchantLayout({
 }) {
   return (
     <SidebarClient>
-      <TokenVerifier />
       {children}
     </SidebarClient>
   );

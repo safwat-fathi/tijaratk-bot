@@ -51,7 +51,7 @@ export default function HtmlSitemapPage() {
       title: "التجربة ولوحة التحكم",
       links: [
         { href: "/demo", label: "العرض التوضيحي (Interactive Demo)", desc: "محاكاة محادثة عميل حقيقية مع محرك الذكاء الاصطناعي" },
-        { href: "/login", label: "تسجيل دخول التجار (Merchant Login)", desc: "الوصول للوحة التحكم وإدارة الطلبات" },
+        { href: "/merchant", label: "لوحة التحكم (Merchant Dashboard)", desc: "إدارة المنتجات والطلبات والمحادثات" },
       ],
     },
   ];

@@ -1,11 +1,20 @@
 import { getCurrentMerchant, getMerchantSettings } from "@/lib/dal";
-import { ConnectFacebookPages } from "@/components/connect-facebook-pages";
+import { connectFacebookAction } from "../actions";
 import { AutoLearningToggle } from "./auto-learning-toggle";
 import { WelcomeMessageEditor } from "./welcome-message-editor";
 
-export default async function SettingsPage() {
+const CONNECT_ERRORS: Record<string, string> = {
+  account_in_use: "هذه الصفحة مرتبطة بحساب تاجر آخر.",
+  account_not_found: "لم نعثر على الصفحة، حاول مرة أخرى.",
+  unsupported_platform: "هذا النوع من الحسابات غير مدعوم.",
+  zernio_unavailable: "الخدمة غير متاحة حالياً، حاول بعد قليل.",
+};
+
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ connected?: string; error?: string }> }) {
   const { merchantName, channels } = await getCurrentMerchant();
   const settings = await getMerchantSettings();
+  const { connected, error } = await searchParams;
+  const fbConnected = channels.some((c) => c.channel === "FACEBOOK");
 
   return (
     <div className="font-sans max-w-3xl">
@@ -15,6 +24,17 @@ export default async function SettingsPage() {
           إدارة قنواتك المتصلة وتفضيلاتك.
         </p>
       </div>
+
+      {connected && (
+        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          تم ربط صفحتك بنجاح. البوت جاهز للرد على رسائل العملاء.
+        </div>
+      )}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {CONNECT_ERRORS[error] ?? "تعذر ربط الصفحة، حاول مرة أخرى."}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
@@ -37,15 +57,24 @@ export default async function SettingsPage() {
               <div>
                 <p className="font-medium text-slate-900">فيسبوك ماسنجر</p>
                 <p className="text-sm text-slate-500">
-                  متصل بـ: {merchantName}
+                  {fbConnected ? `متصل بـ: ${merchantName}` : "اربط صفحتك ليرد البوت على رسائل العملاء"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                نشط
-              </span>
-              <ConnectFacebookPages />
+              {fbConnected && (
+                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                  نشط
+                </span>
+              )}
+              <form action={connectFacebookAction}>
+                <button
+                  type="submit"
+                  className="px-4 py-2 border border-slate-300 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  {fbConnected ? "إدارة الصفحات" : "ربط صفحة فيسبوك"}
+                </button>
+              </form>
             </div>
           </div>
 
