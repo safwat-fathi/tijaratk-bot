@@ -63,18 +63,34 @@ describe('free plan conversation limit', () => {
     });
   });
 
-  it('spam links and emoji reactions do not use up a slot', async () => {
+  const spamRows = async (db: Db, merchantId: string, n: number, modelTier: 'RULE' | 'DEEPSEEK') => {
+    for (let i = 0; i < n; i++) {
+      const c = await makeConversation(db, merchantId);
+      await db.insert(schema.messages).values({ conversationId: c.id, direction: 'INBOUND', rawText: 'x', normalizedText: 'x', intent: i % 2 ? 'spam' : 'reaction', modelTier, createdAt: new Date(Date.now() - (30 - i) * 1000) });
+    }
+  };
+
+  it('tier-0 spam links and emoji reactions do not use up a slot', async () => {
     const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
     await withRollback(async (db) => {
       const m = await makeMerchant(db);
-      for (let i = 0; i < 12; i++) {
-        const c = await makeConversation(db, m.id);
-        await db.insert(schema.messages).values({ conversationId: c.id, direction: 'INBOUND', rawText: 'x', normalizedText: 'x', intent: i % 2 ? 'spam' : 'reaction' });
-      }
+      await spamRows(db, m.id, 12, 'RULE');
       const real = await makeConversation(db, m.id);
       const r = await processMessage(db, real, msg(real, 'السلام عليكم'));
       expect(kinds(r)).toEqual(['text']);
       expect(ai.calls).toHaveLength(1);
+    });
+  });
+
+  it('model-labelled spam still holds a slot (the AI replies to those)', async () => {
+    const ai = fakeAi([]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db);
+      await spamRows(db, m.id, 10, 'DEEPSEEK');
+      const real = await makeConversation(db, m.id);
+      const r = await processMessage(db, real, msg(real, 'السلام عليكم'));
+      expect(r.messages).toEqual([]);
+      expect(ai.calls).toHaveLength(0);
     });
   });
 

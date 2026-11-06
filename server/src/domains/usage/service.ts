@@ -1,8 +1,8 @@
-import { and, asc, eq, gte, isNull, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, isNull, ne, notInArray, or, sql } from 'drizzle-orm';
 import { getSettings } from '../../config.js';
 import { type DbOrTx, schema } from '../../db/index.js';
 
-// Customer threads with a real inbound message this month (tier-0 spam links and emoji reactions don't hold a slot), first to write first. The first N of them are covered by the plan.
+// Customer threads with a real inbound message this month (spam links and emoji reactions decided by the tier-0 rules don't hold a slot; model-labelled ones do, since the AI replies to them), first to write first. The first N of them are covered by the plan.
 // ponytail: month starts at UTC midnight (Egypt is UTC+2/+3); switch to Africa/Cairo if month-edge accuracy matters.
 async function conversationsThisMonth(db: DbOrTx, merchantId: string): Promise<string[]> {
   const now = new Date();
@@ -12,7 +12,7 @@ async function conversationsThisMonth(db: DbOrTx, merchantId: string): Promise<s
     .select({ id: m.conversationId })
     .from(m)
     .innerJoin(schema.conversations, eq(schema.conversations.id, m.conversationId))
-    .where(and(eq(schema.conversations.merchantId, merchantId), eq(m.direction, 'INBOUND'), gte(m.createdAt, monthStart), or(isNull(m.intent), notInArray(m.intent, ['spam', 'reaction']))))
+    .where(and(eq(schema.conversations.merchantId, merchantId), eq(m.direction, 'INBOUND'), gte(m.createdAt, monthStart), or(isNull(m.intent), notInArray(m.intent, ['spam', 'reaction']), isNull(m.modelTier), ne(m.modelTier, 'RULE'))))
     .groupBy(m.conversationId)
     .orderBy(asc(sql`min(${m.createdAt})`), asc(m.conversationId));
   return rows.map((r) => r.id);
