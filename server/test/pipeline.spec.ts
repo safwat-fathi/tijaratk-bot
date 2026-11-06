@@ -63,6 +63,21 @@ describe('free plan conversation limit', () => {
     });
   });
 
+  it('spam links and emoji reactions do not use up a slot', async () => {
+    const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db);
+      for (let i = 0; i < 12; i++) {
+        const c = await makeConversation(db, m.id);
+        await db.insert(schema.messages).values({ conversationId: c.id, direction: 'INBOUND', rawText: 'x', normalizedText: 'x', intent: i % 2 ? 'spam' : 'reaction' });
+      }
+      const real = await makeConversation(db, m.id);
+      const r = await processMessage(db, real, msg(real, 'السلام عليكم'));
+      expect(kinds(r)).toEqual(['text']);
+      expect(ai.calls).toHaveLength(1);
+    });
+  });
+
   it('a conversation from last month is covered again when its customer writes this month', async () => {
     fakeAi([{ reply: 'أهلاً' }]);
     await withRollback(async (db) => {
