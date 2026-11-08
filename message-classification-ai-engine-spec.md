@@ -43,6 +43,15 @@ Scope: storage → normalization → classification → structured extraction, u
 | Serving Method | Self-hosted (e.g., Hugging Face TEI container, FastEmbed, ONNX)| Low-latency local embedding generation with zero per-token third-party API costs                                    |
 | Max Sequence   | 8192 tokens                                                   | Ample capacity for whole messages, turn histories, and labeled examples                                             |
 
+### 1.4 Customer Reply Phrasing Model: GPT-4o-mini (via OpenRouter API)
+
+| Property             | Value                                                              | Design implication                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Role                 | Customer-facing generation tier (`REPLY_LLM_MODEL`)               | Crafts final customer-facing responses grounded in catalog facts and policies. Falls back to `LLM_MODEL` (DeepSeek) when unset.                                              |
+| Context capacity     | 128k context window                                                | Ingests turn history, store facts (catalog, policies), and action results.                                                                                                   |
+| Phrasing & Dialect   | High natural dialect fluency and consistency                       | Excels at warm, concise Egyptian Arabic phrasing, adherence to gender agreement rules, and strict grounding without hallucinations.                                        |
+| Serving & Provider   | **OpenRouter API** (`openai/gpt-4o-mini`)                          | Managed via standard OpenAI client SDK (`getLlmClient()`), tracked under `aiUsageEvents` with model-specific token counts and latency.                                        |
+
 ---
 
 ## 2. Data Model

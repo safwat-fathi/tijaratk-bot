@@ -12,7 +12,8 @@ This repo currently implements the **AI message-classification/routing engine** 
 
 **Built:**
 - Tier 0 rule-based short-circuit (`backend/src/engine/tier0-rules.ts`)
-- DeepSeek v4 Flash for all classification and extraction, with a dialect-aware system prompt, self-reported confidence, and structured-output schemas (`backend/src/engine/classification.ts`, `extraction.ts`, `schemas.ts`, `prompts.ts`)
+- DeepSeek v4 Flash for classification, action routing, and extraction, with a dialect-aware system prompt, self-reported confidence, and structured-output schemas (`backend/src/engine/classification.ts`, `extraction.ts`, `schemas.ts`, `prompts.ts`)
+- Dedicated reply phrasing model (`REPLY_LLM_MODEL`, defaulting to `openai/gpt-4o-mini` or falling back to `LLM_MODEL`) for natural, grounded customer-facing Egyptian Arabic replies (`backend/src/engine/generation.ts`)
 - Pre/post-flight checks (`evaluatePreflight`, `evaluatePostflight` in `backend/src/engine/routing-policy.ts`) flag ambiguous or low-confidence results for human review (`escalation_reason`, `OrderStatus.PENDING_REVIEW`)
 - End-to-end pipeline (`backend/src/engine/pipeline.ts`) wired into a real endpoint: `POST /messages` ingests a message for an existing conversation, runs it through the full tiered pipeline, and persists intent/order/escalation data
 - Core data models: `merchant`, `conversation`, `message`, `product`, `order`, `labeled_example`
@@ -39,16 +40,20 @@ Customer Message
   L0 rules  --(deterministic)--> execute
       |
       v
-  DeepSeek v4 Flash (classification + extraction)
+  DeepSeek v4 Flash (routing, intent classification & extraction)
       |
-      +-- confident + unambiguous --> execute (AUTO_CONFIRMED)
+      +-- confident + unambiguous --> execute / tool action
+      |                                      |
+      |                                      v
+      |                              GPT-4o-mini (customer-facing Egyptian reply)
       |
       +-- low confidence / ambiguous / reasoning heavy / repeated correction --> PENDING_REVIEW (escalate to human)
 ```
 
-- **DeepSeek v4 Flash** (via OpenRouter): sole LLM engine for classification and extraction, driven by a system prompt providing Egyptian Arabic / Arabizi dialect guidance. Low confidence, ambiguous extraction, repeated correction, or reasoning-heavy content flags the order for review. Each reason is a stable string persisted to `Message.escalation_reason`.
+- **DeepSeek v4 Flash** (`LLM_MODEL`, via OpenRouter): primary LLM engine for intent classification, tool/action resolution, and structured extraction, driven by a system prompt providing Egyptian Arabic / Arabizi dialect guidance. Low confidence, ambiguous extraction, repeated correction, or reasoning-heavy content flags the order for review. Each reason is a stable string persisted to `Message.escalation_reason`.
+- **GPT-4o-mini / Reply Model** (`REPLY_LLM_MODEL`, via OpenRouter): dedicated customer-facing generation model (falls back to `LLM_MODEL` if unset) for warm, concise Egyptian Arabic phrasing grounded strictly in store facts (catalog and policies).
 - **Embeddings — BAAI/bge-m3** (1024-dim, via OpenRouter): separate from the chat-completion engine, used for semantic search/clustering (`backend/src/engine/embeddings.ts`, `backend/src/clustering/`).
-- `backend/src/engine/clients.ts` builds two OpenAI-SDK clients (DeepSeek, embeddings) to communicate with the OpenAI-compatible OpenRouter API.
+- `backend/src/engine/clients.ts` builds OpenAI-SDK clients to communicate with the OpenAI-compatible OpenRouter API.
 
 ## Tech stack
 
