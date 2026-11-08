@@ -5,11 +5,11 @@ import { existsSync } from 'node:fs';
 import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
-import { databaseUrl, getSettings } from '../config.js';
+import { getSettings } from '../config.js';
 import { createDb } from '../db/index.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
-const { db, pool } = createDb(databaseUrl(getSettings()));
+const { db, pool } = createDb(getSettings().DB_URL);
 const folder = 'drizzle';
 const rows = async (q: string) => (await db.execute(sql.raw(q))).rows;
 

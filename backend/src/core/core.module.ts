@@ -2,7 +2,7 @@ import { Global, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { Redis } from 'ioredis';
 import pg from 'pg';
-import { type Settings, databaseUrl, getSettings } from '../config.js';
+import { type Settings, getSettings } from '../config.js';
 import { type Db, createDb } from '../db/index.js';
 import { CHANNEL_QUEUE_NAME, DB, QUEUE, REDIS, SETTINGS } from './tokens.js';
 
@@ -16,7 +16,7 @@ const pools = new WeakMap<object, pg.Pool>();
       provide: DB,
       inject: [SETTINGS],
       useFactory: (s: Settings): Db => {
-        const { db, pool } = createDb(databaseUrl(s));
+        const { db, pool } = createDb(s.DB_URL);
         pools.set(db, pool);
         return db;
       },

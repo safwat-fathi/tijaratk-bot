@@ -2,7 +2,7 @@ import { userInfo } from 'node:os';
 
 // Throwaway test configuration - never real secrets.
 const key = Buffer.alloc(32, 7).toString('base64url');
-process.env.DATABASE_URL ??=
+process.env.DB_URL ??=
   process.env.TEST_DATABASE_URL ??
   `postgresql://${userInfo().username}@localhost:5432/tijaratk_nest`;
 process.env.ENCRYPTION_KEY = key;
@@ -36,7 +36,7 @@ import { beforeAll } from 'vitest';
 import pg from 'pg';
 
 beforeAll(async () => {
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  const client = new pg.Client({ connectionString: process.env.DB_URL });
   await client.connect();
   try {
     const { rows } = await client.query(
@@ -44,7 +44,7 @@ beforeAll(async () => {
     );
     if (rows[0].n !== 0) {
       throw new Error(
-        `Test database ${new URL(process.env.DATABASE_URL!).pathname} has ${rows[0].n} committed merchants. ` +
+        `Test database ${new URL(process.env.DB_URL!).pathname} has ${rows[0].n} committed merchants. ` +
           'Point TEST_DATABASE_URL at an empty, disposable database (run `pnpm db:migrate` against it first).',
       );
     }

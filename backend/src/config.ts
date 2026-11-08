@@ -19,13 +19,7 @@ const schema = z
     PROJECT_NAME: z.string().default('TijaratkBot'),
     VERSION: z.string().default('0.1.0'),
     PORT: z.coerce.number().default(8000),
-    // Either DATABASE_URL, or the POSTGRES_* parts (same names as the Python backend)
-    DATABASE_URL: z.string().optional(),
-    POSTGRES_SERVER: z.string().optional(),
-    POSTGRES_USER: z.string().optional(),
-    POSTGRES_PASSWORD: z.string().optional(),
-    POSTGRES_DB: z.string().optional(),
-    POSTGRES_PORT: z.coerce.number().default(5432),
+    DB_URL: z.string(),
     OPENROUTER_BASE_URL: z.string(),
     OPENROUTER_API_KEY: z.string(),
     OPENROUTER_PROVIDERS: csvOrJson.default([]),
@@ -66,12 +60,7 @@ const schema = z
     RATE_LIMIT_DEFAULT_MAX: z.coerce.number().default(100),
     RATE_LIMIT_DEFAULT_WINDOW: z.coerce.number().default(60),
   })
-  .superRefine((s, ctx) => {
-    if (s.DATABASE_URL) return;
-    for (const k of ['POSTGRES_SERVER', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB'] as const) {
-      if (s[k] === undefined) ctx.addIssue({ code: 'custom', path: [k], message: `Required (or set DATABASE_URL)` });
-    }
-  });
+
 
 export type Settings = z.infer<typeof schema>;
 
@@ -86,10 +75,6 @@ export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
   const problems = r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
   throw new Error(`Invalid environment configuration - ${problems}`);
 }
-
-export const databaseUrl = (s: Settings) =>
-  s.DATABASE_URL ??
-  `postgresql://${encodeURIComponent(s.POSTGRES_USER!)}:${encodeURIComponent(s.POSTGRES_PASSWORD!)}@${s.POSTGRES_SERVER}:${s.POSTGRES_PORT}/${s.POSTGRES_DB}`;
 
 let cached: Settings | undefined;
 /** Process-wide settings (Python had a module-level `settings` too). */

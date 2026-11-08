@@ -4,13 +4,13 @@
 //   pnpm merchant:key --new "<name>"     create a merchant and print its API key
 import { existsSync } from 'node:fs';
 import { asc, eq, or } from 'drizzle-orm';
-import { databaseUrl, getSettings } from '../config.js';
+import { getSettings } from '../config.js';
 import { createDb, schema } from '../db/index.js';
 import { createMerchantApiKey } from '../domains/auth/tokens.js';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
 const s = getSettings();
-const { db, pool } = createDb(databaseUrl(s));
+const { db, pool } = createDb(s.DB_URL);
 const t = schema.merchants;
 const [first, ...rest] = process.argv.slice(2);
 const name = rest.join(' ').trim();

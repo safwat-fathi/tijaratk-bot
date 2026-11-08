@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { Logger } from '@nestjs/common';
 import { type Job, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
-import { databaseUrl, getSettings } from '../config.js';
+import { getSettings } from '../config.js';
 import { CHANNEL_QUEUE_NAME, PROCESS_CHANNEL_MESSAGE } from '../core/tokens.js';
 import { createDb } from '../db/index.js';
 import { processChannelMessage, runAutoLearning } from './processor.js';
@@ -11,7 +11,7 @@ import { Queue } from 'bullmq';
 if (existsSync('.env')) process.loadEnvFile('.env');
 const log = new Logger('worker');
 const s = getSettings();
-const { db, pool } = createDb(databaseUrl(s));
+const { db, pool } = createDb(s.DB_URL);
 const connection = new Redis(s.REDIS_URL, { maxRetriesPerRequest: null });
 const lockRedis = new Redis(s.REDIS_URL);
 

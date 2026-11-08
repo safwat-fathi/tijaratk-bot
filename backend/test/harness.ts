@@ -5,13 +5,13 @@ import { Test } from '@nestjs/testing';
 import supertest from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { configureHttp } from '../src/http-setup.js';
-import { databaseUrl, getSettings, setSettingsForTests } from '../src/config.js';
+import { getSettings, setSettingsForTests } from '../src/config.js';
 import { DB, QUEUE, REDIS } from '../src/core/tokens.js';
 import { type Db, createDb, schema } from '../src/db/index.js';
 import { createAccessToken } from '../src/domains/auth/tokens.js';
 import { type AiClient, setAiClientsForTests } from '../src/engine/clients.js';
 
-export const { db: rootDb, pool } = createDb(databaseUrl(getSettings()));
+export const { db: rootDb, pool } = createDb(getSettings().DB_URL);
 export { schema };
 
 class Rollback extends Error {}

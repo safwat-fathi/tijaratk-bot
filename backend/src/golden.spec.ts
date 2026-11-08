@@ -151,23 +151,7 @@ describe('settings parsing', () => {
         DEEPSEEK_MODEL: 'legacy-model',
       }).LLM_MODEL,
     ).toBe('legacy-model');
-    expect(() =>
-      loadSettings({
-        ...base,
-        DATABASE_URL: undefined,
-        POSTGRES_SERVER: undefined,
-      }),
-    ).toThrow(/POSTGRES_SERVER/);
-    expect(() =>
-      loadSettings({
-        ...base,
-        DATABASE_URL: undefined,
-        POSTGRES_SERVER: 'h',
-        POSTGRES_USER: 'u',
-        POSTGRES_PASSWORD: '',
-        POSTGRES_DB: 'd',
-      }),
-    ).not.toThrow();
+    expect(() => loadSettings({ ...base, DB_URL: undefined })).toThrow(/DB_URL/);
   });
   it('parses list settings as JSON or comma-separated', () => {
     expect(
