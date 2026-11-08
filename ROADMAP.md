@@ -9,7 +9,7 @@ Sourced from `TijaratkBot_PRD.md` (§4–§5, §35, §37) and `TijaratkBot_SRD.m
 - API domains: `health`, `messages` (message ingest → full pipeline), `products`, `conversations`
 - Offline clustering job
 - Demo frontend workspace (`/demo`): product catalog, message composer, AI insights panel
-- **Channel/webhook ingestion** — Facebook, Instagram, WhatsApp (via Twilio) text webhooks with signature verification, deduplication, and a BullMQ worker queue. `ChannelConnection` provisioned manually; outbound replies not implemented. (SRD §7, §35–§37)
+- **Channel/webhook ingestion & multi-page control** — Facebook, Instagram, WhatsApp (via Twilio) text webhooks with signature verification, deduplication, and a BullMQ worker queue (`webhooks/zernio`, `webhooks/meta`, `webhooks/whatsapp/twilio`). Merchants connect up to 10 Facebook/Instagram pages via Zernio OAuth, control AI replies per page (on/off, temporary pause, per-page style instructions, soft disconnect/reconnect), and view per-page `Africa/Cairo` stats and shared monthly quota breakdowns (`domains/pages`, `/merchant/pages`). (SRD §7, §35–§37)
 
 ## Near-term — MVP gap-closers
 

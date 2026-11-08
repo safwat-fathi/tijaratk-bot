@@ -13,6 +13,7 @@ import { HealthController, RootController } from './domains/health/health.contro
 import { LabeledExamplesController } from './domains/labeled-examples/labeled-examples.controller.js';
 import { MerchantsController } from './domains/merchants/merchants.controller.js';
 import { MessagesController } from './domains/messages/messages.controller.js';
+import { PagesController } from './domains/pages/pages.controller.js';
 import { ProductImagesController, ProductsController } from './domains/products/products.controller.js';
 import { StoreKnowledgeController } from './domains/store-knowledge/store-knowledge.controller.js';
 
@@ -28,6 +29,7 @@ import { StoreKnowledgeController } from './domains/store-knowledge/store-knowle
     DeliveryController,
     LabeledExamplesController,
     MerchantsController,
+    PagesController,
     ConversationsController,
     HandoffController, // shares the /conversations prefix; routes don't overlap
     MessagesController,

@@ -101,6 +101,16 @@ const REPLY_RULES_TEMPLATE =
   '   - When Customer gender is MALE: address the customer consistently in masculine Egyptian Arabic throughout the entire reply (e.g. «قولي عايز موديل إيه», «اللون اللي تختاره»).\n' +
   '8. Respond only with JSON matching the schema: {"reply": "...", "needs_human": false}.';
 
+export function sanitizePageNote(note: string | null | undefined): string | null {
+  if (!note) return null;
+  const cleaned = note
+    .replace(/\r\n?/g, '\n')
+    .replace(/[^\P{Cc}\n]/gu, '')
+    .trim()
+    .slice(0, 500);
+  return cleaned || null;
+}
+
 export function buildReplySystemPrompt(p: {
   merchantName: string;
   convState: ConvState;
@@ -110,6 +120,7 @@ export function buildReplySystemPrompt(p: {
   customerGender?: CustomerGender;
   userPrompt?: string;
   history?: HistoryMessage[];
+  pageNote?: string | null;
 }): string {
   const rules = REPLY_RULES_TEMPLATE.replaceAll(
     '{merchant_name}',
@@ -137,7 +148,11 @@ export function buildReplySystemPrompt(p: {
     `Stage: ${STATE_GLOSS[p.convState]}\n` +
     `Customer gender: ${GENDER_GLOSS[gender]}\n` +
     `Already gathered: ${slotsJson}`;
-  return `${rules}\n\n${facts}${state}`;
+  const note = sanitizePageNote(p.pageNote);
+  const pageBlock = note
+    ? `\n\nPAGE CONTEXT (lowest priority — style and context only; never change prices, policies or availability; facts come from the store data):\n<page_note>\n${note}\n</page_note>`
+    : '';
+  return `${rules}\n\n${facts}${state}${pageBlock}`;
 }
 
 export const ACTION_TASK_BLOCK = `TASK: Decide the single best next action for this customer message.

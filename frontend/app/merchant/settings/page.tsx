@@ -1,129 +1,50 @@
-import { getCurrentMerchant, getMerchantSettings } from "@/lib/dal";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getMerchantSettings } from "@/lib/dal";
 import {
-  connectFacebookAction,
   updateAiEnabledAction,
   updateAutoLearningAction,
 } from "../actions";
 import { SettingToggle } from "./setting-toggle";
-
-const CONNECT_ERRORS: Record<string, string> = {
-  account_in_use: "هذه الصفحة مرتبطة بحساب تاجر آخر.",
-  account_not_found: "لم نعثر على الصفحة، حاول مرة أخرى.",
-  unsupported_platform: "هذا النوع من الحسابات غير مدعوم.",
-  billing_required: "ربط الصفحات غير متاح مؤقتاً، تواصل مع الدعم.",
-  zernio_unavailable: "الخدمة غير متاحة حالياً، حاول بعد قليل.",
-};
 
 export default async function SettingsPage({
   searchParams,
 }: {
   searchParams: Promise<{ connected?: string; error?: string }>;
 }) {
-  const { merchantName, channels } = await getCurrentMerchant();
-  const settings = await getMerchantSettings();
   const { connected, error } = await searchParams;
-  const fbConnected = channels.some((c) => c.channel === "FACEBOOK");
+  if (connected || error) {
+    const qs = new URLSearchParams();
+    if (connected) qs.set("connected", connected);
+    if (error) qs.set("error", error);
+    redirect(`/merchant/pages?${qs.toString()}`);
+  }
+
+  const settings = await getMerchantSettings();
 
   return (
     <div className="font-sans max-w-3xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">الإعدادات</h1>
-        <p className="text-slate-500 mt-1">إدارة قنواتك المتصلة وتفضيلاتك.</p>
+        <p className="text-slate-500 mt-1">
+          إدارة الذكاء الاصطناعي العام وتفضيلات متجرك.
+        </p>
       </div>
-
-      {connected && (
-        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-          تم ربط صفحتك بنجاح. البوت جاهز للرد على رسائل العملاء.
-        </div>
-      )}
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {CONNECT_ERRORS[error] ?? "تعذر ربط الصفحة، حاول مرة أخرى."}
-        </div>
-      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-900">القنوات المتصلة</h2>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Facebook */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-[#1877F2]/10 text-[#1877F2] rounded-lg flex items-center justify-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-6 h-6"
-                  fill="currentColor"
-                >
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium text-slate-900">فيسبوك ماسنجر</p>
-                <p className="text-sm text-slate-500">
-                  {fbConnected
-                    ? `متصل بـ: ${merchantName}`
-                    : "اربط صفحتك ليرد البوت على رسائل العملاء"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {fbConnected && (
-                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                  نشط
-                </span>
-              )}
-              <form action={connectFacebookAction}>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-slate-300 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
-                >
-                  {fbConnected ? "إدارة الصفحات" : "ربط صفحة فيسبوك"}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* WhatsApp */}
-          <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-[#25D366]/10 text-[#25D366] rounded-lg flex items-center justify-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-6 h-6"
-                  fill="currentColor"
-                >
-                  <path d="M12.031 0C5.395 0 0 5.395 0 12.031c0 2.126.554 4.195 1.606 6.012L.151 23.364l5.485-1.439A11.968 11.968 0 0012.031 24c6.634 0 12.029-5.395 12.029-12.031C24.06 5.395 18.665 0 12.031 0zm0 22.012a9.92 9.92 0 01-5.076-1.39l-.364-.216-3.766.988 1.006-3.67-.236-.376A9.919 9.919 0 012.052 12.03c0-5.503 4.478-9.98 9.979-9.98 5.503 0 9.98 4.477 9.98 9.98 0 5.502-4.477 9.98-9.98 9.98z" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium text-slate-900">واتساب بزنس</p>
-                <p className="text-sm text-slate-500">غير متصل</p>
-              </div>
-            </div>
-            <button className="px-4 py-2 border border-slate-300 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors">
-              ربط
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
           <h2 className="font-semibold text-slate-900">الذكاء الاصطناعي</h2>
         </div>
         <div className="p-6 space-y-6">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 tabular-nums">
             المحادثات هذا الشهر: {settings.conversationsUsed} /{" "}
             {settings.conversationsLimit}
             {settings.conversationsUsed >= settings.conversationsLimit &&
               " — الباقة المجانية انتهت، لن يرد الـ AI على محادثات جديدة حتى الشهر القادم."}
           </p>
           <SettingToggle
-            title="الرد الآلي بالذكاء الاصطناعي"
-            description="عند الإيقاف لن يرد الـ AI على رسائل العملاء، وستظهر لهم قائمة الاختيارات فقط."
+            title="إيقاف الذكاء الاصطناعي على كل الصفحات"
+            description="مفتاح رئيسي لكل الصفحات — عند الإيقاف لن يرد الذكاء الاصطناعي على أي صفحة متصلة، وستظهر للعملاء قائمة الاختيارات فقط."
             initialEnabled={settings.aiEnabled}
             onChange={updateAiEnabledAction}
           />
@@ -139,47 +60,26 @@ export default async function SettingsPage({
       </div>
 
       <div className="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-900">الصفحات المتصلة</h2>
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900">صفحات فيسبوك وإنستجرام</h2>
+          <Link
+            href="/merchant/pages"
+            className="text-sm font-medium text-nile hover:underline"
+          >
+            الانتقال إلى صفحاتي ←
+          </Link>
         </div>
-
-        <div className="p-6 space-y-6">
-          {channels.filter((c) => c.channel === "FACEBOOK").length === 0 ? (
-            <p className="text-sm text-slate-500">لا توجد صفحات متصلة.</p>
-          ) : (
-            channels
-              .filter((c) => c.channel === "FACEBOOK")
-              .map((channel, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900">
-                        {channel.account_name || `صفحة ${merchantName}`}
-                      </p>
-                      <p className="text-sm text-slate-500">صفحة فيسبوك</p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                    نشط
-                  </span>
-                </div>
-              ))
-          )}
+        <div className="p-6">
+          <p className="text-sm text-slate-600">
+            يمكنك ربط صفحات جديدة، أو إيقاف الذكاء الاصطناعي مؤقتًا على صفحة معينة، أو متابعة إحصائيات كل صفحة من قسم{" "}
+            <Link
+              href="/merchant/pages"
+              className="font-semibold text-nile underline underline-offset-2"
+            >
+              صفحاتي
+            </Link>
+            .
+          </p>
         </div>
       </div>
     </div>

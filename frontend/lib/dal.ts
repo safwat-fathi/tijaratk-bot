@@ -25,7 +25,11 @@ export const getCurrentMerchant = cache(async () => {
     redirect(`/login?${LOGIN_MARKER}=1`);
   }
 
-  const data = await res.json() as { merchant_id: string; merchant_name: string; channels: Array<{channel: string; account_name: string | null}> };
+  const data = (await res.json()) as {
+    merchant_id: string;
+    merchant_name: string;
+    channels: Array<{ id: string; channel: string; account_name: string | null }>;
+  };
   return {
     merchantId: data.merchant_id,
     merchantName: data.merchant_name || "Merchant",

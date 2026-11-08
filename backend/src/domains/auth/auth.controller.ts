@@ -38,7 +38,7 @@ export class AuthController {
       merchant_id: m.id,
       merchant_name: m.name,
       is_active: m.status === 'ACTIVE',
-      channels: conns.map((c) => ({ channel: c.channel, account_name: c.accountName ? String(c.accountName) : null })),
+      channels: conns.map((c) => ({ id: c.id, channel: c.channel, account_name: c.accountName ? String(c.accountName) : null })),
     };
   }
 }

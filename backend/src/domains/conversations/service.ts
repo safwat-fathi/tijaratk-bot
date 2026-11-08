@@ -1,11 +1,25 @@
-import { asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { iso } from '../../core/serialize.js';
 import { type DbOrTx, schema } from '../../db/index.js';
 
-export async function listConversations(db: DbOrTx, merchantId: string) {
+export async function listConversations(db: DbOrTx, merchantId: string, pageId?: string) {
   const c = schema.conversations;
-  const rows = await db.select().from(c).where(eq(c.merchantId, merchantId)).orderBy(desc(c.lastMessageAt));
-  return rows.map((r) => ({
+  const cc = schema.channelConnections;
+  const where = pageId
+    ? and(eq(c.merchantId, merchantId), eq(c.channelConnectionId, pageId))
+    : eq(c.merchantId, merchantId);
+  const rows = await db
+    .select({
+      conv: c,
+      pageName: cc.accountName,
+      pageChannel: cc.channel,
+      pageIsActive: cc.isActive,
+    })
+    .from(c)
+    .leftJoin(cc, eq(cc.id, c.channelConnectionId))
+    .where(where)
+    .orderBy(desc(c.lastMessageAt));
+  return rows.map(({ conv: r, pageName, pageChannel, pageIsActive }) => ({
     id: r.id,
     merchant_id: r.merchantId,
     customer_ref: r.customerRef,
@@ -14,6 +28,10 @@ export async function listConversations(db: DbOrTx, merchantId: string) {
     last_message_at: iso(r.lastMessageAt)!,
     ai_enabled: r.aiEnabled,
     human_takeover: r.humanTakeover,
+    channel_connection_id: r.channelConnectionId ?? null,
+    page_name: pageName ?? null,
+    page_channel: pageChannel ?? null,
+    page_is_active: pageIsActive ?? null,
   }));
 }
 

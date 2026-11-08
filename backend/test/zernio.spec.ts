@@ -338,16 +338,68 @@ describe('Zernio connect flow', () => {
 
   it('callback: retires this merchant\'s old Meta-app connections for the channel (they would double-deliver)', async () => {
     await withApp(async ({ http, db }) => {
-      const calls = stubZernio([fb('ACC1')]);
+      const calls = stubZernio([fb('ACC1'), fb('ACC2', { displayName: 'Second Page' })]);
       const m = await makeMerchant(db);
       const other = await makeMerchant(db);
       const legacy = await makeConnection(db, m.id, { externalAccountId: 'PAGE-OLD', pageAccessToken: 'tok' });
       const othersLegacy = await makeConnection(db, other.id, { externalAccountId: 'PAGE-OTHER', pageAccessToken: 'tok' });
       await callback(http, m.id, { accountId: 'ACC1' }, calls);
+      await callback(http, m.id, { accountId: 'ACC2' }, calls);
       const active = async (id: string) => (await db.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, id)))[0].isActive;
       expect(await active(legacy.id)).toBe(false);
       expect(await active(othersLegacy.id)).toBe(true);
       expect((await rows(db, 'ACC1'))[0].isActive).toBe(true);
+      expect((await rows(db, 'ACC2'))[0].isActive).toBe(true);
+    });
+  });
+
+  it('callback: lets a different merchant claim a disconnected page while keeping active pages protected', async () => {
+    await withApp(async ({ http, db }) => {
+      const calls = stubZernio([fb('ACC-DEAD', { displayName: 'Claimed Page' }), fb('ACC-LIVE')]);
+      const a = await makeMerchant(db);
+      const b = await makeMerchant(db);
+      await makeConnection(db, a.id, {
+        externalAccountId: 'ACC-DEAD',
+        channel: 'FACEBOOK',
+        isActive: false,
+        aiEnabled: false,
+        aiInstructions: 'Old secret note',
+      });
+      await makeConnection(db, a.id, { externalAccountId: 'ACC-LIVE', channel: 'FACEBOOK', isActive: true });
+
+      const claimed = await callback(http, b.id, { accountId: 'ACC-DEAD' }, calls);
+      expect(claimed.headers.location).toBe('https://app.example.test/channels?connected=facebook');
+      const [deadRow] = await rows(db, 'ACC-DEAD');
+      expect(deadRow).toMatchObject({
+        merchantId: b.id,
+        isActive: true,
+        accountName: 'Claimed Page',
+        aiEnabled: true,
+        aiPausedUntil: null,
+        aiInstructions: null,
+      });
+
+      const blocked = await callback(http, b.id, { accountId: 'ACC-LIVE' }, calls);
+      expect(blocked.headers.location).toBe('https://app.example.test/channels?error=account_in_use');
+      expect((await rows(db, 'ACC-LIVE'))[0].merchantId).toBe(a.id);
+    });
+  });
+
+  it('callback: enforces the 10-page cap on new pages, but reconnecting an owned page always passes', async () => {
+    await withApp(async ({ http, db }) => {
+      const calls = stubZernio([fb('ACC-OWNED'), fb('ACC-11')]);
+      const m = await makeMerchant(db);
+      await makeConnection(db, m.id, { externalAccountId: 'ACC-OWNED', channel: 'FACEBOOK', isActive: true });
+      for (let i = 2; i <= 10; i++) {
+        await makeConnection(db, m.id, { externalAccountId: `ACC-${i}`, channel: i % 2 === 0 ? 'FACEBOOK' : 'INSTAGRAM', isActive: true });
+      }
+
+      const overCap = await callback(http, m.id, { accountId: 'ACC-11' }, calls);
+      expect(overCap.headers.location).toBe('https://app.example.test/channels?error=page_limit_reached');
+      expect(await rows(db, 'ACC-11')).toHaveLength(0);
+
+      const reconnectOwned = await callback(http, m.id, { accountId: 'ACC-OWNED' }, calls);
+      expect(reconnectOwned.headers.location).toBe('https://app.example.test/channels?connected=facebook');
     });
   });
 });

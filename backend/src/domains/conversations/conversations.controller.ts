@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { ApiError, notFound, parse } from '../../core/http.js';
@@ -18,8 +18,8 @@ export class ConversationsController {
   constructor(@Inject(DB) private readonly db: Db) {}
 
   @Get()
-  list(@CurrentMerchant() m: Merchant) {
-    return listConversations(this.db, m.id);
+  list(@CurrentMerchant() m: Merchant, @Query('page') page?: string) {
+    return listConversations(this.db, m.id, page || undefined);
   }
 
   @Get(':id/messages')
@@ -36,6 +36,15 @@ export class ConversationsController {
     return this.db.transaction(async (tx) => {
       const [conv] = await tx.select().from(schema.conversations).where(eq(schema.conversations.id, id));
       if (!conv || conv.merchantId !== m.id) throw notFound('conversation not found');
+
+      let conn: typeof schema.channelConnections.$inferSelect | undefined;
+      if (conv.channelConnectionId) {
+        [conn] = await tx.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conv.channelConnectionId));
+        if (conn && !conn.isActive) {
+          throw new ApiError(409, 'هذه الصفحة مفصولة حالياً. أعد ربط الصفحة للرد على العميل.');
+        }
+      }
+
       await recordHumanActivity(tx, m.id, conv.id); // a human is in the conversation: pause the AI until they go idle
 
       const msg = textMessage(payload.text);
@@ -52,13 +61,10 @@ export class ConversationsController {
         .returning();
 
       let sent = false;
-      if (conv.channelConnectionId) {
-        const [conn] = await tx.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conv.channelConnectionId));
-        if (conn) {
-          sent = (await deliver(conn, conv.customerRef, [msg]))[0] ?? false;
-          // Roll back (nothing saved) instead of showing the merchant a reply the customer never got.
-          if (!sent) throw new ApiError(502, 'تعذر إرسال الرد إلى العميل عبر القناة. حاول مرة أخرى.');
-        }
+      if (conn) {
+        sent = (await deliver(conn, conv.customerRef, [msg]))[0] ?? false;
+        // Roll back (nothing saved) instead of showing the merchant a reply the customer never got.
+        if (!sent) throw new ApiError(502, 'تعذر إرسال الرد إلى العميل عبر القناة. حاول مرة أخرى.');
       }
       return { message_id: outbound.id, sent };
     });

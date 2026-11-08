@@ -1,4 +1,4 @@
-import { pgTable, customType, varchar, index, foreignKey, integer, doublePrecision, boolean, timestamp, json, uniqueIndex, vector, numeric, unique, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, customType, varchar, text, index, foreignKey, integer, doublePrecision, boolean, timestamp, json, uniqueIndex, vector, numeric, unique, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 import { randomUUID } from "node:crypto"
 import { encryptedString } from "./encrypted-string.js"
@@ -409,6 +409,9 @@ export const channelConnections = pgTable("channel_connections", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
 	pageAccessToken: encryptedString("page_access_token"),
 	accountName: varchar("account_name"),
+	aiEnabled: boolean("ai_enabled").default(true).notNull(),
+	aiPausedUntil: timestamp("ai_paused_until", { withTimezone: true, mode: 'date' }),
+	aiInstructions: text("ai_instructions"),
 }, (table) => [
 	index("ix_channel_connections_merchant_id").using("btree", table.merchantId.asc().nullsLast().op("text_ops")),
 	foreignKey({

@@ -10,6 +10,20 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-tajawal);
   --font-display: var(--font-cairo);
+  --font-readex: var(--font-readex);
+
+  /* Multi-page design tokens */
+  --color-canvas: #EEF3F1;
+  --color-surface: #FBFDFC;
+  --color-ink: #16222E;
+  --color-ink-soft: #5B6B78;
+  --color-nile: #0E7C66;
+  --color-nile-wash: #DDF1EA;
+  --color-saffron: #E8A317;
+  --color-saffron-ink: #7A4E00;
+  --color-stone: #8793A0;
+  --color-poppy: #C8402F;
+  --color-line: #D8E1DD;
 }
 
 body {

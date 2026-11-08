@@ -1,16 +1,16 @@
 # Graph Report - tijaratk-bot  (2026-11-08)
 
 ## Corpus Check
-- 203 files · ~380,438 words
+- 229 files · ~397,010 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1687 nodes · 3271 edges · 116 communities (100 shown, 16 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 17 edges (avg confidence: 0.85)
+- 1847 nodes · 3699 edges · 130 communities (115 shown, 15 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 17 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4fcbf5c9`
+- Built from commit: `8c392154`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,24 +19,25 @@
 - harness.ts
 - gender.ts
 - TijaratkBot_Facebook_WhatsApp_Implementation_Plan.md
-- golden.spec.ts
+- channels.controller.ts
 - devDependencies
 - index.ts
 - Multi-page: per-page AI control and per-page stats
 - devDependencies
-- checkout/service.ts
+- order-writer.ts
 - schema.ts
 - compilerOptions
-- CoreModule
+- core/tokens.ts
 - TijaratkBot — Product Requirements Document (PRD)
 - CurrentMerchant
-- getCurrentMerchant
+- conversations-client.tsx
 - messages.ts
 - orders-client.tsx
 - compilerOptions
-- training/page.tsx
+- getCurrentMerchant
 - delivery.controller.ts
 - LabeledExamplesController
+- [id]/page.tsx
 - classification.ts
 - pipeline.ts
 - settings.json
@@ -45,33 +46,41 @@
 - TijaratkBot_SRD.md
 - TijaratkBot_PRD.md
 - Findings
-- labeled-examples.controller.ts
+- product-matching.ts
 - dal.ts
 - merchant/actions.ts
-- config.ts
-- checkout.controller.ts
+- scripts
+- rate-limit.spec.ts
+- .updateStatus
+- pages/service.ts
 - ar.json
 - tsconfig.build.json
 - en.json
-- parse
+- .takeover
 - ZernioConnectController
-- StoreKnowledgeController
+- store-knowledge/service.ts
+- products/service.ts
+- registry.ts
 - Fix: bot answers "هتأكد من السعر وأرجعلك" instead of quoting the catalog price
 - Implementation decisions (phases 1-6, built 2026-11-04)
 - TijaratkBot: Message Classification & AI Engine — Technical Spec (Core)
-- .ingest
+- types.ts
+- MessagesController
+- Merchant
+- auth/tokens.ts
 - backend/package.json
-- HealthController
+- .reply
+- health.controller.ts
 - fetchKnowledgeAction
 - .oxlintrc.json
 - eslint.config.mjs
 - next.config.ts
 - postcss.config.mjs
-- AuthController
+- .keyLogin
 - nest-cli.json
-- products/service.ts
+- store-facts.ts
 - drizzle-orm
-- prompts.ts
+- action-resolution.ts
 - @nestjs/core
 - @nestjs/platform-express
 - TijaratkBot backend (NestJS)
@@ -82,11 +91,15 @@
 - zod
 - setup.ts
 - conversations.ts
-- MerchantsController
-- action-resolution.ts
+- notFound
+- action-validator.ts
 - release.sh
 - schemas.ts
-- 7. AI Is an Add-On
+- config.ts
+- TijaratkBot
+- README.md
+- CLAUDE.md
+- MerchantsController
 - 33. Onboarding
 - 44. Failure Handling
 - AGENTS.md
@@ -120,16 +133,16 @@
 - 8. Recommended Customer Conversation Flow
 
 ## God Nodes (most connected - your core abstractions)
-1. `Merchant` - 43 edges
-2. `CurrentMerchant` - 43 edges
-3. `getSettings()` - 36 edges
-4. `getBaseUrl()` - 35 edges
-5. `processMessage()` - 34 edges
-6. `Db` - 33 edges
-7. `notFound()` - 27 edges
-8. `parse()` - 27 edges
-9. `DbOrTx` - 25 edges
-10. `checkResponse()` - 25 edges
+1. `Merchant` - 48 edges
+2. `CurrentMerchant` - 48 edges
+3. `getSettings()` - 41 edges
+4. `scripts` - 41 edges
+5. `getBaseUrl()` - 39 edges
+6. `Db` - 36 edges
+7. `processMessage()` - 35 edges
+8. `notFound()` - 31 edges
+9. `parse()` - 30 edges
+10. `checkResponse()` - 29 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `matchKnowledge()` --indirect_call--> `cpLen()`  [INFERRED]
@@ -146,15 +159,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (116 total, 16 thin omitted)
+## Communities (130 total, 15 thin omitted)
 
 ### Community 0 - "units.spec.ts"
-Cohesion: 0.06
-Nodes (71): clusterMessages(), EmbeddedMessage, fetchEmbeddedMessages(), labelCluster(), representativeMessages(), runClustering(), withConversationLock(), cpSlice() (+63 more)
+Cohesion: 0.07
+Nodes (63): agglomerativeCosine(), clusterMessages(), EmbeddedMessage, fetchEmbeddedMessages(), labelCluster(), representativeMessages(), runClustering(), withConversationLock() (+55 more)
 
 ### Community 1 - "harness.ts"
-Cohesion: 0.06
-Nodes (48): setSettingsForTests(), createAccessToken(), addItem(), CartItemNotFoundError, getItemForConversation(), getOrCreateActiveCart(), removeItem(), updateItem() (+40 more)
+Cohesion: 0.07
+Nodes (34): AppModule, Module, setSettingsForTests(), DetailExceptionFilter, createAccessToken(), setAiClientsForTests(), configureHttp(), app (+26 more)
 
 ### Community 2 - "gender.ts"
 Cohesion: 0.11
@@ -164,17 +177,17 @@ Nodes (23): detectGenderFromName(), detectGenderFromText(), FEMALE_NAMES, FEMALE
 Cohesion: 0.02
 Nodes (93): 101. What Not to Build in Phase 1, 102. Recommended Build Order, 103. Final Architecture, 104. The Most Important Engineering Rule, 105. Final Recommendation, 10. Product Detail UX, 11. Variant Resolution, 12. Cart UX (+85 more)
 
-### Community 4 - "golden.spec.ts"
-Cohesion: 0.09
-Nodes (30): agglomerativeCosine(), ChannelsController, log, Controller, Get, Post, Query, Req (+22 more)
+### Community 4 - "channels.controller.ts"
+Cohesion: 0.10
+Nodes (33): ChannelsController, log, Controller, Get, Post, Query, Req, Res (+25 more)
 
 ### Community 5 - "devDependencies"
 Cohesion: 0.05
 Nodes (39): devDependencies, drizzle-kit, @nestjs/cli, @nestjs/mau, @nestjs/schematics, @nestjs/testing, oxlint, oxlint-tsgolint (+31 more)
 
 ### Community 7 - "index.ts"
-Cohesion: 0.12
-Nodes (28): Settings, pools, ApiError, SKIP, CHANNEL_QUEUE_NAME, DB, PROCESS_CHANNEL_MESSAGE, QUEUE (+20 more)
+Cohesion: 0.11
+Nodes (27): Settings, ApiError, DB, Db, Tx, KeyLogin, AuthGuard, Inject (+19 more)
 
 ### Community 8 - "Multi-page: per-page AI control and per-page stats"
 Cohesion: 0.09
@@ -184,9 +197,9 @@ Nodes (21): 10. Non-goals, 1. Context, 2. Decisions I made (flag any you disagre
 Cohesion: 0.05
 Nodes (41): eslint, eslint-config-next, dependencies, @inlang/paraglide-js, @inlang/paraglide-next, lucide-react, next, nextjs-toploader (+33 more)
 
-### Community 10 - "checkout/service.ts"
-Cohesion: 0.17
-Nodes (22): centsToString(), lineTotalCents(), quantize2(), roundHalfEven(), roundScaledToCents(), scaledProduct(), toBigScaled(), toCents() (+14 more)
+### Community 10 - "order-writer.ts"
+Cohesion: 0.24
+Nodes (15): centsToString(), lineTotalCents(), quantize2(), roundHalfEven(), roundScaledToCents(), scaledProduct(), toBigScaled(), toCents() (+7 more)
 
 ### Community 11 - "schema.ts"
 Cohesion: 0.06
@@ -196,49 +209,53 @@ Nodes (33): Fernet, encryptedString, getFernet(), aiActions, aiUsageEvents, byte
 Cohesion: 0.06
 Nodes (30): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+22 more)
 
-### Community 13 - "CoreModule"
-Cohesion: 0.40
-Nodes (3): CoreModule, Module, Global
+### Community 13 - "core/tokens.ts"
+Cohesion: 0.21
+Nodes (9): CoreModule, pools, Module, SKIP, CHANNEL_QUEUE_NAME, QUEUE, REDIS, SETTINGS (+1 more)
 
 ### Community 15 - "CurrentMerchant"
-Cohesion: 0.06
-Nodes (41): notFound(), CurrentMerchant, Merchant, ConversationsController, Body, Controller, Get, HttpCode (+33 more)
+Cohesion: 0.13
+Nodes (16): parse(), CurrentMerchant, read(), Body, Get, Patch, ProductsController, Body (+8 more)
 
-### Community 16 - "getCurrentMerchant"
-Cohesion: 0.20
-Nodes (12): connectFacebookAction(), fetchConversationsAction(), ConversationsPage(), isRedirect(), MerchantDashboard(), CONNECT_ERRORS, SettingsPage(), SettingToggle() (+4 more)
+### Community 16 - "conversations-client.tsx"
+Cohesion: 0.17
+Nodes (17): logoutAction(), ConversationRecord, fetchConversationsAction(), getPages(), ConversationPageChip, ConversationsClient(), ConversationsPage(), isRedirect() (+9 more)
 
 ### Community 17 - "messages.ts"
 Cohesion: 0.40
 Nodes (4): MessageIngestRequest, MessageIngestResponse, OrderDetail, OrderLineItem
 
 ### Community 18 - "orders-client.tsx"
-Cohesion: 0.15
-Nodes (19): createManualOrderAction(), fetchOrdersAction(), fetchProductsAction(), ManualOrderResult, updateOrderStatusAction(), OrdersClient(), isRedirect(), OrdersPage() (+11 more)
+Cohesion: 0.20
+Nodes (14): fetchOrdersAction(), fetchProductsAction(), ManualOrderResult, OrdersClient(), isRedirect(), OrdersPage(), isRedirect(), ProductsPage() (+6 more)
 
 ### Community 19 - "compilerOptions"
 Cohesion: 0.09
 Nodes (22): compilerOptions, allowSyntheticDefaultImports, declaration, emitDecoratorMetadata, esModuleInterop, experimentalDecorators, incremental, isolatedModules (+14 more)
 
-### Community 20 - "training/page.tsx"
-Cohesion: 0.22
-Nodes (10): getIntents(), getLabeledExamples(), isRedirect(), TrainingPage(), SOURCE_LABELS, TrainingClient(), handleAdd(), handleDelete() (+2 more)
+### Community 20 - "getCurrentMerchant"
+Cohesion: 0.21
+Nodes (12): getIntents(), getLabeledExamples(), isRedirect(), TrainingPage(), SOURCE_LABELS, TrainingClient(), handleAdd(), handleDelete() (+4 more)
 
 ### Community 21 - "delivery.controller.ts"
 Cohesion: 0.11
-Nodes (21): DeliveryArea, Create, DeliveryController, NOTE: unlike the Python router (which never committed - its writes were rolled…, Body, Controller, Delete, Get (+13 more)
+Nodes (17): Create, DeliveryController, NOTE: unlike the Python router (which never committed - its writes were rolled…, Body, Controller, Delete, Get, HttpCode (+9 more)
 
 ### Community 22 - "LabeledExamplesController"
-Cohesion: 0.20
-Nodes (7): LabeledExamplesController, Body, Controller, Get, Inject, Post, UseGuards
+Cohesion: 0.13
+Nodes (12): LabeledExamplesController, Body, Controller, Delete, Get, HttpCode, Inject, Param (+4 more)
+
+### Community 23 - "[id]/page.tsx"
+Cohesion: 0.10
+Nodes (40): connectFacebookAction(), connectPlatformAction(), setPageAi(), AddPageSheet(), AiRepliesTab(), AiSign(), CompareTable(), SortKey (+32 more)
 
 ### Community 24 - "classification.ts"
-Cohesion: 0.21
-Nodes (18): ConvState, resolveAction(), classifyMessage(), intentResponseSchema(), extractOrder(), CallUsage, llmProvider(), buildSystemPrompt() (+10 more)
+Cohesion: 0.14
+Nodes (25): cpLen(), stripChars(), classifyMessage(), intentResponseSchema(), HistoryMessage, extractOrder(), CallUsage, llmProvider() (+17 more)
 
 ### Community 25 - "pipeline.ts"
-Cohesion: 0.07
-Nodes (50): DbOrTx, Cart, CartItem, ChannelConnection, Conversation, HandoffReason, LabeledExample, Merchant (+42 more)
+Cohesion: 0.12
+Nodes (28): Message, Order, resumeIfIdle(), takeoverConversation(), ingestMessage(), MessageIngestRequest, isOverConversationLimit(), COST_PER_1K_TOKENS (+20 more)
 
 ### Community 26 - "settings.json"
 Cohesion: 0.20
@@ -257,32 +274,40 @@ Cohesion: 0.04
 Nodes (53): 10. Product Search, 11. Conversation, 12. Conversation State, 13. Message, 14. AI Orchestrator, 15. AI Gateway, 16. L0 Router, 17. L1 Nile-Chat Service (+45 more)
 
 ### Community 30 - "TijaratkBot_PRD.md"
-Cohesion: 0.07
-Nodes (29): 10. L0 — Deterministic Layer, 11. L1 — Nile-Chat 4B, 12. L2 — DeepSeek V4 Flash, 13. L3 — Human Escalation, 14. AI Action Architecture, 16. Catalog Retrieval, 17. Egyptian Arabic and Arabizi Normalization, 18. Conversation State (+21 more)
+Cohesion: 0.06
+Nodes (31): 10. L0 — Deterministic Layer, 11. L1 — Nile-Chat 4B, 12. L2 — DeepSeek V4 Flash, 13. L3 — Human Escalation, 14. AI Action Architecture, 16. Catalog Retrieval, 17. Egyptian Arabic and Arabizi Normalization, 18. Conversation State (+23 more)
 
 ### Community 31 - "Findings"
 Cohesion: 0.10
 Nodes (19): 10. Quota is now check-then-act (low-medium, accepted trade-off with a sharp edge), 11. Usage resets once for every merchant (planned, optional mitigation), 12. Smaller notes, 1. Unrelated change mixed into the same working tree (decide before committing), 2. Large catalogs: false "not in the catalog" answers (medium, both passes), 3. `buildStoreFacts` runs concurrent queries on one transaction client (medium, *verified*), 4. `{merchant_name}` replacement breaks on `$` in the name (low-medium, *verified*), 5. An over-long policy disappears and the model is told there are none (medium, read from code) (+11 more)
 
-### Community 32 - "labeled-examples.controller.ts"
-Cohesion: 0.22
-Nodes (13): Create, DEFAULT_INTENTS, extraction, intent, Update, createExample(), deleteExample(), embeddingFor() (+5 more)
+### Community 32 - "product-matching.ts"
+Cohesion: 0.18
+Nodes (15): LabeledExample, ProductVariant, createExample(), embeddingFor(), LabeledExampleRead, listExamples(), log, toRead() (+7 more)
 
 ### Community 33 - "dal.ts"
-Cohesion: 0.13
-Nodes (12): loginWithKeyAction(), logoutAction(), ERRORS, navigation, SidebarClient(), COOKIES, LOGIN_MARKER, SESSION_COOKIES (+4 more)
+Cohesion: 0.12
+Nodes (13): loginWithKeyAction(), ERRORS, SettingsPage(), SettingToggle(), SettingToggleProps, COOKIES, LOGIN_MARKER, SESSION_COOKIES (+5 more)
 
 ### Community 34 - "merchant/actions.ts"
-Cohesion: 0.20
-Nodes (28): checkResponse(), ConversationRecord, createExampleAction(), createProductAction(), deleteExampleAction(), deleteProductAction(), deleteProductImageAction(), fetchExamplesAction() (+20 more)
+Cohesion: 0.19
+Nodes (33): checkResponse(), createExampleAction(), createKnowledgeAction(), createManualOrderAction(), createProductAction(), deleteExampleAction(), deleteKnowledgeAction(), deleteProductAction() (+25 more)
 
-### Community 36 - "config.ts"
-Cohesion: 0.08
-Nodes (22): bool, csvOrJson, FALSE, loadSettings(), schema, TRUE, RateLimitMiddleware, Inject (+14 more)
+### Community 35 - "scripts"
+Cohesion: 0.04
+Nodes (45): description, name, private, scripts, build, build:backend, build:be, build:fe (+37 more)
 
-### Community 37 - "checkout.controller.ts"
-Cohesion: 0.12
-Nodes (16): CheckoutController, loadItems(), ManualOrder, NOTIFY_STATUSES, StatusUpdate, toOrderRead(), Body, Controller (+8 more)
+### Community 36 - "rate-limit.spec.ts"
+Cohesion: 0.24
+Nodes (6): loadSettings(), RateLimitMiddleware, Inject, Injectable, hit(), settings()
+
+### Community 37 - ".updateStatus"
+Cohesion: 0.15
+Nodes (12): CheckoutController, loadItems(), toOrderRead(), Body, Controller, Get, HttpCode, Inject (+4 more)
+
+### Community 38 - "pages/service.ts"
+Cohesion: 0.13
+Nodes (26): iso(), getConversationMessages(), listConversations(), pageAiState, PatchPageAi, RangeQuery, disconnectPageById(), getPageDetail() (+18 more)
 
 ### Community 39 - "ar.json"
 Cohesion: 0.12
@@ -296,17 +321,25 @@ Nodes (11): compilerOptions, rootDir, exclude, extends, include, node_modules, d
 Cohesion: 0.12
 Nodes (15): demo_catalog_aka, demo_catalog_egp, demo_catalog_empty, demo_catalog_matched, demo_catalog_no_options, demo_catalog_title, demo_knowledge_empty, demo_knowledge_keywords (+7 more)
 
-### Community 42 - "parse"
-Cohesion: 0.17
-Nodes (12): parse(), Body, HttpCode, Post, HandoffController, Body, Controller, HttpCode (+4 more)
+### Community 42 - ".takeover"
+Cohesion: 0.25
+Nodes (8): HandoffController, Body, Controller, HttpCode, Inject, Param, Post, UseGuards
 
 ### Community 43 - "ZernioConnectController"
 Cohesion: 0.24
 Nodes (7): Controller, Get, Param, Query, Res, UseGuards, ZernioConnectController
 
-### Community 44 - "StoreKnowledgeController"
+### Community 44 - "store-knowledge/service.ts"
+Cohesion: 0.11
+Nodes (20): createKnowledge(), deleteKnowledge(), listKnowledge(), matchKnowledge(), search(), toRead(), updateKnowledge(), Create (+12 more)
+
+### Community 45 - "products/service.ts"
 Cohesion: 0.15
-Nodes (11): deleteKnowledge(), StoreKnowledgeController, Body, Controller, Delete, HttpCode, Inject, Param (+3 more)
+Nodes (24): num(), ProductCreate, ProductUpdate, Variant, catalogForAi(), clearProductImage(), createProduct(), deleteProduct() (+16 more)
+
+### Community 46 - "registry.ts"
+Cohesion: 0.16
+Nodes (22): DbOrTx, addItem(), CartItemNotFoundError, getItemForConversation(), getOrCreateActiveCart(), removeItem(), updateItem(), activeCartRows() (+14 more)
 
 ### Community 47 - "Fix: bot answers "هتأكد من السعر وأرجعلك" instead of quoting the catalog price"
 Cohesion: 0.18
@@ -317,64 +350,100 @@ Cohesion: 0.25
 Nodes (7): Architecture, Decisions, Deliberate behavior differences from Python (all bug-fixes or hardening), Format, Implementation decisions (phases 1-6, built 2026-11-04), Known gaps / follow-ups, NestJS migration: decision log
 
 ### Community 49 - "TijaratkBot: Message Classification & AI Engine — Technical Spec (Core)"
-Cohesion: 0.05
-Nodes (37): Architecture, Backend layout (`backend/src/`), Commands (pnpm, inside `backend/`), ⛔ CRITICAL SECURITY RULE: Environment Variables & Secrets, Known in-progress / not-yet-implemented, Schema, Testing, Two-stage AI routing (+29 more)
+Cohesion: 0.17
+Nodes (12): 1.1 Retired Model (formerly Tier 1): MBZUAI-Paris/Nile-Chat-4B, 1.2 Sole LLM Tier: DeepSeek v4 Flash (via OpenRouter API), 1.3 Embedding Model: BAAI/bge-m3 (Self-Hosted Multilingual), 1.4 Customer Reply Phrasing Model: GPT-4o-mini (via OpenRouter API), 1. Model References, 2. Data Model, 3. Pipeline, 4. Review-Flagging Policy (+4 more)
 
-### Community 51 - ".ingest"
-Cohesion: 0.20
-Nodes (8): ingestInTransaction(), MessagesController, Body, Controller, Inject, Post, Res, UseGuards
+### Community 50 - "types.ts"
+Cohesion: 0.14
+Nodes (15): Cart, CartItem, ChannelConnection, Conversation, DeliveryArea, HandoffReason, Merchant, NewMessage (+7 more)
+
+### Community 51 - "MessagesController"
+Cohesion: 0.40
+Nodes (4): MessagesController, Controller, Inject, UseGuards
+
+### Community 52 - "Merchant"
+Cohesion: 0.13
+Nodes (15): Get, UseGuards, Merchant, PagesController, parseRange(), Body, Controller, Get (+7 more)
+
+### Community 53 - "auth/tokens.ts"
+Cohesion: 0.22
+Nodes (9): safeEqual(), createMerchantApiKey(), decodeAccessToken(), keyMac(), merchantIdFromApiKey(), { db, pool }, [first, ...rest], name (+1 more)
 
 ### Community 54 - "backend/package.json"
 Cohesion: 0.22
 Nodes (8): author, description, license, name, packageManager, private, type, version
 
-### Community 56 - "HealthController"
-Cohesion: 0.29
+### Community 55 - ".reply"
+Cohesion: 0.16
+Nodes (10): ConversationsController, Body, Controller, Get, HttpCode, Inject, Param, Post (+2 more)
+
+### Community 56 - "health.controller.ts"
+Cohesion: 0.28
 Nodes (5): HealthController, RootController, Controller, Get, Inject
 
 ### Community 58 - "fetchKnowledgeAction"
-Cohesion: 0.30
-Nodes (10): createKnowledgeAction(), deleteKnowledgeAction(), fetchKnowledgeAction(), updateKnowledgeAction(), isRedirect(), PoliciesPage(), PoliciesClient(), KNOWLEDGE_TYPES (+2 more)
+Cohesion: 0.38
+Nodes (7): fetchKnowledgeAction(), isRedirect(), PoliciesPage(), PoliciesClient(), KNOWLEDGE_TYPES, StoreKnowledgeView(), StoreKnowledge
 
 ### Community 59 - ".oxlintrc.json"
 Cohesion: 0.29
 Nodes (6): env, node, rules, typescript/no-explicit-any, typescript/no-floating-promises, $schema
 
-### Community 63 - "AuthController"
-Cohesion: 0.29
-Nodes (5): AuthController, Controller, Get, Inject, UseGuards
+### Community 63 - ".keyLogin"
+Cohesion: 0.25
+Nodes (6): AuthController, Body, Controller, HttpCode, Inject, Post
 
 ### Community 64 - "nest-cli.json"
 Cohesion: 0.33
 Nodes (5): collection, compilerOptions, deleteOutDir, $schema, sourceRoot
 
-### Community 65 - "products/service.ts"
-Cohesion: 0.09
-Nodes (34): iso(), num(), StoreKnowledge, getConversationMessages(), listConversations(), isOfferActive(), OfferFields, resolveUnitPrice() (+26 more)
+### Community 65 - "store-facts.ts"
+Cohesion: 0.13
+Nodes (16): ConversationNotFoundError, createManualOrder(), ManualOrderCreate, ProductNotFoundError, ResolvedOrderLine, isOfferActive(), OfferFields, resolveUnitPrice() (+8 more)
 
-### Community 69 - "prompts.ts"
-Cohesion: 0.16
-Nodes (16): pyJsonDumps(), buildContextPrompt(), HistoryMessage, PromptExample, PromptMode, truthy(), replyProvider(), CustomerGender (+8 more)
+### Community 69 - "action-resolution.ts"
+Cohesion: 0.14
+Nodes (22): pyJsonDumps(), ConvState, ActionResolution, renderResponse(), resolveAction(), stripInternal(), buildContextPrompt(), PromptExample (+14 more)
 
 ### Community 72 - "TijaratkBot backend (NestJS)"
 Cohesion: 0.50
 Nodes (3): Layout, Schema changes, TijaratkBot backend (NestJS)
 
 ### Community 73 - "getSettings"
-Cohesion: 0.12
-Nodes (23): AppModule, Module, getSettings(), DetailExceptionFilter, AICallError, AiClient, build(), getEmbeddingClient() (+15 more)
+Cohesion: 0.21
+Nodes (17): getSettings(), AICallError, AiClient, build(), getEmbeddingClient(), getLlmClient(), isApiError(), log (+9 more)
 
-### Community 84 - "MerchantsController"
-Cohesion: 0.20
-Nodes (8): MerchantsController, read(), Body, Controller, Get, Inject, Patch, UseGuards
+### Community 84 - "notFound"
+Cohesion: 0.15
+Nodes (9): notFound(), ingestInTransaction(), Body, Post, Res, ProductImagesController, Controller, Inject (+1 more)
 
-### Community 85 - "action-resolution.ts"
-Cohesion: 0.43
-Nodes (6): ActionResolution, renderResponse(), stripInternal(), ProposedAction, StoreFacts, ActionOutcome
+### Community 85 - "action-validator.ts"
+Cohesion: 0.47
+Nodes (5): checkProductOwnership(), checkVariantOwnership(), evaluateAction(), ValidationError, ValidationResult
 
 ### Community 88 - "schemas.ts"
-Cohesion: 0.12
-Nodes (19): cpLen(), stripChars(), COST_PER_1K_TOKENS, estimateCost(), J, objectSig(), ours(), sig() (+11 more)
+Cohesion: 0.24
+Nodes (9): J, objectSig(), ours(), sig(), confidence, ExtractionBase, GeneratedReply, jsonSchemaResponseFormat() (+1 more)
+
+### Community 89 - "config.ts"
+Cohesion: 0.10
+Nodes (18): bool, csvOrJson, FALSE, MAX_ACTIVE_PAGES_PER_MERCHANT, schema, TRUE, PROCESS_CHANNEL_MESSAGE, createDb() (+10 more)
+
+### Community 90 - "TijaratkBot"
+Cohesion: 0.18
+Nodes (11): Architecture, Backend, Documentation, Frontend, Getting started, Prerequisites, Project structure, Status (+3 more)
+
+### Community 91 - "README.md"
+Cohesion: 0.20
+Nodes (6): Explicitly out of scope for now (PRD §5), Near-term — MVP gap-closers, Now — built today, Phase 2 (per PRD §37), Phase 3 (per PRD §37), Roadmap
+
+### Community 92 - "CLAUDE.md"
+Cohesion: 0.20
+Nodes (9): Architecture, Backend layout (`backend/src/`), Commands (pnpm, inside `backend/`), ⛔ CRITICAL SECURITY RULE: Environment Variables & Secrets, Known in-progress / not-yet-implemented, Schema, Testing, Two-stage AI routing (+1 more)
+
+### Community 93 - "MerchantsController"
+Cohesion: 0.40
+Nodes (4): MerchantsController, Controller, Inject, UseGuards
 
 ### Community 109 - "33. Onboarding"
 Cohesion: 0.29
@@ -441,8 +510,8 @@ Cohesion: 0.12
 Nodes (15): 1. Why login goes to dashboard with no Facebook login, 2. Architecture as found (verified), 3. Findings (priority order), 4. Remediation plan (phases; each independently shippable), 5. Explicitly deferred (YAGNI), Critical, High, Medium (+7 more)
 
 ### Community 137 - "app/layout.tsx"
-Cohesion: 0.21
-Nodes (5): cairo, tajawal, Analytics(), WhatsAppWidget(), SITE_URL
+Cohesion: 0.19
+Nodes (6): cairo, readex, tajawal, Analytics(), WhatsAppWidget(), SITE_URL
 
 ### Community 147 - "Merchant Dashboard Remediation"
 Cohesion: 0.25
@@ -497,24 +566,24 @@ Cohesion: 0.67
 Nodes (3): 8.1 Entry, 8.2 Browse, 8. Recommended Customer Conversation Flow
 
 ## Knowledge Gaps
-- **747 isolated node(s):** `$schema`, `typescript/no-explicit-any`, `typescript/no-floating-promises`, `node`, `$schema` (+742 more)
+- **803 isolated node(s):** `$schema`, `typescript/no-explicit-any`, `typescript/no-floating-promises`, `node`, `$schema` (+798 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Merchant` connect `CurrentMerchant` to `labeled-examples.controller.ts`, `checkout.controller.ts`, `index.ts`, `parse`, `ZernioConnectController`, `StoreKnowledgeController`, `.ingest`, `MerchantsController`, `delivery.controller.ts`, `LabeledExamplesController`, `AuthController`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `CurrentMerchant` connect `CurrentMerchant` to `labeled-examples.controller.ts`, `checkout.controller.ts`, `index.ts`, `parse`, `ZernioConnectController`, `StoreKnowledgeController`, `.ingest`, `MerchantsController`, `delivery.controller.ts`, `LabeledExamplesController`, `AuthController`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `Db` connect `index.ts` to `labeled-examples.controller.ts`, `units.spec.ts`, `harness.ts`, `checkout.controller.ts`, `parse`, `StoreKnowledgeController`, `CurrentMerchant`, `.ingest`, `MerchantsController`, `delivery.controller.ts`, `LabeledExamplesController`, `AuthController`?**
-  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `Merchant` connect `Merchant` to `.updateStatus`, `pages/service.ts`, `index.ts`, `.takeover`, `ZernioConnectController`, `store-knowledge/service.ts`, `products/service.ts`, `CurrentMerchant`, `notFound`, `delivery.controller.ts`, `LabeledExamplesController`, `.reply`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `CurrentMerchant` connect `CurrentMerchant` to `.updateStatus`, `pages/service.ts`, `index.ts`, `.takeover`, `ZernioConnectController`, `store-knowledge/service.ts`, `products/service.ts`, `Merchant`, `delivery.controller.ts`, `LabeledExamplesController`, `.reply`, `notFound`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `Db` connect `index.ts` to `units.spec.ts`, `harness.ts`, `channels.controller.ts`, `.updateStatus`, `pages/service.ts`, `.takeover`, `store-knowledge/service.ts`, `core/tokens.ts`, `products/service.ts`, `MessagesController`, `Merchant`, `delivery.controller.ts`, `LabeledExamplesController`, `.reply`, `notFound`, `config.ts`, `MerchantsController`, `.keyLogin`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
 - **What connects `$schema`, `typescript/no-explicit-any`, `typescript/no-floating-promises` to the rest of the system?**
-  _747 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _803 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `units.spec.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.056022408963585436 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06666666666666667 - nodes in this community are weakly interconnected._
 - **Should `harness.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.05543859649122807 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06830601092896176 - nodes in this community are weakly interconnected._
 - **Should `gender.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.10666666666666667 - nodes in this community are weakly interconnected._

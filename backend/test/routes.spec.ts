@@ -23,10 +23,15 @@ describe('auth', () => {
   it('/auth/me lists active connections only', async () => {
     await withApp(async ({ http, db }) => {
       const m = await makeMerchant(db, { name: 'Shop' });
-      await makeConnection(db, m.id, { accountName: 'Live Page' });
+      const live = await makeConnection(db, m.id, { accountName: 'Live Page' });
       await makeConnection(db, m.id, { accountName: 'Dead Page', isActive: false });
       const res = await http.get('/auth/me').set(authHeader(m.id));
-      expect(res.body).toEqual({ merchant_id: m.id, merchant_name: 'Shop', is_active: true, channels: [{ channel: 'FACEBOOK', account_name: 'Live Page' }] });
+      expect(res.body).toEqual({
+        merchant_id: m.id,
+        merchant_name: 'Shop',
+        is_active: true,
+        channels: [{ id: live.id, channel: 'FACEBOOK', account_name: 'Live Page' }],
+      });
     });
   });
 
@@ -204,17 +209,33 @@ describe('merchant settings', () => {
 });
 
 describe('conversations & handoff', () => {
-  it('lists, shows messages in order, and is merchant-scoped', async () => {
+  it('lists with page fields, filters by ?page=, shows messages in order, and is merchant-scoped', async () => {
     await withApp(async ({ http, db }) => {
       const m = await makeMerchant(db);
       const other = await makeMerchant(db, { name: 'O' });
-      const c = await makeConversation(db, m.id);
+      const pageA = await makeConnection(db, m.id, { accountName: 'Shop FB', channel: 'FACEBOOK' });
+      const pageB = await makeConnection(db, m.id, { accountName: 'Shop IG', channel: 'INSTAGRAM' });
+      const c = await makeConversation(db, m.id, { channelConnectionId: pageA.id, lastMessageAt: new Date('2025-01-01T12:00:00Z') });
+      const c2 = await makeConversation(db, m.id, { channelConnectionId: pageB.id, lastMessageAt: new Date('2025-01-01T11:00:00Z') });
       await db.insert(schema.messages).values([
         { conversationId: c.id, direction: 'INBOUND', rawText: 'one', createdAt: new Date('2025-01-01T10:00:00Z') },
         { conversationId: c.id, direction: 'OUTBOUND', rawText: 'two', createdAt: new Date('2025-01-01T10:01:00Z') },
       ]);
       const list = await http.get('/conversations').set(authHeader(m.id));
-      expect(list.body[0]).toMatchObject({ id: c.id, state: 'GATHERING', ai_enabled: true, human_takeover: false, slots: {} });
+      expect(list.body).toHaveLength(2);
+      expect(list.body[0]).toMatchObject({
+        id: c.id,
+        state: 'GATHERING',
+        ai_enabled: true,
+        human_takeover: false,
+        slots: {},
+        channel_connection_id: pageA.id,
+        page_name: 'Shop FB',
+        page_channel: 'FACEBOOK',
+        page_is_active: true,
+      });
+      const filtered = await http.get(`/conversations?page=${pageB.id}`).set(authHeader(m.id));
+      expect(filtered.body.map((x: any) => x.id)).toEqual([c2.id]);
       const msgs = await http.get(`/conversations/${c.id}/messages`).set(authHeader(m.id));
       expect(msgs.body.map((x: any) => x.raw_text)).toEqual(['one', 'two']);
       expect(msgs.body[0].created_at).toBe('2025-01-01T10:00:00.000Z');
@@ -222,7 +243,7 @@ describe('conversations & handoff', () => {
     });
   });
 
-  it('merchant reply is persisted; not sent without a connected page', async () => {
+  it('merchant reply is persisted; not sent without a connected page; refused when page is disconnected', async () => {
     await withApp(async ({ http, db }) => {
       const m = await makeMerchant(db);
       const c = await makeConversation(db, m.id);
@@ -231,6 +252,12 @@ describe('conversations & handoff', () => {
       expect(res.body).toEqual({ message_id: expect.any(String), sent: false });
       const [row] = await db.select().from(schema.messages).where(eq(schema.messages.id, res.body.message_id));
       expect(row).toMatchObject({ direction: 'OUTBOUND', rawText: 'أهلاً', messageType: 'text', richPayload: { kind: 'text', text: 'أهلاً' } });
+
+      const deadPage = await makeConnection(db, m.id, { isActive: false });
+      const deadConv = await makeConversation(db, m.id, { channelConnectionId: deadPage.id });
+      const refused = await http.post(`/conversations/${deadConv.id}/reply`).set(authHeader(m.id)).send({ text: 'مرحباً' });
+      expect(refused.status).toBe(409);
+      expect(refused.body.detail).toContain('مفصولة');
     });
   });
 

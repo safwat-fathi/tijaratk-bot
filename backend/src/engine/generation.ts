@@ -17,6 +17,7 @@ export async function generateReply(p: {
   catalog?: string;
   policies?: string;
   history?: HistoryMessage[];
+  pageNote?: string | null;
 }): Promise<[GeneratedReply, CallUsage]> {
   const [result, usage] = await complete(replyProvider(), {
     systemPrompt: buildReplySystemPrompt({
@@ -27,6 +28,7 @@ export async function generateReply(p: {
       policies: p.policies,
       userPrompt: p.userPrompt,
       history: p.history,
+      pageNote: p.pageNote,
     }),
     userPrompt: `${renderHistory(p.history)}${p.userPrompt}`,
     jsonSchemaFor: GeneratedReply,

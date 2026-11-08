@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { languageTag } from "@/paraglide/runtime";
 import * as m from "@/paraglide/messages";
-import { Cairo, Tajawal } from "next/font/google";
+import { Cairo, Readex_Pro, Tajawal } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@inlang/paraglide-next";
 import { SITE_URL } from "@/lib/site";
@@ -19,6 +19,11 @@ const tajawal = Tajawal({
   variable: "--font-tajawal",
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "700"],
+});
+
+const readex = Readex_Pro({
+  variable: "--font-readex",
+  subsets: ["arabic", "latin"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -70,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html
         lang={lang}
         dir={dir}
-        className={`${cairo.variable} ${tajawal.variable} h-full antialiased`}
+        className={`${cairo.variable} ${tajawal.variable} ${readex.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col">
           <NextTopLoader color="#2563eb" showSpinner={false} />

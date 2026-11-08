@@ -3022,6 +3022,82 @@
           "webhooks"
         ]
       }
+    },
+    "/pages": {
+      "get": {
+        "operationId": "list_pages_pages_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Pages",
+        "tags": [
+          "pages"
+        ]
+      }
+    },
+    "/pages/{id}": {
+      "get": {
+        "operationId": "get_page_pages__id__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Page",
+        "tags": [
+          "pages"
+        ]
+      }
+    },
+    "/pages/{id}/ai": {
+      "patch": {
+        "operationId": "update_page_ai_pages__id__ai_patch",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Page Ai",
+        "tags": [
+          "pages"
+        ]
+      }
+    },
+    "/pages/{id}/disconnect": {
+      "post": {
+        "operationId": "disconnect_page_pages__id__disconnect_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Disconnect Page",
+        "tags": [
+          "pages"
+        ]
+      }
     }
   }
 }

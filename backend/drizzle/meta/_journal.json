@@ -36,6 +36,13 @@
       "when": 1794120000500,
       "tag": "0004_ai_answered_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794141796252,
+      "tag": "0005_page_ai_settings",
+      "breakpoints": true
     }
   ]
 }

@@ -11,6 +11,7 @@ import {
   quickReplyMessage,
   textMessage,
 } from '../domains/messaging/models.js';
+import { pageAiState } from '../domains/pages/ai-state.js';
 import { isOverConversationLimit } from '../domains/usage/service.js';
 import { resolveAction } from './action-resolution.js';
 import { classifyMessage } from './classification.js';
@@ -146,6 +147,7 @@ async function generateAiReply(
     catalog?: string;
     policies?: string;
     history?: HistoryMessage[];
+    pageNote?: string | null;
   },
 ): Promise<GeneratedReply | null> {
   try {
@@ -157,6 +159,7 @@ async function generateAiReply(
       catalog: p.catalog,
       policies: p.policies,
       history: p.history,
+      pageNote: p.pageNote,
     });
     await addUsageEvent(db, conversation.id, message.id, usage, { success: true });
     return reply;
@@ -199,29 +202,41 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
   await saveMessage(db, message); // session.add(message): orders reference it by FK
   const normalizedText = message.normalizedText ?? '';
 
-  const [info] = await db
+  const [row] = await db
     .select({
       name: schema.merchants.name,
       currency: schema.merchants.currency,
       toolOrdering: schema.merchants.aiToolOrderingEnabled,
-      aiEnabled: schema.merchants.aiEnabled,
+      merchantAiEnabled: schema.merchants.aiEnabled,
+      ccId: schema.channelConnections.id,
+      ccName: schema.channelConnections.accountName,
+      ccAiEnabled: schema.channelConnections.aiEnabled,
+      ccAiPausedUntil: schema.channelConnections.aiPausedUntil,
+      ccAiInstructions: schema.channelConnections.aiInstructions,
     })
     .from(schema.merchants)
+    .leftJoin(
+      schema.channelConnections,
+      conversation.channelConnectionId
+        ? eq(schema.channelConnections.id, conversation.channelConnectionId)
+        : sql`false`,
+    )
     .where(eq(schema.merchants.id, conversation.merchantId));
-  const merchantName = info.name;
+  const merchantName = row.name;
+  const page = row.ccId
+    ? { aiEnabled: row.ccAiEnabled ?? true, aiPausedUntil: row.ccAiPausedUntil ?? null }
+    : null;
+  const pageNote = row.ccAiInstructions ?? null;
   // Past the plan's monthly quota: behave like AI off (the message is saved; the merchant answers by hand).
-  const overQuota = info.aiEnabled && (await isOverConversationLimit(db, conversation.merchantId, conversation.id));
-  if (overQuota) info.aiEnabled = false;
-
-  let ccName: string | null = null;
-  if (conversation.channelConnectionId) {
-    const [cc] = await db
-      .select({ n: schema.channelConnections.accountName })
-      .from(schema.channelConnections)
-      .where(eq(schema.channelConnections.id, conversation.channelConnectionId));
-    ccName = cc?.n ?? null;
-  }
-  const displayName = ccName || merchantName || 'المتجر';
+  const overQuota = row.merchantAiEnabled && (await isOverConversationLimit(db, conversation.merchantId, conversation.id));
+  const aiState = pageAiState({ merchantAiEnabled: row.merchantAiEnabled, overQuota, page });
+  const info = {
+    name: row.name,
+    currency: row.currency,
+    toolOrdering: row.toolOrdering,
+    aiEnabled: aiState === 'on',
+  };
+  const displayName = row.ccName || merchantName || 'المتجر';
 
   // --- Postback routing (L0 deterministic, no AI) ---
   if (message.postbackPayload && typeof message.postbackPayload === 'object') {
@@ -233,15 +248,20 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
   }
 
   // The AI stays silent in these cases with nothing else in the logs, so say which one applied.
-  const skipReason = overQuota
-    ? 'over_quota'
-    : !info.aiEnabled
-      ? 'merchant_ai_off'
-      : !conversation.aiEnabled
-        ? 'conversation_ai_off'
-        : conversation.humanTakeover
-          ? 'human_takeover'
-          : null;
+  const skipReason =
+    aiState === 'over_quota'
+      ? 'over_quota'
+      : aiState === 'master_off'
+        ? 'merchant_ai_off'
+        : aiState === 'off'
+          ? 'page_ai_off'
+          : aiState === 'paused'
+            ? 'page_paused'
+            : !conversation.aiEnabled
+              ? 'conversation_ai_off'
+              : conversation.humanTakeover
+                ? 'human_takeover'
+                : null;
   if (skipReason) log.warn(`ai_skipped reason=${skipReason} message_id=${message.id} conversation_id=${conversation.id} merchant_id=${conversation.merchantId}`);
 
   const tier0 = matchTier0(normalizedText);
@@ -255,6 +275,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
       if (info.aiEnabled && conversation.aiEnabled) {
         aiReply = await generateAiReply(db, conversation, message, {
           merchantName,
+          pageNote,
           userPrompt: `customer: ${normalizedText}\nThe customer just greeted you. Greet them back and ask how you can help.`,
         });
       }
@@ -328,7 +349,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
       query: normalizedText,
       currency: info.currency,
     });
-    const resolution = await resolveAction(db, conversation, message, facts);
+    const resolution = await resolveAction(db, conversation, message, facts, pageNote);
     message.modelTier = 'DEEPSEEK';
     // Tools may have rewritten the conversation's slots (update_customer_info): re-read for the reply prompt.
     const [fresh] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, conversation.id));
@@ -343,6 +364,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
         catalog: facts.catalog,
         policies: facts.policies,
         history,
+        pageNote,
         userPrompt:
           `customer: ${normalizedText}\n` +
           `action_result: ${resolution.responseText}\n` +
@@ -463,6 +485,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
       catalog: facts.catalog,
       policies: facts.policies,
       history,
+      pageNote,
       userPrompt: `customer: ${normalizedText}`,
     });
     outbound = replyMessages(message, aiReply);

@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Logger, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { createHmac } from 'node:crypto';
-import { and, eq, isNotNull } from 'drizzle-orm';
+import { and, count, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import type { Response } from 'express';
 import type { Settings } from '../../config.js';
 import { ApiError } from '../../core/http.js';
@@ -121,22 +121,43 @@ export class ZernioConnectController {
 
     const t = schema.channelConnections;
     try {
-      const claimed = await this.db.transaction(async (tx) => {
+      const outcome = await this.db.transaction(async (tx) => {
+        const [existing] = await tx
+          .select({ id: t.id, merchantId: t.merchantId, isActive: t.isActive })
+          .from(t)
+          .where(and(eq(t.channel, channel), eq(t.externalAccountId, accountId)));
+        if (existing && existing.merchantId !== merchantId && existing.isActive) {
+          return 'account_in_use' as const;
+        }
+        if (!existing || existing.merchantId !== merchantId) {
+          const [{ n }] = await tx
+            .select({ n: count() })
+            .from(t)
+            .where(and(eq(t.merchantId, merchantId), eq(t.isActive, true), inArray(t.channel, ['FACEBOOK', 'INSTAGRAM'])));
+          if (Number(n) >= this.s.MAX_ACTIVE_PAGES_PER_MERCHANT) return 'page_limit_reached' as const;
+        }
         const [row] = await tx
           .insert(t)
           .values({ merchantId, channel, externalAccountId: accountId, accountName: account.displayName ?? account.username ?? null })
           .onConflictDoUpdate({
             target: [t.channel, t.externalAccountId],
-            set: { isActive: true, accountName: account.displayName ?? account.username ?? null },
-            setWhere: eq(t.merchantId, merchantId), // never take an account over from another merchant
+            set: {
+              merchantId,
+              isActive: true,
+              accountName: account.displayName ?? account.username ?? null,
+              aiEnabled: sql`CASE WHEN ${t.merchantId} = ${merchantId} THEN ${t.aiEnabled} ELSE true END`,
+              aiPausedUntil: sql`CASE WHEN ${t.merchantId} = ${merchantId} THEN ${t.aiPausedUntil} ELSE NULL END`,
+              aiInstructions: sql`CASE WHEN ${t.merchantId} = ${merchantId} THEN ${t.aiInstructions} ELSE NULL END`,
+            },
+            setWhere: or(eq(t.merchantId, merchantId), eq(t.isActive, false)), // never take an active account over from another merchant
           })
           .returning({ id: t.id });
-        if (!row) return false;
+        if (!row) return 'account_in_use' as const;
         // Old Meta-app connections for this channel would deliver every message twice.
         await tx.update(t).set({ isActive: false }).where(and(eq(t.merchantId, merchantId), eq(t.channel, channel), isNotNull(t.pageAccessToken)));
-        return true;
+        return 'connected' as const;
       });
-      return claimed ? { connected: account.platform } : { error: 'account_in_use' };
+      return outcome === 'connected' ? { connected: account.platform } : { error: outcome };
     } catch (e) {
       log.warn(`zernio_connect_store_failed error=${e}`);
       return { error: 'connect_failed' };

@@ -10,10 +10,12 @@ import { fetchMessagesAction, sendManualReplyAction } from "@/app/merchant/actio
 export function MessageComposer({
   conversationId,
   isTakeover = false,
+  pageDisconnected = false,
   onStateChange,
 }: {
   conversationId: string;
   isTakeover?: boolean;
+  pageDisconnected?: boolean;
   onStateChange?: (state: { status: string }) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -58,6 +60,7 @@ export function MessageComposer({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (pageDisconnected) return;
     const formData = new FormData(e.currentTarget);
     const text = String(formData.get("text") ?? "").trim();
     if (!text) return;
@@ -84,6 +87,8 @@ export function MessageComposer({
     }
   };
 
+  const canReply = isTakeover && !pageDisconnected;
+
   return (
     <section className="flex h-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-[#efeae2] shadow-sm">
       {/* Chat Header */}
@@ -98,8 +103,13 @@ export function MessageComposer({
           </div>
         </div>
 
-        {/* Takeover Indicator */}
-        {isTakeover ? (
+        {/* Takeover / Disconnected Indicator */}
+        {pageDisconnected ? (
+          <span className="rounded-full bg-slate-400/25 border border-slate-300/40 px-2.5 py-1 text-xs font-semibold text-white flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-slate-300"></span>
+            الصفحة مفصولة
+          </span>
+        ) : isTakeover ? (
           <span className="rounded-full bg-amber-400/20 border border-amber-300/40 px-2.5 py-1 text-xs font-semibold text-amber-200 flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
             التدخل نشط
@@ -112,8 +122,17 @@ export function MessageComposer({
         )}
       </div>
 
+      {/* Disconnected notice bar */}
+      {pageDisconnected && (
+        <div className="bg-slate-100 border-b border-slate-300 px-4 py-2 flex items-center justify-between text-xs text-slate-800">
+          <span className="font-medium">
+            الصفحة مفصولة — لا يمكن إرسال ردود جديدة حتى تعيد ربط الصفحة من «صفحاتي».
+          </span>
+        </div>
+      )}
+
       {/* Takeover notice bar */}
-      {isTakeover && (
+      {!pageDisconnected && isTakeover && (
         <div className="bg-amber-50 border-b border-amber-200/80 px-4 py-2 flex items-center justify-between text-xs text-amber-900">
           <span className="font-medium">
             تم إيقاف الذكاء الاصطناعي لهذه المحادثة. يمكنك الآن إرسال ردود مباشرة للعميل.
@@ -152,15 +171,21 @@ export function MessageComposer({
         ref={formRef}
         onSubmit={handleSubmit}
         className={`flex items-end gap-2 p-3 ${
-          isTakeover ? "bg-blue-100/70 border-t border-blue-200" : "bg-[#f0f0f0]"
+          canReply ? "bg-blue-100/70 border-t border-blue-200" : "bg-[#f0f0f0]"
         }`}
       >
         <textarea
           name="text"
           required
           rows={1}
-          placeholder={isTakeover ? "اكتب ردك لإرساله للعميل..." : "فعّل تولي المحادثة أولاً لتتمكن من إرسال رد يدوي"}
-          disabled={!isTakeover}
+          placeholder={
+            pageDisconnected
+              ? "الصفحة مفصولة — أعد ربطها للرد على العميل"
+              : isTakeover
+                ? "اكتب ردك لإرساله للعميل..."
+                : "فعّل تولي المحادثة أولاً لتتمكن من إرسال رد يدوي"
+          }
+          disabled={!canReply}
           className="max-h-32 min-h-12 flex-1 resize-none rounded-full border-none bg-white px-4 py-3 text-sm focus:outline-none focus:ring-0 shadow-xs disabled:bg-gray-100 disabled:text-gray-400"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -171,7 +196,7 @@ export function MessageComposer({
         />
         <button
           type="submit"
-          disabled={sending || !isTakeover}
+          disabled={sending || !canReply}
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white transition-colors bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           title="إرسال الرد"
         >

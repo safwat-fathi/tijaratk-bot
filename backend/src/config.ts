@@ -67,21 +67,24 @@ const schema = z.object({
   // Free plan (every merchant for now): the AI answers only the first N conversations (customers who wrote) each month.
   // ponytail: one global value; add Merchant.plan when paid plans exist.
   FREE_PLAN_MONTHLY_CONVERSATIONS: z.coerce.number().default(10),
+  MAX_ACTIVE_PAGES_PER_MERCHANT: z.coerce.number().default(10),
   ENCRYPTION_KEY: z.string().default(''),
   RATE_LIMIT_ENABLED: bool.default(true),
   RATE_LIMIT_DEFAULT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_DEFAULT_WINDOW: z.coerce.number().default(60),
 });
 
+export const MAX_ACTIVE_PAGES_PER_MERCHANT = 10;
+
 export type Settings = z.infer<typeof schema>;
 
 export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
-  const llmModel = env.LLM_MODEL;
+  const llmModel = env.LLM_MODEL ?? env.DEEPSEEK_MODEL;
   const normalized = {
     ...env,
     LLM_MODEL: llmModel,
     REPLY_LLM_MODEL: env.REPLY_LLM_MODEL || llmModel,
-    LLM_TEMPERATURE: env.LLM_TEMPERATURE,
+    LLM_TEMPERATURE: env.LLM_TEMPERATURE ?? env.DEEPSEEK_TEMPERATURE,
   };
   const r = schema.safeParse(normalized);
   if (r.success) return r.data;

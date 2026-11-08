@@ -180,6 +180,65 @@ describe('tier 0 and routing without AI classification', () => {
     });
   });
 
+  it('per-page AI gating: page off, page paused, pause expired, master off beats page on, null connection, and page instructions', async () => {
+    await withRollback(async (db) => {
+      const { m, c } = await world(db);
+
+      // 1. Null connection uses merchant settings (on when merchant AI is enabled)
+      fakeAi([{ reply: 'أهلاً من غير صفحة' }]);
+      const nullConnRes = await processMessage(db, c, msg(c, 'السلام عليكم'));
+      expect(kinds(nullConnRes)).toEqual(['text']);
+
+      // Attach a page connection
+      await db.insert(schema.channelConnections).values({
+        id: 'page-1',
+        merchantId: m.id,
+        channel: 'FACEBOOK',
+        externalAccountId: 'ext-1',
+        accountName: 'صفحة الجملة',
+        aiEnabled: false,
+      });
+      await db.update(schema.conversations).set({ channelConnectionId: 'page-1' }).where(eq(schema.conversations.id, c.id));
+      const conv = { ...c, channelConnectionId: 'page-1' };
+
+      // 2. Page AI off -> stays silent
+      const aiOff = fakeAi([]);
+      const pageOffRes = await processMessage(db, conv, msg(conv, 'عايز اطلب'));
+      expect(pageOffRes.messages).toEqual([]);
+      expect(pageOffRes.message.intent).toBe('fallback:no_ai');
+      expect(aiOff.calls).toHaveLength(0);
+
+      // 3. Page paused in the future -> stays silent
+      await db
+        .update(schema.channelConnections)
+        .set({ aiEnabled: true, aiPausedUntil: new Date(Date.now() + 3_600_000) })
+        .where(eq(schema.channelConnections.id, 'page-1'));
+      const pausedRes = await processMessage(db, conv, msg(conv, 'السلام عليكم'));
+      expect(pausedRes.messages).toEqual([]);
+
+      // 4. Pause expired -> AI answers, and page instructions reach the reply prompt
+      await db
+        .update(schema.channelConnections)
+        .set({
+          aiEnabled: true,
+          aiPausedUntil: new Date(Date.now() - 60_000),
+          aiInstructions: 'هذه صفحة بيع بالجملة لأصحاب المحلات فقط.',
+        })
+        .where(eq(schema.channelConnections.id, 'page-1'));
+      const aiExpired = fakeAi([{ intent: 'question', confidence: 0.95 }, { reply: 'أهلاً بيك في صفحة الجملة' }]);
+      const expiredRes = await processMessage(db, conv, msg(conv, 'عندكم جملة؟'));
+      expect(kinds(expiredRes)).toEqual(['text']);
+      expect(aiExpired.calls[1].messages[0].content).toContain('هذه صفحة بيع بالجملة لأصحاب المحلات فقط.');
+
+      // 5. Master off beats page on
+      await db.update(schema.merchants).set({ aiEnabled: false }).where(eq(schema.merchants.id, m.id));
+      const masterOffAi = fakeAi([]);
+      const masterOffRes = await processMessage(db, conv, msg(conv, 'عايز اطلب'));
+      expect(masterOffRes.messages).toEqual([]);
+      expect(masterOffAi.calls).toHaveLength(0);
+    });
+  });
+
   it('human takeover: stays silent (even on a greeting) until the idle window passes, then the AI resumes', async () => {
     const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
     await withRollback(async (db) => {

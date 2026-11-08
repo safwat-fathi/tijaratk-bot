@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { COOKIES, LOGIN_MARKER } from "@/lib/constants";
 import { getBaseUrl } from "@/lib/api";
@@ -9,6 +10,12 @@ import type { Product } from "@/lib/products";
 import type { StoreKnowledge } from "@/lib/knowledge";
 import type { Order } from "@/lib/orders";
 import type { LabeledExample } from "@/lib/training";
+import type {
+  PageDetailResponse,
+  PageInfo,
+  PagesOverviewResponse,
+  StatsRange,
+} from "@/lib/pages";
 
 export async function checkResponse(res: Response, errorPrefix: string = "Request failed") {
   if (res.status === 401 || res.status === 403) {
@@ -31,18 +38,83 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
-/** Starts the Facebook page connect flow and sends the browser to consent; the API brings it back to /merchant/settings. */
-export async function connectFacebookAction() {
+/** Starts the platform connect flow and sends the browser to consent; the API brings it back to /merchant/settings which redirects to /merchant/pages. */
+export async function connectPlatformAction(platform: "facebook" | "instagram") {
   const token = await getAuthToken();
-  const res = await fetch(`${getBaseUrl()}/merchants/me/connect/facebook`, {
+  const res = await fetch(`${getBaseUrl()}/merchants/me/connect/${platform}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   }).catch(() => null);
   if (res?.status === 401) redirect(`/login?${LOGIN_MARKER}=1`);
-  if (res?.status === 402) redirect("/merchant/settings?error=billing_required");
+  if (res?.status === 402) redirect("/merchant/pages?error=billing_required");
+  if (res?.status === 409) redirect("/merchant/pages?error=page_limit_reached");
   const body = res?.ok ? ((await res.json()) as { auth_url?: string; connected?: string }) : null;
   if (body?.auth_url) redirect(body.auth_url);
-  redirect(`/merchant/settings?${body?.connected ? `connected=${body.connected}` : "error=connect_failed"}`);
+  redirect(`/merchant/pages?${body?.connected ? `connected=${body.connected}` : "error=connect_failed"}`);
+}
+
+export async function connectFacebookAction() {
+  return connectPlatformAction("facebook");
+}
+
+// ---------------- PAGES ACTIONS ----------------
+
+export async function getPages(range: StatsRange = "7d"): Promise<PagesOverviewResponse> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/pages?range=${encodeURIComponent(range)}`, {
+    headers: await getAuthHeaders(),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to fetch pages");
+  return res.json();
+}
+
+export async function getPage(id: string, range: StatsRange = "7d"): Promise<PageDetailResponse> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/pages/${encodeURIComponent(id)}?range=${encodeURIComponent(range)}`, {
+    headers: await getAuthHeaders(),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to fetch page");
+  return res.json();
+}
+
+export async function setPageAi(
+  id: string,
+  patch: {
+    ai_enabled?: boolean;
+    pause_hours?: number | null;
+    ai_instructions?: string | null;
+  },
+): Promise<PageInfo> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/pages/${encodeURIComponent(id)}/ai`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(),
+    body: JSON.stringify(patch),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to update page AI settings");
+  const data = (await res.json()) as PageInfo;
+  revalidatePath("/merchant/pages");
+  revalidatePath(`/merchant/pages/${id}`);
+  revalidatePath("/merchant", "layout");
+  return data;
+}
+
+export async function disconnectPage(id: string): Promise<{ id: string; is_active: boolean }> {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/pages/${encodeURIComponent(id)}/disconnect`, {
+    method: "POST",
+    headers: await getAuthHeaders(),
+    cache: "no-store",
+  });
+  await checkResponse(res, "Failed to disconnect page");
+  const data = (await res.json()) as { id: string; is_active: boolean };
+  revalidatePath("/merchant/pages");
+  revalidatePath(`/merchant/pages/${id}`);
+  revalidatePath("/merchant", "layout");
+  return data;
 }
 
 // ---------------- PRODUCTS ACTIONS ----------------
@@ -305,15 +377,27 @@ export interface ConversationRecord {
   merchant_id: string;
   customer_ref: string;
   channel: string;
-  status: string;
-  is_human_takeover: boolean;
+  state?: string;
+  status?: string;
+  ai_enabled?: boolean;
+  human_takeover?: boolean;
+  is_human_takeover?: boolean;
+  last_message_at?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+  channel_connection_id?: string | null;
+  page_name?: string | null;
+  page_channel?: string | null;
+  page_is_active?: boolean | null;
 }
 
-export async function fetchConversationsAction(_merchantId?: string): Promise<ConversationRecord[]> {
+export async function fetchConversationsAction(
+  _merchantId?: string,
+  pageId?: string,
+): Promise<ConversationRecord[]> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/conversations`, {
+  const query = pageId ? `?page=${encodeURIComponent(pageId)}` : "";
+  const res = await fetch(`${baseUrl}/conversations${query}`, {
     headers: await getAuthHeaders(),
     cache: "no-store",
   });
@@ -408,7 +492,11 @@ export async function updateAiEnabledAction(
     cache: "no-store",
   });
   await checkResponse(res, "Failed to update settings");
-  return res.json();
+  const data = (await res.json()) as { ai_enabled: boolean };
+  revalidatePath("/merchant/pages");
+  revalidatePath("/merchant/settings");
+  revalidatePath("/merchant", "layout");
+  return data;
 }
 
 export async function updateAutoLearningAction(
