@@ -76,7 +76,12 @@ const schema = z
 export type Settings = z.infer<typeof schema>;
 
 export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
-  const r = schema.safeParse(env);
+  const normalized = {
+    ...env,
+    LLM_MODEL: env.LLM_MODEL ?? env.DEEPSEEK_MODEL,
+    LLM_TEMPERATURE: env.LLM_TEMPERATURE ?? env.DEEPSEEK_TEMPERATURE,
+  };
+  const r = schema.safeParse(normalized);
   if (r.success) return r.data;
   const problems = r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
   throw new Error(`Invalid environment configuration - ${problems}`);

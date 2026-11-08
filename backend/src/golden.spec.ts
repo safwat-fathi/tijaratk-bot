@@ -22,9 +22,9 @@ const g = JSON.parse(
   ),
 );
 
-describe('golden: crypto compatibility with the Python backend', () => {
+describe('golden: crypto and signature vectors', () => {
   const c = g.crypto;
-  it('decrypts a Python-produced Fernet token', () => {
+  it('decrypts a known Fernet token', () => {
     expect(new Fernet(c.fernet_key).decrypt(c.fernet_token)).toBe(c.plaintext);
   });
   it('round-trips and rejects foreign/garbled tokens', () => {
@@ -38,7 +38,7 @@ describe('golden: crypto compatibility with the Python backend', () => {
       ),
     ).toBeNull();
   });
-  it('verifies Python-minted JWTs, rejects expired / wrong-signature', () => {
+  it('verifies known JWTs, rejects expired / wrong-signature', () => {
     const s = loadSettings({ ...process.env, JWT_SECRET_KEY: c.jwt_secret });
     expect(decodeAccessToken(s, c['jwt_valid_sub_merchant-123'])).toBe(
       'merchant-123',
@@ -82,7 +82,7 @@ describe('golden: crypto compatibility with the Python backend', () => {
   });
 });
 
-describe('golden: money matches Python Decimal', () => {
+describe('golden: money rounding', () => {
   it.each(g.money)('%j', (c: any) => {
     const sum = c.lines.reduce(
       (acc: bigint, [p, q]: [string, number]) => acc + scaledProduct(p, q),
@@ -97,7 +97,7 @@ describe('golden: money matches Python Decimal', () => {
   });
 });
 
-describe('golden: agglomerative clustering matches sklearn', () => {
+describe('golden: agglomerative clustering partitions', () => {
   it.each(g.clustering.map((c: any, i: number) => [i, c.threshold, c]))(
     'case %i threshold %f',
     (_i: number, _t: number, c: any) => {
@@ -110,9 +110,9 @@ describe('golden: agglomerative clustering matches sklearn', () => {
   );
 });
 
-describe('settings parsing (pydantic parity)', () => {
+describe('settings parsing', () => {
   const base = { ...process.env } as NodeJS.ProcessEnv;
-  it('accepts pydantic booleans, case-insensitively', () => {
+  it('accepts true/false/yes/no/on/off/1/0, case-insensitively', () => {
     for (const [v, want] of [
       ['True', true],
       ['FALSE', false],
@@ -130,7 +130,7 @@ describe('settings parsing (pydantic parity)', () => {
       loadSettings({ ...base, RATE_LIMIT_ENABLED: 'maybe' }),
     ).toThrow(/RATE_LIMIT_ENABLED/);
   });
-  it('refuses to start without the settings Python also required', () => {
+  it('refuses to start without required settings', () => {
     for (const k of [
       'JWT_SECRET_KEY',
       'OPENROUTER_API_KEY',
@@ -141,9 +141,16 @@ describe('settings parsing (pydantic parity)', () => {
         new RegExp(k),
       );
     }
-    expect(() => loadSettings({ ...base, LLM_MODEL: undefined })).toThrow(
-      /LLM_MODEL/,
-    );
+    expect(() =>
+      loadSettings({ ...base, LLM_MODEL: undefined, DEEPSEEK_MODEL: undefined }),
+    ).toThrow(/LLM_MODEL/);
+    expect(
+      loadSettings({
+        ...base,
+        LLM_MODEL: undefined,
+        DEEPSEEK_MODEL: 'legacy-model',
+      }).LLM_MODEL,
+    ).toBe('legacy-model');
     expect(() =>
       loadSettings({
         ...base,
