@@ -1,5 +1,9 @@
 import { getCurrentMerchant, getMerchantSettings } from "@/lib/dal";
-import { connectFacebookAction, updateAiEnabledAction, updateAutoLearningAction } from "../actions";
+import {
+  connectFacebookAction,
+  updateAiEnabledAction,
+  updateAutoLearningAction,
+} from "../actions";
 import { SettingToggle } from "./setting-toggle";
 
 const CONNECT_ERRORS: Record<string, string> = {
@@ -9,7 +13,11 @@ const CONNECT_ERRORS: Record<string, string> = {
   zernio_unavailable: "الخدمة غير متاحة حالياً، حاول بعد قليل.",
 };
 
-export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ connected?: string; error?: string }> }) {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ connected?: string; error?: string }>;
+}) {
   const { merchantName, channels } = await getCurrentMerchant();
   const settings = await getMerchantSettings();
   const { connected, error } = await searchParams;
@@ -19,9 +27,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     <div className="font-sans max-w-3xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">الإعدادات</h1>
-        <p className="text-slate-500 mt-1">
-          إدارة قنواتك المتصلة وتفضيلاتك.
-        </p>
+        <p className="text-slate-500 mt-1">إدارة قنواتك المتصلة وتفضيلاتك.</p>
       </div>
 
       {connected && (
@@ -56,7 +62,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <div>
                 <p className="font-medium text-slate-900">فيسبوك ماسنجر</p>
                 <p className="text-sm text-slate-500">
-                  {fbConnected ? `متصل بـ: ${merchantName}` : "اربط صفحتك ليرد البوت على رسائل العملاء"}
+                  {fbConnected
+                    ? `متصل بـ: ${merchantName}`
+                    : "اربط صفحتك ليرد البوت على رسائل العملاء"}
                 </p>
               </div>
             </div>
@@ -107,7 +115,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </div>
         <div className="p-6 space-y-6">
           <p className="text-sm text-slate-600">
-            المحادثات هذا الشهر: {settings.conversationsUsed} / {settings.conversationsLimit}
+            المحادثات هذا الشهر: {settings.conversationsUsed} /{" "}
+            {settings.conversationsLimit}
             {settings.conversationsUsed >= settings.conversationsLimit &&
               " — الباقة المجانية انتهت، لن يرد الـ AI على محادثات جديدة حتى الشهر القادم."}
           </p>
@@ -134,39 +143,41 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </div>
 
         <div className="p-6 space-y-6">
-          {channels.filter(c => c.channel === 'FACEBOOK').length === 0 ? (
+          {channels.filter((c) => c.channel === "FACEBOOK").length === 0 ? (
             <p className="text-sm text-slate-500">لا توجد صفحات متصلة.</p>
           ) : (
-            channels.filter(c => c.channel === 'FACEBOOK').map((channel, idx) => (
-              <div key={idx} className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                    </svg>
+            channels
+              .filter((c) => c.channel === "FACEBOOK")
+              .map((channel, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center border border-blue-100">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900">
+                        {channel.account_name || `صفحة ${merchantName}`}
+                      </p>
+                      <p className="text-sm text-slate-500">صفحة فيسبوك</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-900">{channel.account_name || `صفحة ${merchantName}`}</p>
-                    <p className="text-sm text-slate-500">
-                      صفحة فيسبوك
-                    </p>
-                  </div>
+                  <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                    نشط
+                  </span>
                 </div>
-                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                  نشط
-                </span>
-              </div>
-            ))
+              ))
           )}
         </div>
       </div>

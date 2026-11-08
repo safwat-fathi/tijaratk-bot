@@ -5,10 +5,5 @@ export default async function ConversationsPage() {
   // Fetch actual conversations list from backend
   const conversations = await fetchConversationsAction();
 
-  return (
-    <ConversationsClient 
-      merchantId="" 
-      conversations={conversations} 
-    />
-  );
+  return <ConversationsClient merchantId="" conversations={conversations} />;
 }
