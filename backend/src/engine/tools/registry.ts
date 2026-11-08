@@ -6,6 +6,7 @@ import { getProduct, listActiveOffers, searchProducts } from '../../domains/prod
 import { search as searchKnowledge } from '../../domains/store-knowledge/service.js';
 import { eq } from 'drizzle-orm';
 import { type ValidationError, evaluateAction } from '../action-validator.js';
+import { detectGenderFromName } from '../gender.js';
 import type { ProposedAction } from '../schemas.js';
 import { ActionArgumentError, ToolUnavailableError } from './errors.js';
 
@@ -64,6 +65,10 @@ const HANDLERS: HandlerMap = {
         slots[`customer_${field}`] = value;
         captured[field] = value;
       }
+    }
+    if (a.name && !slots.customer_gender) {
+      const nameGender = detectGenderFromName(a.name);
+      if (nameGender !== 'UNKNOWN') slots.customer_gender = nameGender;
     }
     await db.update(schema.conversations).set({ slots }).where(eq(schema.conversations.id, c.conversationId));
     const delivery_validation = await validateDeliveryArea(db, c.merchantId, a.address);

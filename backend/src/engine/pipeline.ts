@@ -20,6 +20,7 @@ import { estimateCost } from './cost.js';
 import { embedText, findSimilarExamples } from './embeddings.js';
 import { extractOrder } from './extraction.js';
 import type { CallUsage } from './gateway.js';
+import { detectGenderFromName, resolveCustomerGender } from './gender.js';
 import { generateReply } from './generation.js';
 import { handlePostback } from './postback-router.js';
 import {
@@ -292,6 +293,15 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     .limit(s.CONTEXT_HISTORY_TURNS);
   const history = historyRows.reverse();
 
+  const detectedGender = resolveCustomerGender({
+    slots: conversation.slots as Slots,
+    text: normalizedText,
+    history,
+  });
+  if (detectedGender !== 'UNKNOWN' && (conversation.slots as Slots).customer_gender !== detectedGender) {
+    await setSlots(db, conversation, { ...(conversation.slots as Slots), customer_gender: detectedGender });
+  }
+
   let examples: Awaited<ReturnType<typeof findSimilarExamples>> = [];
   try {
     message.embedding = await embedText(normalizedText);
@@ -472,6 +482,10 @@ async function handleDeterministicCheckoutStep(db: DbOrTx, conversation: Convers
 
   if (step === 'name') {
     slots.customer_name = text;
+    const nameGender = detectGenderFromName(text);
+    if (nameGender !== 'UNKNOWN' && !slots.customer_gender) {
+      slots.customer_gender = nameGender;
+    }
     slots.deterministic_checkout_step = 'phone';
     outbound.push(textMessage(`أهلاً بك يا ${text}!\n\nبرجاء إدخال رقم الموبايل للتواصل:`));
   } else if (step === 'phone') {

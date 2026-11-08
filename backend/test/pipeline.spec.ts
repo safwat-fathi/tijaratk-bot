@@ -479,8 +479,9 @@ describe('tool ordering mode', () => {
       const { c } = await world(db, { toolOrdering: true });
       await processMessage(db, c, msg(c, 'اسمي علي'));
       const [conv] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
-      expect(conv.slots).toEqual({ customer_name: 'علي', customer_phone: '01012345678', customer_address: 'القاهرة' });
+      expect(conv.slots).toEqual({ customer_name: 'علي', customer_phone: '01012345678', customer_address: 'القاهرة', customer_gender: 'MALE' });
       expect(ai.calls[1].messages[0].content).toContain('"customer_name": "علي"');
+      expect(ai.calls[1].messages[0].content).toContain('Customer gender: MALE');
 
       const bad = await processMessage(db, conv, msg(c, 'رقمي 123'));
       expect(bad.message.escalationReason).toBe('action_rejected:argument_invalid');
@@ -644,6 +645,27 @@ describe('grounded replies', () => {
       const sys = ai.calls[1].messages[0].content as string;
       expect(sys).toContain('تيشيرت بولو');
       expect(sys).toContain('350');
+    });
+  });
+
+  it('detects customer gender from linguistic cues, persists it in slots, and carries it to neutral follow-up turns', async () => {
+    const ai = fakeAi([
+      { intent: 'question', confidence: 0.95 },
+      { reply: 'قوليلي عايزة موديل إيه وهنأكدلك المقاس المتاح' },
+      { intent: 'question', confidence: 0.95 },
+      { reply: 'الشحن 50 جنيه' },
+    ]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db, { name: 'متجر النور' });
+      const c = await makeConversation(db, m.id, { state: 'NEW' });
+      await processMessage(db, c, msg(c, 'أنا عايزة أعرف المقاسات المتاحة'));
+      const [conv] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
+      expect(conv.slots).toEqual({ customer_gender: 'FEMALE' });
+      expect(ai.calls[1].messages[0].content).toContain('Customer gender: FEMALE');
+
+      // Follow-up message has no gender markers, but persisted slot keeps gender FEMALE
+      await processMessage(db, conv, msg(c, 'طب الشحن بكام؟'));
+      expect(ai.calls[3].messages[0].content).toContain('Customer gender: FEMALE');
     });
   });
 });

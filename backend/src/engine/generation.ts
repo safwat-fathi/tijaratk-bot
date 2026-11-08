@@ -25,6 +25,8 @@ export async function generateReply(p: {
       slots: p.slots,
       catalog: p.catalog,
       policies: p.policies,
+      userPrompt: p.userPrompt,
+      history: p.history,
     }),
     userPrompt: `${renderHistory(p.history)}${p.userPrompt}`,
     jsonSchemaFor: GeneratedReply,

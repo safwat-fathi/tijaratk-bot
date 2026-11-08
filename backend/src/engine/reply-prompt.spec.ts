@@ -29,4 +29,17 @@ describe('buildReplySystemPrompt', () => {
   it('tells the model not to call a product unavailable when the catalog is a partial list', () => {
     expect(buildReplySystemPrompt({ ...base, catalog: 'x', policies: 'y' })).toContain('partial list');
   });
+
+  it('defaults to UNKNOWN gender with gender-neutral instructions and adapts when MALE or FEMALE is detected', () => {
+    const unknown = buildReplySystemPrompt(base);
+    expect(unknown).toContain('GENDER & ADDRESSING');
+    expect(unknown).toContain('NEVER mix masculine and feminine');
+    expect(unknown).toContain('Customer gender: UNKNOWN (use gender-neutral Egyptian Arabic phrasing');
+
+    const female = buildReplySystemPrompt({ ...base, userPrompt: 'customer: أنا عايزة أعرف المقاسات' });
+    expect(female).toContain('Customer gender: FEMALE (address the customer consistently in feminine Egyptian Arabic)');
+
+    const male = buildReplySystemPrompt({ ...base, slots: { customer_name: 'أحمد' } });
+    expect(male).toContain('Customer gender: MALE (address the customer consistently in masculine Egyptian Arabic)');
+  });
 });

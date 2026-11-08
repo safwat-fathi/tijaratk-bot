@@ -1,10 +1,13 @@
 import { pyJsonDumps } from '../core/pystr.js';
 import type { ConvState } from '../db/types.js';
+import type { HistoryMessage } from './context-budget.js';
+import { type CustomerGender, resolveCustomerGender } from './gender.js';
 
 const STATE_GLOSS: Record<ConvState, string> = {
   NEW: 'NEW (conversation just started, nothing gathered yet)',
   GATHERING: 'GATHERING (customer is actively providing order details)',
-  CONFIRMING: 'CONFIRMING (order details are gathered, waiting on customer confirmation)',
+  CONFIRMING:
+    'CONFIRMING (order details are gathered, waiting on customer confirmation)',
   COMPLETED: 'COMPLETED (order already confirmed)',
   ABANDONED: 'ABANDONED (conversation went cold)',
 };
@@ -12,7 +15,7 @@ const STATE_GLOSS: Record<ConvState, string> = {
 const BASE_TEMPLATE =
   "You are the message-understanding engine behind {merchant_name}'s automated " +
   'order assistant on a WhatsApp-style chat channel. You do not reply to the ' +
-  "customer — you read one inbound customer message and produce structured data " +
+  'customer — you read one inbound customer message and produce structured data ' +
   "that {merchant_name}'s system uses to run its order pipeline. Nothing you " +
   'output is shown to the customer directly.\n\n' +
   'Customers write in Egyptian Arabic (Arabic script), Arabizi (Egyptian Arabic ' +
@@ -24,7 +27,7 @@ const BASE_TEMPLATE =
   'script.\n\n' +
   'Conversation stage: {conv_state}\n' +
   'Already gathered for this order so far: {slots_json}\n\n' +
-  'Use the conversation stage and what\'s already gathered as context for this ' +
+  "Use the conversation stage and what's already gathered as context for this " +
   'message — e.g. a short reply like "2 كيلو" during GATHERING is almost ' +
   'always filling in a quantity for whatever product is already in slots, not ' +
   'describing a new unrelated order.\n\n' +
@@ -37,14 +40,19 @@ export function buildSystemPrompt(p: {
   convState: ConvState;
   slots: Record<string, unknown>;
 }): string {
-  const slotsJson = Object.keys(p.slots ?? {}).length ? pyJsonDumps(p.slots) : '(nothing gathered yet)';
+  const slotsJson = Object.keys(p.slots ?? {}).length
+    ? pyJsonDumps(p.slots)
+    : '(nothing gathered yet)';
   const values: Record<string, string> = {
     merchant_name: p.merchantName,
     conv_state: STATE_GLOSS[p.convState],
     slots_json: slotsJson,
     task_block: p.taskBlock,
   };
-  return BASE_TEMPLATE.replace(/\{(merchant_name|conv_state|slots_json|task_block)\}/g, (_, k: string) => values[k]);
+  return BASE_TEMPLATE.replace(
+    /\{(merchant_name|conv_state|slots_json|task_block)\}/g,
+    (_, k: string) => values[k],
+  );
 }
 
 export const classificationTaskBlock = (knownIntents: string[]) =>
@@ -66,10 +74,18 @@ export const EXTRACTION_TASK_BLOCK =
   '5. If the customer mentions a size, color, or other variant descriptor for a line item ' +
   "(e.g. 'XL', 'الأسود', 'the large one'), extract it into that line item's `variant_hint`.";
 
+const GENDER_GLOSS: Record<CustomerGender, string> = {
+  FEMALE:
+    'FEMALE (address the customer consistently in feminine Egyptian Arabic)',
+  MALE: 'MALE (address the customer consistently in masculine Egyptian Arabic)',
+  UNKNOWN:
+    'UNKNOWN (use gender-neutral Egyptian Arabic phrasing — never mix masculine and feminine forms or use gendered singular imperatives)',
+};
+
 const REPLY_RULES_TEMPLATE =
   "You are {merchant_name}'s sales assistant on a chat channel. Write the actual reply the customer receives.\n\n" +
   'Customers write in Egyptian Arabic (Arabic script), Arabizi (Latin letters and digits, e.g. "3ayz", "si3r", "bety"), ' +
-  'or English. Reply in warm, concise Egyptian Arabic (2-4 short sentences max), mirroring the customer\'s script ' +
+  "or English. Reply in warm, concise Egyptian Arabic (2-4 short sentences max), mirroring the customer's script " +
   '(use English only if the customer wrote fully in English).\n\n' +
   'CRITICAL RULES:\n' +
   '1. Answer ONLY from the store facts (catalog, policies) and any action_result below — never invent products, prices, stock, policies, delivery areas, timings, or order numbers.\n' +
@@ -78,7 +94,12 @@ const REPLY_RULES_TEMPLATE =
   '4. If the customer asks about a product that is not in the catalog: when the catalog is complete, state clearly that it is not available and suggest close items from the catalog if any exist; when the catalog starts with a note that it is a partial list, never say the product is unavailable — ask the customer for the exact product name or details instead.\n' +
   '5. Never promise "I will check and get back to you" («هتأكد وأرجعلك») unless you set "needs_human": true.\n' +
   '6. Set "needs_human": true ONLY for store-specific questions (e.g. an unlisted shipping area, policy, or custom request) that the store facts and action_result cannot answer. Never set "needs_human": true for greetings, small talk, or when saying a product is not in the catalog.\n' +
-  '7. Respond only with JSON matching the schema: {"reply": "...", "needs_human": false}.';
+  '7. GENDER & ADDRESSING:\n' +
+  '   - NEVER mix masculine and feminine grammatical forms in the same reply (e.g. never write «قوليلي عايز» or combine «تختاره» with «قوليلي»).\n' +
+  '   - When Customer gender is UNKNOWN: use warm, natural, gender-neutral Egyptian Arabic that fits any customer. Prefer impersonal phrasing (e.g. «المقاسات بتختلف حسب الموديل واللون.. إيه الموديل المطلوب علشان نأكدلك المقاس المتاح؟», «يا ريت اسم أو صورة الموديل وهنأكدلك المتاح فوراً») or polite plural («تحبوا نأكد لحضراتكم», «ابعتولنا»). Avoid gendered singular forms like «قوليلي» / «قولي» / «عايز» / «عايزة» / «اختار» / «اختاري».\n' +
+  '   - When Customer gender is FEMALE: address the customer consistently in feminine Egyptian Arabic throughout the entire reply (e.g. «قوليلي عايزة موديل إيه», «اللون اللي تختاريه»).\n' +
+  '   - When Customer gender is MALE: address the customer consistently in masculine Egyptian Arabic throughout the entire reply (e.g. «قولي عايز موديل إيه», «اللون اللي تختاره»).\n' +
+  '8. Respond only with JSON matching the schema: {"reply": "...", "needs_human": false}.';
 
 export function buildReplySystemPrompt(p: {
   merchantName: string;
@@ -86,9 +107,24 @@ export function buildReplySystemPrompt(p: {
   slots: Record<string, unknown>;
   catalog?: string;
   policies?: string;
+  customerGender?: CustomerGender;
+  userPrompt?: string;
+  history?: HistoryMessage[];
 }): string {
-  const rules = REPLY_RULES_TEMPLATE.replaceAll('{merchant_name}', () => p.merchantName); // a function: `$&` in a name must stay literal
-  const slotsJson = Object.keys(p.slots ?? {}).length ? pyJsonDumps(p.slots) : '(nothing gathered yet)';
+  const rules = REPLY_RULES_TEMPLATE.replaceAll(
+    '{merchant_name}',
+    () => p.merchantName,
+  ); // a function: `$&` in a name must stay literal
+  const slotsJson = Object.keys(p.slots ?? {}).length
+    ? pyJsonDumps(p.slots)
+    : '(nothing gathered yet)';
+  const gender =
+    p.customerGender ??
+    resolveCustomerGender({
+      slots: p.slots,
+      text: p.userPrompt,
+      history: p.history,
+    });
   // No facts supplied (e.g. a greeting) = no section, rather than a section claiming the store is empty.
   const facts =
     p.catalog === undefined && p.policies === undefined
@@ -99,6 +135,7 @@ export function buildReplySystemPrompt(p: {
   const state =
     `CONVERSATION STATE:\n` +
     `Stage: ${STATE_GLOSS[p.convState]}\n` +
+    `Customer gender: ${GENDER_GLOSS[gender]}\n` +
     `Already gathered: ${slotsJson}`;
   return `${rules}\n\n${facts}${state}`;
 }
