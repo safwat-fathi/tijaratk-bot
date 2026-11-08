@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, UseGuards } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { notFound, parse } from '../../core/http.js';
+import { ApiError, notFound, parse } from '../../core/http.js';
 import { DB } from '../../core/tokens.js';
 import { type Db, schema } from '../../db/index.js';
 import { AuthGuard, CurrentMerchant, type Merchant } from '../auth/auth.guard.js';
@@ -54,7 +54,11 @@ export class ConversationsController {
       let sent = false;
       if (conv.channelConnectionId) {
         const [conn] = await tx.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conv.channelConnectionId));
-        if (conn) sent = (await deliver(conn, conv.customerRef, [msg]))[0] ?? false;
+        if (conn) {
+          sent = (await deliver(conn, conv.customerRef, [msg]))[0] ?? false;
+          // Roll back (nothing saved) instead of showing the merchant a reply the customer never got.
+          if (!sent) throw new ApiError(502, 'تعذر إرسال الرد إلى العميل عبر القناة. حاول مرة أخرى.');
+        }
       }
       return { message_id: outbound.id, sent };
     });

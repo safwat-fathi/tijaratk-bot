@@ -74,12 +74,12 @@ export function MessageComposer({
 
     try {
       await sendManualReplyAction(conversationId, text, undefined);
-      await load();
       onStateChange?.({ status: "success" });
     } catch (err) {
       alert(err instanceof Error ? err.message : "فشل إرسال الرد");
       onStateChange?.({ status: "error" });
     } finally {
+      await load(); // drop the optimistic bubble if the send failed
       setSending(false);
     }
   };
