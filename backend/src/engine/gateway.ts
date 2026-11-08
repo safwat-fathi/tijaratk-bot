@@ -32,6 +32,11 @@ export function llmProvider(): Provider {
   return { name: 'llm', client: getLlmClient(), model: s.LLM_MODEL, temperature: s.LLM_TEMPERATURE };
 }
 
+export function replyProvider(): Provider {
+  const s = getSettings();
+  return { name: 'llm', client: getLlmClient(), model: s.REPLY_LLM_MODEL, temperature: s.LLM_TEMPERATURE };
+}
+
 function requestBody(provider: Provider, systemPrompt: string, userPrompt: string, responseFormat: unknown) {
   const s = getSettings();
   const body: Record<string, unknown> = {

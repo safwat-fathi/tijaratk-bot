@@ -7,72 +7,87 @@ const bool = z.string().transform((v, ctx) => {
   const k = v.trim().toLowerCase();
   if (TRUE.has(k)) return true;
   if (FALSE.has(k)) return false;
-  ctx.addIssue({ code: 'custom', message: 'must be a boolean (true/false/1/0/yes/no/on/off)' });
+  ctx.addIssue({
+    code: 'custom',
+    message: 'must be a boolean (true/false/1/0/yes/no/on/off)',
+  });
   return z.NEVER;
 });
-const csvOrJson = z.string().transform((v) => (v.trim().startsWith('[') ? (JSON.parse(v) as string[]) : v.split(',').map((s) => s.trim()).filter(Boolean)));
+const csvOrJson = z.string().transform((v) =>
+  v.trim().startsWith('[')
+    ? (JSON.parse(v) as string[])
+    : v
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+);
 
 // Required vs optional: no defaults for secrets, DB, models or provider URLs
 // (a missing value must stop startup, not silently fall back to a made-up one).
-const schema = z
-  .object({
-    PROJECT_NAME: z.string().default('TijaratkBot'),
-    VERSION: z.string().default('0.1.0'),
-    PORT: z.coerce.number().default(8000),
-    DB_URL: z.string(),
-    OPENROUTER_BASE_URL: z.string(),
-    OPENROUTER_API_KEY: z.string(),
-    OPENROUTER_PROVIDERS: csvOrJson.default([]),
-    LLM_MODEL: z.string(),
-    EMBEDDING_BASE_URL: z.string(),
-    EMBEDDING_API_KEY: z.string(),
-    EMBEDDING_MODEL: z.string(),
-    CLASSIFICATION_CONFIDENCE_THRESHOLD: z.coerce.number().default(0.7),
-    CONTEXT_HISTORY_TURNS: z.coerce.number().default(10),
-    LLM_TEMPERATURE: z.coerce.number().default(0.1),
-    AI_MAX_OUTPUT_TOKENS: z.coerce.number().default(4096),
-    AI_REQUEST_TIMEOUT_SECONDS: z.coerce.number().default(30),
-    AI_MAX_RETRIES: z.coerce.number().default(2),
-    CORS_ORIGINS: csvOrJson.default(['http://localhost:3000']),
-    REDIS_URL: z.string().default('redis://localhost:6379/0'),
-    META_APP_ID: z.string().default(''),
-    META_APP_SECRET: z.string().default(''),
-    META_VERIFY_TOKEN: z.string().default(''),
-    ZERNIO_API_KEY: z.string().default(''),
-    ZERNIO_PROFILE_ID: z.string().default(''),
-    PUBLIC_API_URL: z.string().default(''),
-    ZERNIO_RETURN_URL: z.string().default('http://localhost:3000/merchant/settings'),
-    ZERNIO_WEBHOOK_SECRET: z.string().default(''),
-    // Optional: id of our own Meta app saved in Zernio, so the consent screen says TijaratkBot instead of Zernio's app.
-    ZERNIO_OAUTH_APP_ID: z.string().default(''),
-    TWILIO_AUTH_TOKEN: z.string().default(''),
-    TWILIO_WEBHOOK_URL: z.string().default(''),
-    JWT_SECRET_KEY: z.string(),
-    JWT_ALGORITHM: z.string().default('HS256'),
-    JWT_EXPIRE_MINUTES: z.coerce.number().default(10080),
-    // A human takeover (merchant reply or escalation) hands the AI back after this long with no human activity.
-    HUMAN_TAKEOVER_IDLE_MINUTES: z.coerce.number().default(30),
-    // Free plan (every merchant for now): the AI answers only the first N conversations (customers who wrote) each month.
-    // ponytail: one global value; add Merchant.plan when paid plans exist.
-    FREE_PLAN_MONTHLY_CONVERSATIONS: z.coerce.number().default(10),
-    ENCRYPTION_KEY: z.string().default(''),
-    RATE_LIMIT_ENABLED: bool.default(true),
-    RATE_LIMIT_DEFAULT_MAX: z.coerce.number().default(100),
-    RATE_LIMIT_DEFAULT_WINDOW: z.coerce.number().default(60),
-  })
-
+const schema = z.object({
+  PROJECT_NAME: z.string().default('TijaratkBot'),
+  VERSION: z.string().default('0.1.0'),
+  PORT: z.coerce.number().default(8000),
+  DB_URL: z.string(),
+  OPENROUTER_BASE_URL: z.string(),
+  OPENROUTER_API_KEY: z.string(),
+  OPENROUTER_PROVIDERS: csvOrJson.default([]),
+  LLM_MODEL: z.string(),
+  REPLY_LLM_MODEL: z.string(),
+  EMBEDDING_BASE_URL: z.string(),
+  EMBEDDING_API_KEY: z.string(),
+  EMBEDDING_MODEL: z.string(),
+  CLASSIFICATION_CONFIDENCE_THRESHOLD: z.coerce.number().default(0.7),
+  CONTEXT_HISTORY_TURNS: z.coerce.number().default(10),
+  LLM_TEMPERATURE: z.coerce.number().default(0.1),
+  AI_MAX_OUTPUT_TOKENS: z.coerce.number().default(4096),
+  AI_REQUEST_TIMEOUT_SECONDS: z.coerce.number().default(30),
+  AI_MAX_RETRIES: z.coerce.number().default(2),
+  CORS_ORIGINS: csvOrJson.default(['http://localhost:3000']),
+  REDIS_URL: z.string().default('redis://localhost:6379/0'),
+  META_APP_ID: z.string().default(''),
+  META_APP_SECRET: z.string().default(''),
+  META_VERIFY_TOKEN: z.string().default(''),
+  ZERNIO_API_KEY: z.string().default(''),
+  ZERNIO_PROFILE_ID: z.string().default(''),
+  PUBLIC_API_URL: z.string().default(''),
+  ZERNIO_RETURN_URL: z
+    .string()
+    .default('http://localhost:3000/merchant/settings'),
+  ZERNIO_WEBHOOK_SECRET: z.string().default(''),
+  // Optional: id of our own Meta app saved in Zernio, so the consent screen says TijaratkBot instead of Zernio's app.
+  ZERNIO_OAUTH_APP_ID: z.string().default(''),
+  TWILIO_AUTH_TOKEN: z.string().default(''),
+  TWILIO_WEBHOOK_URL: z.string().default(''),
+  JWT_SECRET_KEY: z.string(),
+  JWT_ALGORITHM: z.string().default('HS256'),
+  JWT_EXPIRE_MINUTES: z.coerce.number().default(10080),
+  // A human takeover (merchant reply or escalation) hands the AI back after this long with no human activity.
+  HUMAN_TAKEOVER_IDLE_MINUTES: z.coerce.number().default(30),
+  // Free plan (every merchant for now): the AI answers only the first N conversations (customers who wrote) each month.
+  // ponytail: one global value; add Merchant.plan when paid plans exist.
+  FREE_PLAN_MONTHLY_CONVERSATIONS: z.coerce.number().default(10),
+  ENCRYPTION_KEY: z.string().default(''),
+  RATE_LIMIT_ENABLED: bool.default(true),
+  RATE_LIMIT_DEFAULT_MAX: z.coerce.number().default(100),
+  RATE_LIMIT_DEFAULT_WINDOW: z.coerce.number().default(60),
+});
 
 export type Settings = z.infer<typeof schema>;
 
 export function loadSettings(env: NodeJS.ProcessEnv = process.env): Settings {
+  const llmModel = env.LLM_MODEL;
   const normalized = {
     ...env,
-    LLM_MODEL: env.LLM_MODEL ?? env.DEEPSEEK_MODEL,
-    LLM_TEMPERATURE: env.LLM_TEMPERATURE ?? env.DEEPSEEK_TEMPERATURE,
+    LLM_MODEL: llmModel,
+    REPLY_LLM_MODEL: env.REPLY_LLM_MODEL || llmModel,
+    LLM_TEMPERATURE: env.LLM_TEMPERATURE,
   };
   const r = schema.safeParse(normalized);
   if (r.success) return r.data;
-  const problems = r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
+  const problems = r.error.issues
+    .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
+    .join('; ');
   throw new Error(`Invalid environment configuration - ${problems}`);
 }
 
