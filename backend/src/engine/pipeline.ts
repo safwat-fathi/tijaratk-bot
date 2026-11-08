@@ -209,7 +209,8 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     .where(eq(schema.merchants.id, conversation.merchantId));
   const merchantName = info.name;
   // Past the plan's monthly quota: behave like AI off (the message is saved; the merchant answers by hand).
-  if (info.aiEnabled && (await isOverConversationLimit(db, conversation.merchantId, conversation.id))) info.aiEnabled = false;
+  const overQuota = info.aiEnabled && (await isOverConversationLimit(db, conversation.merchantId, conversation.id));
+  if (overQuota) info.aiEnabled = false;
 
   let ccName: string | null = null;
   if (conversation.channelConnectionId) {
@@ -229,6 +230,18 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     message.modelTier = 'RULE';
     return finish(null, await handlePostback(db, conversation.merchantId, conversation.id, payload));
   }
+
+  // The AI stays silent in these cases with nothing else in the logs, so say which one applied.
+  const skipReason = overQuota
+    ? 'over_quota'
+    : !info.aiEnabled
+      ? 'merchant_ai_off'
+      : !conversation.aiEnabled
+        ? 'conversation_ai_off'
+        : conversation.humanTakeover
+          ? 'human_takeover'
+          : null;
+  if (skipReason) log.warn(`ai_skipped reason=${skipReason} message_id=${message.id} conversation_id=${conversation.id} merchant_id=${conversation.merchantId}`);
 
   const tier0 = matchTier0(normalizedText);
   if (tier0) {

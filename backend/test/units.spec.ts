@@ -174,6 +174,25 @@ describe('worker: processChannelMessage', () => {
     );
   });
 
+  it.each([
+    [200, true],
+    [500, false],
+  ])('send status %i: the inbound message is metered as AI-answered only if the reply was delivered (%s)', async (status, answered) => {
+    fakeAi([{ reply: 'أهلاً بيك' }]);
+    vi.spyOn(senderHttp, 'fetch').mockImplementation(async () => new Response('{}', { status }));
+    await withRedis((redis) =>
+      withRollback(async (db) => {
+        const m = await makeMerchant(db);
+        const conn = await makeConnection(db, m.id, { pageAccessToken: 'tok' });
+        const conv = await makeConversation(db, m.id, { channelConnectionId: conn.id, customerRef: 'U7', state: 'NEW' });
+        const [inbound] = await db.insert(schema.messages).values({ conversationId: conv.id, direction: 'INBOUND', rawText: 'hi', normalizedText: 'hi' }).returning();
+        await processChannelMessage(db, redis, inbound.id);
+        const [after] = await db.select().from(schema.messages).where(eq(schema.messages.id, inbound.id));
+        expect(after.aiAnswered).toBe(answered);
+      }),
+    );
+  });
+
   it('replies through Zernio for connections without a page token (customerRef is the Zernio conversation id)', async () => {
     fakeAi([{ reply: 'أهلاً بيك' }]);
     const calls: { path: string; body: any }[] = [];

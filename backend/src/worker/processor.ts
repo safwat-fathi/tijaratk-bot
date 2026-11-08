@@ -12,11 +12,11 @@ import { processMessage } from '../engine/pipeline.js';
 
 const log = new Logger('worker');
 
-/** Send rich messages via the channel and persist each one that went out. */
-async function sendOutbound(db: DbOrTx, redis: Redis, conversation: Conversation, outbound: OutboundMessage[]): Promise<void> {
-  if (!outbound.length || !conversation.channelConnectionId) return;
+/** Send rich messages via the channel and persist each one that went out. Returns whether anything was delivered. */
+async function sendOutbound(db: DbOrTx, redis: Redis, conversation: Conversation, outbound: OutboundMessage[]): Promise<boolean> {
+  if (!outbound.length || !conversation.channelConnectionId) return false;
   const [conn] = await db.select().from(schema.channelConnections).where(eq(schema.channelConnections.id, conversation.channelConnectionId));
-  if (!conn) return;
+  if (!conn) return false;
   await markBotSent(redis, conversation.customerRef); // before AND after: the echo can land at either end of the send
   const results = await deliver(conn, conversation.customerRef, outbound);
   await markBotSent(redis, conversation.customerRef);
@@ -31,6 +31,7 @@ async function sendOutbound(db: DbOrTx, redis: Redis, conversation: Conversation
       richPayload: msg,
     });
   }
+  return results.some(Boolean);
 }
 
 /** One inbound channel message: lock the conversation, run the pipeline, send + persist replies, commit. */
@@ -52,7 +53,12 @@ export async function processChannelMessage(db: Db, redis: Redis, messageId: str
         // Shouldn't happen: fall back to a deterministic order confirmation.
         outbound = [textMessage(`تم استلام طلبك #${result.order.orderNumber || result.order.id.slice(0, 8)}. هنتواصل معاك قريب!`)];
       }
-      await sendOutbound(tx, redis, conv, outbound);
+      const delivered = await sendOutbound(tx, redis, conv, outbound);
+      // The pipeline marks a message answered before the send; a reply that never reached the customer must not use quota.
+      if (result.message.aiAnswered && !delivered) {
+        await tx.update(schema.messages).set({ aiAnswered: false }).where(eq(schema.messages.id, messageId));
+        log.warn(`ai_reply_not_delivered message_id=${messageId} conversation_id=${conv.id}`);
+      }
     }),
   );
 }
