@@ -6,6 +6,7 @@ import type { Conversation, Message } from '../src/db/types.js';
 import { AICallError } from '../src/engine/clients.js';
 import { recordHumanActivity } from '../src/domains/handoff/service.js';
 import { processMessage } from '../src/engine/pipeline.js';
+import { conversationUsage } from '../src/domains/usage/service.js';
 import { fakeAi, makeConversation, makeMerchant, makeProduct, resetAi, schema, unit, withRollback } from './harness.js';
 
 afterEach(resetAi);
@@ -91,6 +92,14 @@ describe('free plan conversation limit', () => {
       const r = await processMessage(db, real, msg(real, 'السلام عليكم'));
       expect(r.messages).toEqual([]);
       expect(ai.calls).toHaveLength(0);
+    });
+  });
+
+  it('reported usage is capped at the limit even when more threads wrote (the extra ones got no AI)', async () => {
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db);
+      for (let i = 0; i < 13; i++) await inbound(db, await makeConversation(db, m.id), new Date(Date.now() - (30 - i) * 1000));
+      expect(await conversationUsage(db, m.id)).toEqual({ conversations_used: 10, conversations_limit: 10 });
     });
   });
 

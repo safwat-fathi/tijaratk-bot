@@ -26,6 +26,6 @@ export async function isOverConversationLimit(db: DbOrTx, merchantId: string, co
 
 export async function conversationUsage(db: DbOrTx, merchantId: string) {
   const limit = getSettings().FREE_PLAN_MONTHLY_CONVERSATIONS;
-  const used = (await conversationsThisMonth(db, merchantId)).length;
+  const used = Math.min((await conversationsThisMonth(db, merchantId)).length, limit); // threads past the quota get no AI, so they aren't "used"
   return { conversations_used: used, conversations_limit: limit };
 }
