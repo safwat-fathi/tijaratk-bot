@@ -48,7 +48,7 @@ export async function connectFacebookAction() {
 
 export async function fetchProductsAction(_merchantId?: string): Promise<Product[]> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/products/`, {
+  const res = await fetch(`${baseUrl}/products`, {
     headers: await getAuthHeaders(),
     cache: "no-store",
   });
@@ -68,7 +68,7 @@ export async function createProductAction(
   _merchantId?: string,
 ): Promise<Product> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/products/`, {
+  const res = await fetch(`${baseUrl}/products`, {
     method: "POST",
     headers: await getAuthHeaders(),
     body: JSON.stringify(data),
@@ -133,7 +133,7 @@ export async function deleteProductAction(productId: string, _merchantId?: strin
 
 export async function fetchKnowledgeAction(_merchantId?: string): Promise<StoreKnowledge[]> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/store-knowledge/`, {
+  const res = await fetch(`${baseUrl}/store-knowledge`, {
     headers: await getAuthHeaders(),
     cache: "no-store",
   });
@@ -151,7 +151,7 @@ export async function createKnowledgeAction(
   _merchantId?: string,
 ): Promise<StoreKnowledge> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/store-knowledge/`, {
+  const res = await fetch(`${baseUrl}/store-knowledge`, {
     method: "POST",
     headers: await getAuthHeaders(),
     body: JSON.stringify(data),
@@ -312,7 +312,7 @@ export interface ConversationRecord {
 
 export async function fetchConversationsAction(_merchantId?: string): Promise<ConversationRecord[]> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/conversations/`, {
+  const res = await fetch(`${baseUrl}/conversations`, {
     headers: await getAuthHeaders(),
     cache: "no-store",
   });
@@ -322,7 +322,7 @@ export async function fetchConversationsAction(_merchantId?: string): Promise<Co
 
 export async function fetchOrdersAction(_merchantId?: string): Promise<Order[]> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/orders/`, {
+  const res = await fetch(`${baseUrl}/orders`, {
     headers: await getAuthHeaders(),
     cache: "no-store",
   });
@@ -347,7 +347,7 @@ export async function fetchMessagesAction(
 
 export async function fetchExamplesAction(_merchantId?: string): Promise<LabeledExample[]> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/labeled-examples/`, {
+  const res = await fetch(`${baseUrl}/labeled-examples`, {
     headers: await getAuthHeaders(),
     cache: "no-store",
   });
@@ -361,7 +361,7 @@ export async function createExampleAction(data: {
   extraction?: Record<string, unknown> | null;
 }): Promise<LabeledExample> {
   const baseUrl = getBaseUrl();
-  const res = await fetch(`${baseUrl}/labeled-examples/`, {
+  const res = await fetch(`${baseUrl}/labeled-examples`, {
     method: "POST",
     headers: await getAuthHeaders(),
     body: JSON.stringify(data),

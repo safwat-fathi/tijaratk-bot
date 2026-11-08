@@ -3,5 +3,5 @@ export function getBaseUrl(): string {
   if (!baseUrl) {
     throw new Error("BASE_API_URL not configured");
   }
-  return baseUrl;
+  return baseUrl.replace(/\/+$/, "");
 }
