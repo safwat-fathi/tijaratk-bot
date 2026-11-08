@@ -6,19 +6,19 @@ Instructions and operational rules for AI agents working in this repository.
 
 - **NEVER access, read, open, cat, grep, or inspect `.env` files** (such as `.env`, `.env.local`, `.env.production`, or any `.env*` file containing real values).
 - **NEVER print, expose, or log real environment variable values or secrets** (e.g., API keys, database passwords, auth tokens, secret keys) in tool outputs, terminal commands, chat responses, diffs, or artifacts.
-- **ALWAYS reference `.env.example` or schema definitions** (e.g., `server/src/config.ts`) when you need to understand expected configuration keys, types, defaults, or environment variable names.
+- **ALWAYS reference `.env.example` or schema definitions** (e.g., `backend/src/config.ts`) when you need to understand expected configuration keys, types, defaults, or environment variable names.
 
-## 🚨 CRITICAL RULE: Mandatory Frontend & Server Lint Checks
+## 🚨 CRITICAL RULE: Mandatory Frontend & Backend Lint Checks
 
-- **NEVER perform or conclude any changes without running lint checks for BOTH Frontend (FE) and Server (BE) to make sure ALL files have NO lint errors.**
+- **NEVER perform or conclude any changes without running lint checks for BOTH Frontend (FE) and Backend (BE) to make sure ALL files have NO lint errors.**
 - **Before completing any task, you MUST run:**
   1. **Frontend Lint**:
      ```bash
      pnpm -C frontend lint
      ```
-  2. **Server Lint**:
+  2. **Backend Lint**:
      ```bash
-     pnpm -C server lint
+     pnpm -C backend lint
      ```
 - **Zero Tolerance for Lint Errors**: All reported lint errors must be resolved before presenting changes or finishing execution.
 

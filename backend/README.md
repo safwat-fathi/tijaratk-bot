@@ -1,6 +1,6 @@
-# TijaratkBot server (NestJS)
+# TijaratkBot backend (NestJS)
 
-TypeScript API server and worker. Postgres + Redis, REST contract in `../docs/contract/openapi.json`
+TypeScript API backend and worker. Postgres + Redis, REST contract in `../docs/contract/openapi.json`
 (a frozen spec the contract test checks against). Migration history: `../docs/nestjs-migration-decisions.md`.
 
 ```bash

@@ -1,7 +1,7 @@
 {
-  "name": "tijaratk-bot-server",
+  "name": "tijaratk-bot-backend",
   "version": "0.0.1",
-  "description": "TijaratkBot API server (NestJS)",
+  "description": "TijaratkBot API backend (NestJS)",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

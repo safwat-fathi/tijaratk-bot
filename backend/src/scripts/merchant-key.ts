@@ -1,4 +1,4 @@
-// Operator tool for merchant portal logins. Run from server/ after `pnpm build`:
+// Operator tool for merchant portal logins. Run from backend/ after `pnpm build`:
 //   pnpm merchant:key                    list merchants
 //   pnpm merchant:key "<name or id>"     print that merchant's API key
 //   pnpm merchant:key --new "<name>"     create a merchant and print its API key

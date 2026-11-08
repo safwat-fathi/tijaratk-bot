@@ -1,5 +1,5 @@
 // Production pm2 config. Build first:
-//   (cd server && pnpm install --frozen-lockfile && pnpm build) && (cd frontend && pnpm install --frozen-lockfile && pnpm build)
+//   (cd backend && pnpm install --frozen-lockfile && pnpm build) && (cd frontend && pnpm install --frozen-lockfile && pnpm build)
 // Run exactly one worker: BullMQ schedules the 03:00 auto-learning job, so two workers would duplicate its rows.
 module.exports = {
   apps: [
@@ -14,10 +14,10 @@ module.exports = {
       }
     },
     {
-      name: 'tijaratk-bot-server',
+      name: 'tijaratk-bot-backend',
       script: 'pnpm',
       args: 'start:prod',
-      cwd: './server',
+      cwd: './backend',
       interpreter: 'none',
       env: {
         NODE_ENV: 'production',
@@ -25,10 +25,10 @@ module.exports = {
       }
     },
     {
-      name: 'tijaratk-bot-server-worker',
+      name: 'tijaratk-bot-backend-worker',
       script: 'pnpm',
       args: 'start:worker',
-      cwd: './server',
+      cwd: './backend',
       interpreter: 'none',
       env: { NODE_ENV: 'production' }
     }

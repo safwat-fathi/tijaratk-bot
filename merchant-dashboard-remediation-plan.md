@@ -42,7 +42,7 @@
 - Add backend coverage for bearer-only authentication, Page selection/conflicts, encrypted token migration, ownership checks, session races, reply/takeover rules, order invariants, delivery persistence across sessions, and product/variant validation.
 - Add focused frontend checks for the session-only action layer and screen error states; validate the complete Facebook flow with a Meta test user and test Page.
 - Upgrade the database from the current Alembic head, verify no plaintext Page tokens remain, and retain a database backup before the data migration.
-- Run `pnpm -C frontend lint`, `pnpm -C frontend exec tsc --noEmit`, `pnpm -C server lint`, and `pnpm -C server test` with Redis available. Run `graphify update .` after implementation.
+- Run `pnpm -C frontend lint`, `pnpm -C frontend exec tsc --noEmit`, `pnpm -C backend lint`, and `pnpm -C backend test` with Redis available. Run `graphify update .` after implementation.
 - Investigate the existing `next build` Turbopack process-binding failure separately from dashboard behavior; TypeScript currently passes, while the build cannot reach type checking in this environment.
 
 ## Assumptions
