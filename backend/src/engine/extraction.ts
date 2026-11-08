@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { ConvState } from '../db/types.js';
-import { type CallUsage, complete, deepseekProvider } from './gateway.js';
+import { type CallUsage, complete, llmProvider } from './gateway.js';
 import { EXTRACTION_TASK_BLOCK, buildSystemPrompt } from './prompts.js';
 import { evaluatePostflight, evaluatePreflight } from './routing-policy.js';
 import { ExtractionBase, ExtractionResult } from './schemas.js';
@@ -17,7 +17,7 @@ export async function extractOrder(p: {
   const pre = evaluatePreflight({ text: p.text, correctionCount: p.correctionCount });
   if (pre) return [ExtractionResult.parse({ confidence: 0 }), pre, null];
 
-  const [result, usage] = await complete(deepseekProvider(), {
+  const [result, usage] = await complete(llmProvider(), {
     systemPrompt: buildSystemPrompt({
       taskBlock: EXTRACTION_TASK_BLOCK,
       merchantName: p.merchantName,

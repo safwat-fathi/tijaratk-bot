@@ -2,14 +2,17 @@ import { userInfo } from 'node:os';
 
 // Throwaway test configuration - never real secrets.
 const key = Buffer.alloc(32, 7).toString('base64url');
-process.env.DATABASE_URL ??= process.env.TEST_DATABASE_URL ?? `postgresql://${userInfo().username}@localhost:5432/tijaratk_nest`;
+process.env.DATABASE_URL ??=
+  process.env.TEST_DATABASE_URL ??
+  `postgresql://${userInfo().username}@localhost:5432/tijaratk_nest`;
 process.env.ENCRYPTION_KEY = key;
 process.env.JWT_SECRET_KEY = 'test-jwt-secret-0123456789abcdef0123';
 process.env.META_APP_SECRET = 'meta-app-secret-for-tests';
 process.env.META_VERIFY_TOKEN = 'verify-me';
 process.env.META_APP_ID = 'app-1';
 process.env.TWILIO_AUTH_TOKEN = 'twilio-token-for-tests';
-process.env.TWILIO_WEBHOOK_URL = 'https://example.test/webhooks/whatsapp/twilio';
+process.env.TWILIO_WEBHOOK_URL =
+  'https://example.test/webhooks/whatsapp/twilio';
 process.env.ZERNIO_API_KEY = 'zernio-key-for-tests';
 process.env.ZERNIO_PROFILE_ID = 'profile-for-tests';
 process.env.PUBLIC_API_URL = 'https://api.example.test';
@@ -19,7 +22,7 @@ process.env.RATE_LIMIT_ENABLED = 'false';
 process.env.AI_MAX_RETRIES = '0';
 process.env.OPENROUTER_BASE_URL = 'http://127.0.0.1:9/v1';
 process.env.OPENROUTER_API_KEY = 'test-key';
-process.env.DEEPSEEK_MODEL = 'test-model';
+process.env.LLM_MODEL = 'test-model';
 process.env.EMBEDDING_BASE_URL = 'http://127.0.0.1:9/v1';
 process.env.EMBEDDING_API_KEY = 'test-key';
 process.env.EMBEDDING_MODEL = 'test-embed';
@@ -36,7 +39,9 @@ beforeAll(async () => {
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
   try {
-    const { rows } = await client.query('select count(*)::int as n from merchants');
+    const { rows } = await client.query(
+      'select count(*)::int as n from merchants',
+    );
     if (rows[0].n !== 0) {
       throw new Error(
         `Test database ${new URL(process.env.DATABASE_URL!).pathname} has ${rows[0].n} committed merchants. ` +

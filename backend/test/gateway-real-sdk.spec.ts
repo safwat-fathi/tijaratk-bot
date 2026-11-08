@@ -60,11 +60,11 @@ describe('real openai SDK against an OpenAI-compatible endpoint', () => {
       await against(s);
       const [reply, usage] = await generateReply({ userPrompt: 'hi', merchantName: 'M', convState: 'NEW', slots: {} });
       expect(reply).toEqual({ reply: 'أهلاً', needs_human: false });
-      expect(usage).toMatchObject({ inputTokens: 11, outputTokens: 7, provider: 'openrouter', tier: 'deepseek' });
+      expect(usage).toMatchObject({ inputTokens: 11, outputTokens: 7, provider: 'openrouter', tier: 'llm' });
       const sent = s.seen[0];
       expect(sent.url).toBe('/v1/chat/completions');
       expect(sent.auth).toBe('Bearer k1');
-      expect(sent.body).toMatchObject({ stream: false, max_tokens: 4096, provider: { order: ['DeepSeek', 'Fireworks', 'Together'] } });
+      expect(sent.body).toMatchObject({ stream: false, max_tokens: 4096 });
       expect(sent.body.response_format.json_schema.name).toBe('generated_reply');
       expect(sent.body.messages.map((m: any) => m.role)).toEqual(['system', 'user']);
     } finally {
@@ -72,7 +72,7 @@ describe('real openai SDK against an OpenAI-compatible endpoint', () => {
     }
   });
 
-  it('the ~deepseek route streams SSE even with stream=false: chunks are aggregated, usage kept', async () => {
+  it('streaming SSE routes when stream=false: chunks are aggregated, usage kept', async () => {
     const s = await serve((_req, _b, res) => (res.setHeader('content-type', 'text/event-stream'), res.end(sse(['{"reply":', '"أهلاً ', 'بيك"}']))));
     try {
       await against(s);

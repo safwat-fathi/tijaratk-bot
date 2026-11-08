@@ -17,12 +17,12 @@ export interface AiClient {
   embeddings: { create: (body: any) => Promise<any> };
 }
 
-let deepseek: AiClient | undefined;
+let chatClient: AiClient | undefined;
 let embedding: AiClient | undefined;
 
 /**
- * OpenRouter may answer with an SSE stream even when `stream: false` was requested (the `~deepseek/...` model
- * routes do - and that is the configured model). Accept both: JSON completion, or SSE chunks aggregated into
+ * OpenRouter may answer with an SSE stream even when `stream: false` was requested (certain
+ * model routes do - e.g. ~vendor/model-latest). Accept both: JSON completion, or SSE chunks aggregated into
  * a ChatCompletion-shaped object with `.choices[0].message.content` and `.usage`.
  */
 export async function readCompletion(res: Response): Promise<any> {
@@ -68,13 +68,13 @@ function build(baseURL: string, apiKey: string): AiClient {
   };
 }
 
-export const getDeepseekClient = (): AiClient =>
-  (deepseek ??= build(getSettings().OPENROUTER_BASE_URL, getSettings().OPENROUTER_API_KEY));
+export const getLlmClient = (): AiClient =>
+  (chatClient ??= build(getSettings().OPENROUTER_BASE_URL, getSettings().OPENROUTER_API_KEY));
 export const getEmbeddingClient = (): AiClient =>
   (embedding ??= build(getSettings().EMBEDDING_BASE_URL, getSettings().EMBEDDING_API_KEY));
 
-export const setAiClientsForTests = (c?: { deepseek?: AiClient; embedding?: AiClient }) => {
-  deepseek = c?.deepseek;
+export const setAiClientsForTests = (c?: { llm?: AiClient; embedding?: AiClient }) => {
+  chatClient = c?.llm;
   embedding = c?.embedding;
 };
 

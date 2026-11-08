@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { ConvState } from '../db/types.js';
-import { type CallUsage, complete, deepseekProvider } from './gateway.js';
+import { type CallUsage, complete, llmProvider } from './gateway.js';
 import { buildSystemPrompt, classificationTaskBlock } from './prompts.js';
 import { evaluatePostflight, evaluatePreflight } from './routing-policy.js';
 import { IntentClassification } from './schemas.js';
@@ -32,7 +32,7 @@ export async function classifyMessage(p: {
     convState: p.convState,
     slots: p.slots,
   });
-  let [result, usage] = await complete(deepseekProvider(), {
+  let [result, usage] = await complete(llmProvider(), {
     systemPrompt,
     userPrompt: p.prompt,
     jsonSchemaFor: intentResponseSchema(p.knownIntents),

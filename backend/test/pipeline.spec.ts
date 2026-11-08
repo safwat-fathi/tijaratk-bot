@@ -254,7 +254,7 @@ describe('classification + extraction flow', () => {
       expect(ai.calls[0].response_format.json_schema.schema.properties.intent.enum).toEqual(['greeting', 'other', 'purchase_intent', 'question', 'reaction', 'spam']);
       const events = await db.select().from(schema.aiUsageEvents);
       expect(events).toHaveLength(2);
-      expect(events[0]).toMatchObject({ tier: 'deepseek', provider: 'openrouter', inputTokens: 10, outputTokens: 5, success: true });
+      expect(events[0]).toMatchObject({ tier: 'llm', provider: 'openrouter', inputTokens: 10, outputTokens: 5, success: true });
     });
   });
 

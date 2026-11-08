@@ -1,6 +1,6 @@
 import type { ConvState } from '../db/types.js';
 import type { HistoryMessage } from './context-budget.js';
-import { type CallUsage, complete, deepseekProvider } from './gateway.js';
+import { type CallUsage, complete, llmProvider } from './gateway.js';
 import { buildReplySystemPrompt } from './prompts.js';
 import { GeneratedReply } from './schemas.js';
 
@@ -18,7 +18,7 @@ export async function generateReply(p: {
   policies?: string;
   history?: HistoryMessage[];
 }): Promise<[GeneratedReply, CallUsage]> {
-  const [result, usage] = await complete(deepseekProvider(), {
+  const [result, usage] = await complete(llmProvider(), {
     systemPrompt: buildReplySystemPrompt({
       merchantName: p.merchantName,
       convState: p.convState,

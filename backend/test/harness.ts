@@ -94,7 +94,7 @@ export { setSettingsForTests };
 /** Scripted AI: responses are consumed in order; each is an object (JSON content) or an Error to throw. */
 export function fakeAi(script: (any | Error)[] = [], embedding: number[] = unit(0)) {
   const calls: any[] = [];
-  const deepseek: AiClient = {
+  const llmClient: AiClient = {
     chat: {
       completions: {
         create: async (body: any) => {
@@ -109,10 +109,10 @@ export function fakeAi(script: (any | Error)[] = [], embedding: number[] = unit(
     embeddings: { create: async () => ({ data: [{ embedding }], usage: {} }) },
   };
   const emb: AiClient = {
-    chat: deepseek.chat,
+    chat: llmClient.chat,
     embeddings: { create: async () => ({ data: [{ embedding }], usage: {} }) },
   };
-  setAiClientsForTests({ deepseek, embedding: emb });
+  setAiClientsForTests({ llm: llmClient, embedding: emb });
   return { calls };
 }
 

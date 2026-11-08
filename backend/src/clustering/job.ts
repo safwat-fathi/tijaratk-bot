@@ -59,7 +59,7 @@ export async function labelCluster(representatives: { normalizedText: string | n
     'You classify user messages into a 1-3 word intent. You also provide a very brief summary of the user messages. Respond with json: {"intent": snake_case_label, "summary": one_sentence}.';
   const userPrompt = `Cluster size: ${clusterSize}\nMessages:\n${texts}`;
   try {
-    const data = await gateway.completeJson(gateway.deepseekProvider(), { systemPrompt, userPrompt });
+    const data = await gateway.completeJson(gateway.llmProvider(), { systemPrompt, userPrompt });
     if (typeof data?.intent !== 'string') throw new Error('missing intent');
     return data.intent;
   } catch {

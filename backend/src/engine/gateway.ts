@@ -3,7 +3,7 @@ import { getSettings } from '../config.js';
 import {
   AICallError,
   type AiClient,
-  getDeepseekClient,
+  getLlmClient,
   getEmbeddingClient,
   isApiError,
   parseJsonContent,
@@ -12,7 +12,7 @@ import {
 import { jsonSchemaResponseFormat } from './schemas.js';
 
 export interface Provider {
-  name: string; // always "deepseek" - kept for CallUsage/logging, not branching
+  name: string; // "llm" - kept for CallUsage/logging, not branching
   client: AiClient;
   model: string;
   temperature: number;
@@ -27,9 +27,9 @@ export interface CallUsage {
   latencyMs: number;
 }
 
-export function deepseekProvider(): Provider {
+export function llmProvider(): Provider {
   const s = getSettings();
-  return { name: 'deepseek', client: getDeepseekClient(), model: s.DEEPSEEK_MODEL, temperature: s.DEEPSEEK_TEMPERATURE };
+  return { name: 'llm', client: getLlmClient(), model: s.LLM_MODEL, temperature: s.LLM_TEMPERATURE };
 }
 
 function requestBody(provider: Provider, systemPrompt: string, userPrompt: string, responseFormat: unknown) {

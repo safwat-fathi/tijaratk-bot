@@ -4,7 +4,7 @@ import { type DbOrTx, schema } from '../db/index.js';
 import type { Conversation, Message } from '../db/types.js';
 import { AICallError } from './clients.js';
 import { buildContextPrompt } from './context-budget.js';
-import { complete, deepseekProvider } from './gateway.js';
+import { complete, llmProvider } from './gateway.js';
 import { ACTION_TASK_BLOCK, buildSystemPrompt } from './prompts.js';
 import { ProposedAction } from './schemas.js';
 import type { StoreFacts } from './store-facts.js';
@@ -77,7 +77,7 @@ export async function resolveAction(
   for (let attempt = 0; attempt < 2; attempt++) {
     // S44: retry once on invalid JSON, then escalate
     try {
-      [action] = await complete(deepseekProvider(), {
+      [action] = await complete(llmProvider(), {
         systemPrompt,
         userPrompt: prompt,
         jsonSchemaFor: ProposedAction,

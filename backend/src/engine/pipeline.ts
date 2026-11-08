@@ -162,7 +162,7 @@ async function generateAiReply(
   } catch (e) {
     if (!(e instanceof AICallError)) throw e;
     log.warn(`generation_failed message_id=${message.id} error=${e.message}`);
-    await addUsageEvent(db, conversation.id, message.id, null, { success: false, failedTier: 'deepseek' });
+    await addUsageEvent(db, conversation.id, message.id, null, { success: false, failedTier: 'llm' });
     return null;
   }
 }
@@ -345,7 +345,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
   } catch (e) {
     if (!(e instanceof AICallError)) throw e;
     log.warn(`classification_failed message_id=${message.id} error=${e.message}`);
-    await addUsageEvent(db, conversation.id, message.id, null, { success: false, failedTier: 'deepseek' });
+    await addUsageEvent(db, conversation.id, message.id, null, { success: false, failedTier: 'llm' });
     if (!message.escalationReason) message.escalationReason = 'ai_call_failed';
     return finish(null, [supportOffer('عذراً، حصلت مشكلة في النظام. تحب نحولك لخدمة العملاء؟', 'ai_call_failed')]);
   }
@@ -385,7 +385,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     } catch (e) {
       if (!(e instanceof AICallError)) throw e;
       log.warn(`extraction_failed message_id=${message.id} error=${e.message}`);
-      await addUsageEvent(db, conversation.id, message.id, null, { success: false, failedTier: 'deepseek' });
+      await addUsageEvent(db, conversation.id, message.id, null, { success: false, failedTier: 'llm' });
       if (!message.escalationReason) message.escalationReason = 'ai_call_failed';
       return finish(null, [supportOffer('عذراً، حصلت مشكلة في النظام. تحب نحولك لخدمة العملاء؟', 'ai_call_failed')]);
     }
