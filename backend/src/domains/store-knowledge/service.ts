@@ -28,18 +28,22 @@ const toRead = (r: StoreKnowledge): StoreKnowledgeRead => ({
  * Keyword-match MVP (SRD §23): a row matches when any seeded trigger keyword appears as a substring of
  * the customer's text; ranked by the longest matching keyword (stable for ties, like Python's sort).
  */
+export function matchKnowledge<T extends { keywords: string[] }>(rows: T[], query: string): T[] {
+  const q = query.toLowerCase();
+  return rows
+    .map((row) => ({ row, best: Math.max(0, ...row.keywords.filter((k) => q.includes(k.toLowerCase())).map(cpLen)) }))
+    .filter((s) => s.best > 0)
+    .sort((a, b) => b.best - a.best)
+    .map(({ row }) => row);
+}
+
 export async function search(db: DbOrTx, merchantId: string, query: string, knowledgeType?: string | null) {
   const t = schema.storeKnowledge;
   const rows = await db
     .select()
     .from(t)
     .where(knowledgeType ? and(eq(t.merchantId, merchantId), eq(t.knowledgeType, knowledgeType)) : eq(t.merchantId, merchantId));
-  const q = query.toLowerCase();
-  return rows
-    .map((row) => ({ row, best: Math.max(0, ...row.keywords.filter((k) => q.includes(k.toLowerCase())).map(cpLen)) }))
-    .filter((s) => s.best > 0)
-    .sort((a, b) => b.best - a.best)
-    .map(({ row }) => ({ id: row.id, knowledge_type: row.knowledgeType, title: row.title, content: row.content }));
+  return matchKnowledge(rows, query).map((row) => ({ id: row.id, knowledge_type: row.knowledgeType, title: row.title, content: row.content }));
 }
 
 export async function listKnowledge(db: DbOrTx, merchantId: string): Promise<StoreKnowledgeRead[]> {

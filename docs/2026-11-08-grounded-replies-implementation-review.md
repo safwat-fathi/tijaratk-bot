@@ -2,7 +2,7 @@
 
 Date: 2026-11-08
 Scope: working tree vs `docs/2026-11-08-grounded-replies-review-and-plan.md` (W0 to W5). Backend `engine/`, `domains/products`, `domains/usage`, migration `0004`, contract docs, policies/training page copy.
-Status: review only. No code was changed; the one temporary probe spec I wrote was deleted.
+Status: review, plus the fixes listed under "Fixes applied" at the end (uncommitted, on top of `944ebd0`). The review text below describes the tree as it was before those fixes.
 
 ## Verdict
 
@@ -114,3 +114,20 @@ The new column defaults to `false` with no backfill, so `conversations_used` dro
 1. Decide on finding 1 (split or confirm, especially `robots.ts`), then re-run `pnpm -C backend test`, typecheck, and both lints on the final tree.
 2. Fix findings 2 to 5 (all small and local); fix 6 if any merchant uses tool ordering. Findings 7 to 9 and the notes are one-liners worth bundling.
 3. Run plan *Verification B* with a real OpenRouter key (the only proof the model quotes prices instead of deferring), then *Verification C* on production, then `pnpm build && pnpm db:migrate` and restart API + worker.
+
+## Fixes applied (after this review)
+
+Done test-first (15 new tests failed for the intended reasons before the code was written). Full backend suite: 19 files, **259 / 259 pass**, typecheck clean, lint 0 errors, and the pg `already executing a query` warning no longer appears.
+
+| Finding | Fix |
+|---|---|
+| 2 large catalogs | `catalogForAi` now returns `{ products, total }` and, above 40 products, unions the nearest 8 with name/alias token matches (so NULL-embedding products are found). `formatCatalog` prepends a `قائمة جزئية: N من M` line when it shows a subset, and reply rule 4 tells the model not to call a product unavailable in that case. |
+| 3 concurrent queries | `buildStoreFacts` awaits sequentially (test counts in-flight pg queries: 1). Policy keyword matching reuses the already-loaded rows via the new pure `matchKnowledge`, so `store_knowledge` is read once. |
+| 4 `$` in names | `replaceAll('{merchant_name}', () => name)`. |
+| 5 long policies | An over-long policy is truncated to the remaining budget (with `…`) instead of dropped; "no policies registered" now only appears when there are no rows. |
+| 6 delivery regression | `renderResponse` appends a deterministic note when `delivery_validation.status === 'unavailable'`. |
+| 7 id leak | `StoreFacts` has `catalog` (no ids, used by the reply generator) and `catalogWithIds` (action prompt only). |
+| 8 greeting | The facts section is omitted when no facts are supplied. |
+| 12 notes | `resolveAction` takes `facts` as a required parameter and the dead fallback is gone. The vacuous `pipeline.spec.ts` assertion now checks `aiAnswered === false`. New tests: nearest-8 path, NULL-embedding product, first-40 fallback, limit-1 quota boundary, partial marker on/off. |
+
+Not changed, as agreed: the unrelated frontend/demo deletion (finding 1; it was committed together with the plan work in `944ebd0`, and `robots.ts` still has `disallow: "/"`), finding 9 (offer vs variant wording), finding 10 (quota race), finding 11 (usage reset), the product `description` cap, and the `renderHistory` duplication.

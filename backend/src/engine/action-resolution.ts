@@ -7,7 +7,7 @@ import { buildContextPrompt } from './context-budget.js';
 import { complete, deepseekProvider } from './gateway.js';
 import { ACTION_TASK_BLOCK, buildSystemPrompt } from './prompts.js';
 import { ProposedAction } from './schemas.js';
-import { type StoreFacts, buildStoreFacts } from './store-facts.js';
+import type { StoreFacts } from './store-facts.js';
 import { type ActionOutcome, dispatchAction } from './tools/registry.js';
 
 export interface ActionResolution {
@@ -29,6 +29,9 @@ function stripInternal(v: unknown): unknown {
   return v;
 }
 
+const DELIVERY_UNAVAILABLE_NOTE =
+  'ملحوظة: التوصيل لمنطقة العميل غير مؤكد. قل للعميل إن رسوم التوصيل هتتأكد بشكل منفصل، ولا تذكر أي رسوم ولا إن التوصيل متاح.';
+
 function renderResponse(outcome: ActionOutcome): string {
   if (outcome.status === 'rejected') {
     const reason = outcome.errors[0]?.message ?? 'طلب غير صالح';
@@ -36,14 +39,17 @@ function renderResponse(outcome: ActionOutcome): string {
   }
   if (outcome.status === 'failed') return 'لا أستطيع إتمام ذلك حالياً — دعني أحولك لأحد زملائي لمساعدتك.';
   const json = JSON.stringify(stripInternal(outcome.result ?? {}));
-  return json.length > 6000 ? `${json.slice(0, 6000)}...(truncated)` : json;
+  const note = (outcome.result as { delivery_validation?: { status?: string } } | null)?.delivery_validation?.status === 'unavailable'
+    ? `\n${DELIVERY_UNAVAILABLE_NOTE}`
+    : '';
+  return (json.length > 6000 ? `${json.slice(0, 6000)}...(truncated)` : json) + note;
 }
 
 export async function resolveAction(
   db: DbOrTx,
   conversation: Conversation,
   message: Message,
-  facts?: StoreFacts,
+  facts: StoreFacts,
 ): Promise<ActionResolution> {
   const s = getSettings();
   const m = schema.messages;
@@ -63,19 +69,8 @@ export async function resolveAction(
     maxTurns: s.CONTEXT_HISTORY_TURNS,
     mode: 'action',
   });
-  const [merchant] = await db
-    .select({ name: schema.merchants.name, currency: schema.merchants.currency })
-    .from(schema.merchants)
-    .where(eq(schema.merchants.id, conversation.merchantId));
-  const storeFacts =
-    facts ??
-    (await buildStoreFacts(db, conversation.merchantId, {
-      embedding: message.embedding,
-      query: currentText,
-      currency: merchant.currency,
-      withIds: true,
-    }));
-  const taskBlock = `${ACTION_TASK_BLOCK}\n\nStore catalog (use these exact product_id / variant_id values):\n${storeFacts.catalog}`;
+  const [merchant] = await db.select({ name: schema.merchants.name }).from(schema.merchants).where(eq(schema.merchants.id, conversation.merchantId));
+  const taskBlock = `${ACTION_TASK_BLOCK}\n\nStore catalog (use these exact product_id / variant_id values):\n${facts.catalogWithIds}`;
   const systemPrompt = buildSystemPrompt({ taskBlock, merchantName: merchant.name, convState: conversation.state, slots });
 
   let action: ProposedAction | null = null;

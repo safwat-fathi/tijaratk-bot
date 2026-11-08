@@ -304,7 +304,6 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
       embedding: message.embedding,
       query: normalizedText,
       currency: info.currency,
-      withIds: true,
     });
     const resolution = await resolveAction(db, conversation, message, facts);
     message.modelTier = 'DEEPSEEK';

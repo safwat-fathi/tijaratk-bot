@@ -75,7 +75,7 @@ const REPLY_RULES_TEMPLATE =
   '1. Answer ONLY from the store facts (catalog, policies) and any action_result below — never invent products, prices, stock, policies, delivery areas, timings, or order numbers.\n' +
   '2. Quote prices exactly as listed with their currency (e.g. جنيه). When a product has an active offer, state both the offer price and the original price (plus the end date if shown).\n' +
   '3. When a product has variants (sizes/colors/options), list each variant on its own line with its price and whether it is available (متاح) or unavailable (غير متاح).\n' +
-  '4. If the customer asks about a product not in the catalog, state clearly that it is not available and suggest close items from the catalog if any exist.\n' +
+  '4. If the customer asks about a product that is not in the catalog: when the catalog is complete, state clearly that it is not available and suggest close items from the catalog if any exist; when the catalog starts with a note that it is a partial list, never say the product is unavailable — ask the customer for the exact product name or details instead.\n' +
   '5. Never promise "I will check and get back to you" («هتأكد وأرجعلك») unless you set "needs_human": true.\n' +
   '6. Set "needs_human": true ONLY for store-specific questions (e.g. an unlisted shipping area, policy, or custom request) that the store facts and action_result cannot answer. Never set "needs_human": true for greetings, small talk, or when saying a product is not in the catalog.\n' +
   '7. Respond only with JSON matching the schema: {"reply": "...", "needs_human": false}.';
@@ -87,17 +87,20 @@ export function buildReplySystemPrompt(p: {
   catalog?: string;
   policies?: string;
 }): string {
-  const rules = REPLY_RULES_TEMPLATE.replaceAll('{merchant_name}', p.merchantName);
+  const rules = REPLY_RULES_TEMPLATE.replaceAll('{merchant_name}', () => p.merchantName); // a function: `$&` in a name must stay literal
   const slotsJson = Object.keys(p.slots ?? {}).length ? pyJsonDumps(p.slots) : '(nothing gathered yet)';
+  // No facts supplied (e.g. a greeting) = no section, rather than a section claiming the store is empty.
   const facts =
-    `STORE FACTS:\n` +
-    `Catalog:\n${p.catalog || '(لا توجد منتجات مسجلة)'}\n\n` +
-    `Policies & instructions:\n${p.policies || '(لا توجد سياسات مسجلة)'}`;
+    p.catalog === undefined && p.policies === undefined
+      ? ''
+      : `STORE FACTS:\n` +
+        `Catalog:\n${p.catalog || '(لا توجد منتجات مسجلة)'}\n\n` +
+        `Policies & instructions:\n${p.policies || '(لا توجد سياسات مسجلة)'}\n\n`;
   const state =
     `CONVERSATION STATE:\n` +
     `Stage: ${STATE_GLOSS[p.convState]}\n` +
     `Already gathered: ${slotsJson}`;
-  return `${rules}\n\n${facts}\n\n${state}`;
+  return `${rules}\n\n${facts}${state}`;
 }
 
 export const ACTION_TASK_BLOCK = `TASK: Decide the single best next action for this customer message.

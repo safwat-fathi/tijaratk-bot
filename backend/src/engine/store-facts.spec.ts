@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { type ProductRead, extractSearchTokens } from '../domains/products/service.js';
-import type { StoreKnowledgeRead } from '../domains/store-knowledge/service.js';
+import { type StoreKnowledgeRead, matchKnowledge } from '../domains/store-knowledge/service.js';
 import { formatCatalog, formatPolicies } from './store-facts.js';
 
 const prod = (o: Partial<ProductRead> = {}): ProductRead => ({
@@ -93,6 +93,38 @@ describe('store-facts pure formatters', () => {
     const { text: capped, dropped: droppedCount } = formatPolicies([], all, 60);
     expect(droppedCount).toBe(1);
     expect(capped.split('\n')).toHaveLength(2);
+  });
+
+  it('marks the catalog as a partial list only when fewer products are shown than exist', () => {
+    const partial = formatCatalog([prod()], { now, total: 45 });
+    expect(partial).toContain('قائمة جزئية');
+    expect(partial).toContain('1 من 45');
+    expect(formatCatalog([prod()], { now, total: 1 })).not.toContain('قائمة جزئية');
+    expect(formatCatalog([prod()], { now })).not.toContain('قائمة جزئية');
+  });
+
+  it('truncates a policy that is over budget instead of dropping it', () => {
+    const long = pol('1', 'الإرجاع', 'ا'.repeat(3500));
+    const { text, dropped } = formatPolicies([], [long], 3000);
+    expect(dropped).toBe(0);
+    expect(text).not.toContain('لا توجد سياسات مسجلة');
+    expect(text.startsWith('- [shipping] الإرجاع: ااا')).toBe(true);
+    expect(text.length).toBeLessThanOrEqual(3000);
+  });
+
+  it('only says "no policies registered" when there are no rows at all', () => {
+    expect(formatPolicies([], []).text).toContain('لا توجد سياسات مسجلة');
+    expect(formatPolicies([], [pol('1', 'أ', 'محتوى')]).text).not.toContain('لا توجد سياسات مسجلة');
+  });
+
+  it('matches knowledge rows by keyword, longest matching keyword first, rows without keywords never', () => {
+    const rows = [
+      { ...pol('1', 'الشحن', 'a'), keywords: ['شحن'] },
+      { ...pol('2', 'الدفع', 'b'), keywords: ['طريقة الدفع', 'دفع'] },
+      { ...pol('3', 'عام', 'c'), keywords: [] },
+    ];
+    expect(matchKnowledge(rows, 'طريقة الدفع والشحن ايه؟').map((r) => r.id)).toEqual(['2', '1']);
+    expect(matchKnowledge(rows, 'مرحبا')).toEqual([]);
   });
 
   it('extracts search tokens with leading "ال" stripped', () => {

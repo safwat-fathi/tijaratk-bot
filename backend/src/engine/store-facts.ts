@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { cpSlice } from '../core/pystr.js';
 import type { DbOrTx } from '../db/index.js';
 import { isOfferActive, resolveUnitPrice } from '../domains/products/offers.js';
 import { type ProductRead, catalogForAi } from '../domains/products/service.js';
@@ -8,18 +9,22 @@ const log = new Logger('store-facts');
 const POLICY_CHAR_BUDGET = 3000;
 
 export interface StoreFacts {
-  catalog: string;
+  catalog: string; // no ids: safe to show the customer-facing reply model
+  catalogWithIds: string; // for the action prompt, which must cite product_id / variant_id
   policies: string;
 }
 
 export function formatCatalog(
   products: ProductRead[],
-  o: { currency?: string; withIds?: boolean; now?: Date } = {},
+  o: { currency?: string; withIds?: boolean; now?: Date; total?: number } = {},
 ): string {
   if (!products.length) return '(لا توجد منتجات مسجلة)';
   const now = o.now ?? new Date();
   const curr = !o.currency || o.currency === 'EGP' ? 'جنيه' : o.currency;
-  const lines: string[] = [];
+  const lines: string[] =
+    o.total !== undefined && o.total > products.length
+      ? [`(قائمة جزئية: ${products.length} من ${o.total} منتج. لو المنتج اللي العميل بيسأل عنه مش ظاهر، ممكن يكون موجود.)`]
+      : [];
 
   for (const p of products) {
     const offerProduct = {
@@ -57,12 +62,14 @@ export function formatCatalog(
   return lines.join('\n');
 }
 
+const MIN_TRUNCATED_POLICY = 40;
+
 export function formatPolicies(
   matched: { id: string }[],
   all: knowledge.StoreKnowledgeRead[],
   budget = POLICY_CHAR_BUDGET,
-): { text: string; dropped: number } {
-  if (!all.length) return { text: '(لا توجد سياسات مسجلة)', dropped: 0 };
+): { text: string; dropped: number; truncated: number } {
+  if (!all.length) return { text: '(لا توجد سياسات مسجلة)', dropped: 0, truncated: 0 };
   const byId = new Map(all.map((r) => [r.id, r]));
   const seen = new Set<string>();
   const ordered: knowledge.StoreKnowledgeRead[] = [];
@@ -85,32 +92,45 @@ export function formatPolicies(
   const lines: string[] = [];
   let len = 0;
   let dropped = 0;
+  let truncated = 0;
   for (const r of ordered) {
     const line = `- [${r.knowledge_type}] ${r.title}: ${r.content}`;
-    const nextLen = len + (lines.length ? 1 : 0) + line.length;
-    if (nextLen > budget) {
+    const sep = lines.length ? 1 : 0;
+    const room = budget - len - sep;
+    if (line.length <= room) {
+      lines.push(line);
+      len += sep + line.length;
+    } else if (room >= MIN_TRUNCATED_POLICY || (!lines.length && room > 1)) {
+      // An over-long policy is cut, never dropped: dropping it would tell the model there is no such policy.
+      const cut = `${cpSlice(line, room - 1)}…`;
+      lines.push(cut);
+      len += sep + cut.length;
+      truncated++;
+    } else {
       dropped++;
-      continue;
     }
-    lines.push(line);
-    len = nextLen;
   }
-  return { text: lines.length ? lines.join('\n') : '(لا توجد سياسات مسجلة)', dropped };
+  return { text: lines.join('\n'), dropped, truncated };
 }
 
 export async function buildStoreFacts(
   db: DbOrTx,
   merchantId: string,
-  o: { embedding?: number[] | null; query?: string; currency?: string; withIds?: boolean } = {},
+  o: { embedding?: number[] | null; query?: string; currency?: string } = {},
 ): Promise<StoreFacts> {
-  const [products, matched, all] = await Promise.all([
-    catalogForAi(db, merchantId, { embedding: o.embedding, query: o.query }),
-    o.query ? knowledge.search(db, merchantId, o.query) : Promise.resolve([]),
-    knowledge.listKnowledge(db, merchantId),
-  ]);
-  const catalog = formatCatalog(products, { currency: o.currency, withIds: o.withIds });
-  const { text: policies, dropped } = formatPolicies(matched, all);
-  if (dropped > 0) log.warn(`store_policies_truncated merchant_id=${merchantId} dropped=${dropped}`);
-  return { catalog, policies };
-}
+  // Sequential on purpose: a transaction is a single connection, and pg deprecates overlapping queries on it.
+  const { products, total } = await catalogForAi(db, merchantId, { embedding: o.embedding, query: o.query });
+  const all = await knowledge.listKnowledge(db, merchantId);
+  const matched = o.query ? knowledge.matchKnowledge(all, o.query) : [];
 
+  const fmt = { currency: o.currency, total };
+  const { text: policies, dropped, truncated } = formatPolicies(matched, all);
+  if (dropped > 0 || truncated > 0) {
+    log.warn(`store_policies_trimmed merchant_id=${merchantId} dropped=${dropped} truncated=${truncated}`);
+  }
+  return {
+    catalog: formatCatalog(products, fmt),
+    catalogWithIds: formatCatalog(products, { ...fmt, withIds: true }),
+    policies,
+  };
+}

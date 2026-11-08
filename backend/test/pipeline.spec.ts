@@ -95,6 +95,20 @@ describe('free plan conversation limit', () => {
     });
   });
 
+  it('with one slot left (9 answered) a new conversation is still answered and takes the last slot', async () => {
+    fakeAi([{ reply: 'أهلاً بيك!' }, { reply: 'أهلاً تاني' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db);
+      for (let i = 0; i < 9; i++) await answeredInbound(db, await makeConversation(db, m.id), new Date(Date.now() - (30 - i) * 1000));
+      const tenth = await makeConversation(db, m.id);
+      const r = await processMessage(db, tenth, msg(tenth, 'السلام عليكم'));
+      expect(kinds(r)).toEqual(['text']);
+      expect(await conversationUsage(db, m.id)).toEqual({ conversations_used: 10, conversations_limit: 10 });
+      const eleventh = await makeConversation(db, m.id);
+      expect((await processMessage(db, eleventh, msg(eleventh, 'السلام عليكم'))).messages).toEqual([]);
+    });
+  });
+
   it('reported usage is capped at the limit even when more threads were answered', async () => {
     await withRollback(async (db) => {
       const m = await makeMerchant(db);
@@ -366,13 +380,13 @@ describe('classification + extraction flow', () => {
     });
   });
 
-  it('reply failure yields no outbound and never tells the model no store_info is available', async () => {
-    const ai = fakeAi([{ intent: 'question', confidence: 0.9 }, new AICallError('x')]);
+  it('reply failure yields no outbound and the conversation is not metered as answered', async () => {
+    fakeAi([{ intent: 'question', confidence: 0.9 }, new AICallError('x')]);
     await withRollback(async (db) => {
       const { c } = await world(db);
       const r = await processMessage(db, c, msg(c, 'ايه ده'));
       expect(r.messages).toEqual([]);
-      expect(userPromptOf(ai.calls[1])).not.toContain('No store_info is available');
+      expect(r.message.aiAnswered).toBe(false);
     });
   });
 
@@ -421,6 +435,7 @@ describe('tool ordering mode', () => {
       expect(r.message.modelTier).toBe('DEEPSEEK');
       expect(r.messages).toEqual([{ kind: 'text', text: 'لقيت قميص بـ 100 جنيه' }]);
       expect(ai.calls[0].messages[0].content).toContain(p.id);
+      expect(ai.calls[1].messages[0].content).not.toContain(p.id);
       expect(userPromptOf(ai.calls[1])).toContain('"price":100');
       const [act] = await db.select().from(schema.aiActions);
       expect(act).toMatchObject({ actionType: 'search_products', status: 'executed', arguments: { query: 'قميص', filters: {} } });
@@ -469,6 +484,18 @@ describe('tool ordering mode', () => {
 
       const bad = await processMessage(db, conv, msg(c, 'رقمي 123'));
       expect(bad.message.escalationReason).toBe('action_rejected:argument_invalid');
+    });
+  });
+
+  it('an address outside the delivery areas tells the reply model the fee is confirmed separately', async () => {
+    const ai = fakeAi([{ action: 'update_customer_info', address: 'الإسكندرية', confidence: 0.9 }, { reply: 'تمام، هنأكد رسوم التوصيل' }]);
+    await withRollback(async (db) => {
+      const { m, c } = await world(db, { toolOrdering: true });
+      await db.insert(schema.deliveryAreas).values({ merchantId: m.id, area: 'القاهرة', deliveryFee: '30.00' });
+      await processMessage(db, c, msg(c, 'عنواني الإسكندرية'));
+      const prompt = userPromptOf(ai.calls[1]);
+      expect(prompt).toContain('"status":"unavailable"');
+      expect(prompt).toContain('رسوم التوصيل');
     });
   });
 
@@ -573,6 +600,34 @@ describe('grounded replies', () => {
       });
       const [conv] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
       expect(conv.humanTakeover).toBe(false);
+    });
+  });
+
+  it('a catalog that is only a subset of the products is marked as a partial list', async () => {
+    const ai = fakeAi([{ intent: 'question', confidence: 0.95 }, { reply: 'ok' }, { intent: 'question', confidence: 0.95 }, { reply: 'ok' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db, { name: 'متجر النور' });
+      const c = await makeConversation(db, m.id, { state: 'NEW' });
+      for (let i = 1; i <= 45; i++) await makeProduct(db, m.id, { name: `منتج ${i}`, price: '100.00', embedding: unit(i) });
+      await processMessage(db, c, msg(c, 'عندكم بنطلون؟'));
+      expect(ai.calls[1].messages[0].content).toContain('قائمة جزئية');
+
+      const small = await makeMerchant(db, { name: 'متجر صغير' });
+      const sc = await makeConversation(db, small.id, { state: 'NEW' });
+      await makeProduct(db, small.id, { name: 'قميص', price: '100.00', embedding: unit(0) });
+      await processMessage(db, sc, msg(sc, 'عندكم بنطلون؟'));
+      expect(ai.calls[3].messages[0].content).not.toContain('قائمة جزئية');
+    });
+  });
+
+  it('a greeting reply prompt does not claim the store has no products or policies', async () => {
+    const ai = fakeAi([{ reply: 'أهلاً بيك' }]);
+    await withRollback(async (db) => {
+      const { c } = await world(db);
+      await processMessage(db, c, msg(c, 'السلام عليكم'));
+      const sys = ai.calls[0].messages[0].content as string;
+      expect(sys).not.toContain('لا توجد منتجات مسجلة');
+      expect(sys).not.toContain('STORE FACTS');
     });
   });
 

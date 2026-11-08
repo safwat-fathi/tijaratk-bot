@@ -103,28 +103,37 @@ export function extractSearchTokens(query: string): string[] {
   return [...out];
 }
 
+const NEAREST_K = 8;
+const CATALOG_MAX_ALL = 40;
+
+/**
+ * The products the AI reply may quote. Up to 40 products: all of them. Above that: the nearest 8 by embedding
+ * plus anything whose name/alias shares a word with the question (so products with a NULL embedding are still
+ * found). `total` lets the caller tell the model when the list is only a subset.
+ */
 export async function catalogForAi(
   db: DbOrTx,
   merchantId: string,
   o: { embedding?: number[] | null; query?: string } = {},
-): Promise<ProductRead[]> {
+): Promise<{ products: ProductRead[]; total: number }> {
   const t = schema.products;
   const [{ n }] = await db.select({ n: count() }).from(t).where(eq(t.merchantId, merchantId));
   const total = Number(n);
-  if (total === 0) return [];
-  if (total <= 40) return listProducts(db, merchantId);
+  if (total === 0) return { products: [], total };
+  if (total <= CATALOG_MAX_ALL) return { products: await listProducts(db, merchantId), total };
 
+  const picked = new Map<string, Product>();
   if (o.embedding?.length) {
     const nearest = await db
       .select()
       .from(t)
       .where(and(eq(t.merchantId, merchantId), isNotNull(t.embedding)))
       .orderBy(asc(cosineDistance(t.embedding, o.embedding)))
-      .limit(8);
-    if (nearest.length) return withVariants(db, nearest);
+      .limit(NEAREST_K);
+    for (const r of nearest) picked.set(r.id, r);
   }
+  if (!picked.size) log.warn(`catalog_nearest_fallback merchant_id=${merchantId}`);
 
-  log.warn(`catalog_nearest_fallback merchant_id=${merchantId}`);
   const tokens = extractSearchTokens(o.query ?? '');
   if (tokens.length) {
     const conds = tokens.flatMap((tok) => [
@@ -136,12 +145,15 @@ export async function catalogForAi(
       .from(t)
       .where(and(eq(t.merchantId, merchantId), or(...conds)))
       .orderBy(asc(t.name))
-      .limit(40);
-    if (matched.length) return withVariants(db, matched);
+      .limit(picked.size ? NEAREST_K : CATALOG_MAX_ALL);
+    for (const r of matched) picked.set(r.id, r);
   }
 
-  const first = await db.select().from(t).where(eq(t.merchantId, merchantId)).orderBy(asc(t.name)).limit(40);
-  return withVariants(db, first);
+  if (!picked.size) {
+    const first = await db.select().from(t).where(eq(t.merchantId, merchantId)).orderBy(asc(t.name)).limit(CATALOG_MAX_ALL);
+    return { products: await withVariants(db, first), total };
+  }
+  return { products: await withVariants(db, [...picked.values()]), total };
 }
 
 export async function searchProducts(db: DbOrTx, merchantId: string, query: string, _filters: unknown): Promise<ProductRead[]> {
