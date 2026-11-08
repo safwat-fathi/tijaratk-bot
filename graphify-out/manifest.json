@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "backend/src/config.ts": {
-    "mtime": 1794126465.261122,
-    "seen": 1794126643.892434,
-    "ast_hash": "5041282b8dfa5aca83f589bb936a3ff7",
+    "mtime": 1794126849.396942,
+    "seen": 1794126930.852113,
+    "ast_hash": "eabd8610a68fe1d9b53b5a1177351921",
     "semantic_hash": ""
   },
   "backend/src/core/core.module.ts": {
@@ -894,8 +894,8 @@
     "semantic_hash": ""
   },
   "backend/src/engine/clients.ts": {
-    "mtime": 1794126495.28158,
-    "seen": 1794126643.893836,
+    "mtime": 1794126714.4624164,
+    "seen": 1794126930.85358,
     "ast_hash": "cc13c41e4b666e8349169f5eb11940ab",
     "semantic_hash": ""
   },
@@ -924,8 +924,8 @@
     "semantic_hash": ""
   },
   "backend/src/engine/gateway.ts": {
-    "mtime": 1794126475.4373155,
-    "seen": 1794126643.89391,
+    "mtime": 1794126714.640236,
+    "seen": 1794126930.8536751,
     "ast_hash": "bf3733391d2322f91956bcabb49730b1",
     "semantic_hash": ""
   },
@@ -1014,9 +1014,9 @@
     "semantic_hash": ""
   },
   "backend/src/golden.spec.ts": {
-    "mtime": 1794126514.6264088,
-    "seen": 1794126643.894233,
-    "ast_hash": "70ca72ac8ae33bfd9af9378e7bb7ec0f",
+    "mtime": 1794126856.7047968,
+    "seen": 1794126930.854048,
+    "ast_hash": "4599cf30a61efc5551b8d877afe40fb3",
     "semantic_hash": ""
   },
   "backend/src/http-setup.ts": {
@@ -1074,14 +1074,14 @@
     "semantic_hash": ""
   },
   "backend/test/gateway-real-sdk.spec.ts": {
-    "mtime": 1794126543.8237197,
-    "seen": 1794126643.894442,
+    "mtime": 1794126714.6860514,
+    "seen": 1794126930.854262,
     "ast_hash": "9481db60726077eaa109a3cc1e4eea26",
     "semantic_hash": ""
   },
   "backend/test/harness.ts": {
-    "mtime": 1794126499.8111107,
-    "seen": 1794126643.894444,
+    "mtime": 1794126714.7437358,
+    "seen": 1794126930.854263,
     "ast_hash": "6a3e4a4db21f83c98887aeebb460b8c7",
     "semantic_hash": ""
   },
