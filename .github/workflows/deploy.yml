@@ -1,0 +1,84 @@
+name: Deploy
+
+# On push to main: typecheck/lint, then release that commit's changed apps on the VPS. deploy/release.sh is the SSH forced command of
+# DEPLOY_SSH_KEY, so the key can run that script and nothing else. Same pattern as NowFocus.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  # Which apps changed. Shared files (workflow, release script, pm2 config) count as both. Manual runs deploy both.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.backend == 'true' }}
+      frontend: ${{ github.event_name == 'workflow_dispatch' || steps.f.outputs.frontend == 'true' }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: f
+        with:
+          filters: |
+            shared: &shared
+              - ".github/workflows/deploy.yml"
+              - "deploy/**"
+              - "ecosystem.config.js"
+            backend:
+              - "backend/**"
+              - *shared
+            frontend:
+              - "frontend/**"
+              - *shared
+
+  check:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: backend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      # ponytail: no `pnpm test` here, it needs Postgres+pgvector+Redis service containers. Add when you want a CI gate.
+
+  deploy:
+    needs: [changes, check]
+    # check is skipped when only the frontend changed; that must not block the deploy, but a failed check must.
+    if: ${{ !cancelled() && !failure() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release on the VPS
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          APPS: ${{ needs.changes.outputs.backend == 'true' && 'backend' || '' }} ${{ needs.changes.outputs.frontend == 'true' && 'frontend' || '' }}
+        run: |
+          for v in DEPLOY_KEY DEPLOY_HOST DEPLOY_USER DEPLOY_KNOWN_HOSTS; do
+            [ -n "${!v}" ] || { echo "::error::secret $v is empty or not visible to this job"; exit 1; }
+          done
+          printf '%s' "$DEPLOY_HOST" | grep -Eq '^[A-Za-z0-9.-]+$' || { echo "::error::DEPLOY_HOST is not a bare hostname or IP"; exit 1; }
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::DEPLOY_SSH_KEY is not a valid private key"; exit 1; }
+          # Command line = sha + app names; the forced command accepts nothing else.
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "${DEPLOY_USER}@${DEPLOY_HOST}" "$GITHUB_SHA $APPS"

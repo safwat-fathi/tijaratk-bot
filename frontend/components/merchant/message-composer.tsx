@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { sendManualReplyAction } from "@/app/merchant/actions";
+import { fetchMessagesAction, sendManualReplyAction } from "@/app/merchant/actions";
 
 export function MessageComposer({
   conversationId,
@@ -22,6 +22,29 @@ export function MessageComposer({
     { id: string; text: string; role: "user" | "ai" | "agent" }[]
   >([]);
   const [sending, setSending] = useState(false);
+
+  const load = async () => {
+    try {
+      const rows = await fetchMessagesAction(conversationId);
+      setMessages(
+        rows.map((r) => ({
+          id: r.id,
+          text: r.raw_text ?? "",
+          role: r.direction === "INBOUND" ? "user" : "ai",
+        })),
+      );
+    } catch (err) {
+      console.error("Failed to load messages:", err);
+    }
+  };
+
+  useEffect(() => {
+    setMessages([]);
+    load();
+    const t = setInterval(load, 5000); // ponytail: polling, switch to SSE/websocket if load matters
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]);
 
   useEffect(() => {
     onStateChange?.({ status: "idle" });
@@ -51,6 +74,7 @@ export function MessageComposer({
 
     try {
       await sendManualReplyAction(conversationId, text, undefined);
+      await load();
       onStateChange?.({ status: "success" });
     } catch (err) {
       alert(err instanceof Error ? err.message : "فشل إرسال الرد");
