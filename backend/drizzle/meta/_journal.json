@@ -29,6 +29,13 @@
       "when": 1793919329748,
       "tag": "0003_product_offers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794120000500,
+      "tag": "0004_ai_answered_messages",
+      "breakpoints": true
     }
   ]
 }

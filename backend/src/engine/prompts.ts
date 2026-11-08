@@ -66,25 +66,39 @@ export const EXTRACTION_TASK_BLOCK =
   '5. If the customer mentions a size, color, or other variant descriptor for a line item ' +
   "(e.g. 'XL', 'الأسود', 'the large one'), extract it into that line item's `variant_hint`.";
 
-// NOTE: `{merchant_name}` below is intentionally left literal: the Python original never substituted it
-// (the block is passed as a *value* into str.format), so the model has always seen the raw placeholder.
-export const GENERATION_TASK_BLOCK = `TASK: Write the actual reply the customer receives on the chat channel.
+const REPLY_RULES_TEMPLATE =
+  "You are {merchant_name}'s sales assistant on a chat channel. Write the actual reply the customer receives.\n\n" +
+  'Customers write in Egyptian Arabic (Arabic script), Arabizi (Latin letters and digits, e.g. "3ayz", "si3r", "bety"), ' +
+  'or English. Reply in warm, concise Egyptian Arabic (2-4 short sentences max), mirroring the customer\'s script ' +
+  '(use English only if the customer wrote fully in English).\n\n' +
+  'CRITICAL RULES:\n' +
+  '1. Answer ONLY from the store facts (catalog, policies) and any action_result below — never invent products, prices, stock, policies, delivery areas, timings, or order numbers.\n' +
+  '2. Quote prices exactly as listed with their currency (e.g. جنيه). When a product has an active offer, state both the offer price and the original price (plus the end date if shown).\n' +
+  '3. When a product has variants (sizes/colors/options), list each variant on its own line with its price and whether it is available (متاح) or unavailable (غير متاح).\n' +
+  '4. If the customer asks about a product not in the catalog, state clearly that it is not available and suggest close items from the catalog if any exist.\n' +
+  '5. Never promise "I will check and get back to you" («هتأكد وأرجعلك») unless you set "needs_human": true.\n' +
+  '6. Set "needs_human": true ONLY for store-specific questions (e.g. an unlisted shipping area, policy, or custom request) that the store facts and action_result cannot answer. Never set "needs_human": true for greetings, small talk, or when saying a product is not in the catalog.\n' +
+  '7. Respond only with JSON matching the schema: {"reply": "...", "needs_human": false}.';
 
-You are replying AS {merchant_name}'s assistant — warm, concise Egyptian Arabic
-(2-4 short sentences max). Do not use English unless the customer wrote fully in
-English.
-
-You are given the conversation context and optionally:
-- "store_info": the merchant's official store information that answers the
-  customer's question. Ground your answer ONLY in this text — never invent
-  prices, policies, products, delivery areas, or timings. If store_info does not
-  cover the question, say you will check and get back to them.
-- "action_result": the factual outcome of an action the system just performed
-  (e.g. products found, cart updated). Rephrase these facts naturally — do not
-  add facts, do not contradict them. If it says nothing was found, say so kindly.
-
-Never output order numbers or confirmations unless they appear in the facts you
-were given. Respond only with json matching the schema: {"reply": "..."}.`;
+export function buildReplySystemPrompt(p: {
+  merchantName: string;
+  convState: ConvState;
+  slots: Record<string, unknown>;
+  catalog?: string;
+  policies?: string;
+}): string {
+  const rules = REPLY_RULES_TEMPLATE.replaceAll('{merchant_name}', p.merchantName);
+  const slotsJson = Object.keys(p.slots ?? {}).length ? pyJsonDumps(p.slots) : '(nothing gathered yet)';
+  const facts =
+    `STORE FACTS:\n` +
+    `Catalog:\n${p.catalog || '(لا توجد منتجات مسجلة)'}\n\n` +
+    `Policies & instructions:\n${p.policies || '(لا توجد سياسات مسجلة)'}`;
+  const state =
+    `CONVERSATION STATE:\n` +
+    `Stage: ${STATE_GLOSS[p.convState]}\n` +
+    `Already gathered: ${slotsJson}`;
+  return `${rules}\n\n${facts}\n\n${state}`;
+}
 
 export const ACTION_TASK_BLOCK = `TASK: Decide the single best next action for this customer message.
 

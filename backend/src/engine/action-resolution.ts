@@ -7,6 +7,7 @@ import { buildContextPrompt } from './context-budget.js';
 import { complete, deepseekProvider } from './gateway.js';
 import { ACTION_TASK_BLOCK, buildSystemPrompt } from './prompts.js';
 import { ProposedAction } from './schemas.js';
+import { type StoreFacts, buildStoreFacts } from './store-facts.js';
 import { type ActionOutcome, dispatchAction } from './tools/registry.js';
 
 export interface ActionResolution {
@@ -16,40 +17,34 @@ export interface ActionResolution {
   escalationReason: string | null;
 }
 
-function renderResponse(outcome: ActionOutcome, action: ProposedAction): string {
+function stripInternal(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(stripInternal);
+  if (v && typeof v === 'object') {
+    return Object.fromEntries(
+      Object.entries(v as Record<string, unknown>)
+        .filter(([k]) => k !== 'image_url' && k !== 'merchant_id')
+        .map(([k, val]) => [k, stripInternal(val)]),
+    );
+  }
+  return v;
+}
+
+function renderResponse(outcome: ActionOutcome): string {
   if (outcome.status === 'rejected') {
     const reason = outcome.errors[0]?.message ?? 'طلب غير صالح';
     return `عذراً، لم أتمكن من تنفيذ ذلك — ${reason}.`;
   }
   if (outcome.status === 'failed') return 'لا أستطيع إتمام ذلك حالياً — دعني أحولك لأحد زملائي لمساعدتك.';
-  const result = outcome.result as any;
-  switch (action.action) {
-    case 'search_products': {
-      const products: { name: string }[] = result.products ?? [];
-      if (!products.length) return 'لم أتمكن من العثور على أي منتجات مطابقة.';
-      return `وجدت ${products.length} منتج(ات): ${products.slice(0, 5).map((p) => p.name).join(', ')}`;
-    }
-    case 'get_product':
-      return result.product.name;
-    case 'update_customer_info': {
-      const note = result.delivery_validation.status === 'unavailable' ? ' سأقوم بتأكيد رسوم التوصيل لمنطقتك بشكل منفصل.' : '';
-      return `تمام، حفظت بياناتك.${note}`;
-    }
-    case 'get_offers': {
-      const offers: { name: string; offer_price: number }[] = result.offers ?? [];
-      if (!offers.length) return 'مفيش عروض متاحة حالياً.';
-      return `العروض المتاحة: ${offers.slice(0, 5).map((o) => `${o.name} بـ ${o.offer_price}`).join('، ')}`;
-    }
-    case 'search_store_knowledge': {
-      const results: { content: string }[] = result.results ?? [];
-      return results.length ? results[0].content : 'لم أتمكن من العثور على أي معلومات حول ذلك.';
-    }
-    default:
-      return 'تم.';
-  }
+  const json = JSON.stringify(stripInternal(outcome.result ?? {}));
+  return json.length > 6000 ? `${json.slice(0, 6000)}...(truncated)` : json;
 }
 
-export async function resolveAction(db: DbOrTx, conversation: Conversation, message: Message): Promise<ActionResolution> {
+export async function resolveAction(
+  db: DbOrTx,
+  conversation: Conversation,
+  message: Message,
+  facts?: StoreFacts,
+): Promise<ActionResolution> {
   const s = getSettings();
   const m = schema.messages;
   const rows = await db
@@ -60,15 +55,28 @@ export async function resolveAction(db: DbOrTx, conversation: Conversation, mess
     .limit(s.CONTEXT_HISTORY_TURNS);
   const history = rows.reverse();
   const slots = (conversation.slots ?? {}) as Record<string, unknown>;
+  const currentText = message.normalizedText || message.rawText || '';
   const prompt = buildContextPrompt({
     history,
     slots,
-    currentText: message.normalizedText || message.rawText || '',
+    currentText,
     maxTurns: s.CONTEXT_HISTORY_TURNS,
     mode: 'action',
   });
-  const [merchant] = await db.select({ name: schema.merchants.name }).from(schema.merchants).where(eq(schema.merchants.id, conversation.merchantId));
-  const systemPrompt = buildSystemPrompt({ taskBlock: ACTION_TASK_BLOCK, merchantName: merchant.name, convState: conversation.state, slots });
+  const [merchant] = await db
+    .select({ name: schema.merchants.name, currency: schema.merchants.currency })
+    .from(schema.merchants)
+    .where(eq(schema.merchants.id, conversation.merchantId));
+  const storeFacts =
+    facts ??
+    (await buildStoreFacts(db, conversation.merchantId, {
+      embedding: message.embedding,
+      query: currentText,
+      currency: merchant.currency,
+      withIds: true,
+    }));
+  const taskBlock = `${ACTION_TASK_BLOCK}\n\nStore catalog (use these exact product_id / variant_id values):\n${storeFacts.catalog}`;
+  const systemPrompt = buildSystemPrompt({ taskBlock, merchantName: merchant.name, convState: conversation.state, slots });
 
   let action: ProposedAction | null = null;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -94,5 +102,5 @@ export async function resolveAction(db: DbOrTx, conversation: Conversation, mess
   let escalationReason: string | null = null;
   if (outcome.status === 'rejected') escalationReason = `action_rejected:${outcome.errors[0].code}`;
   else if (outcome.status === 'failed') escalationReason = `tool_unavailable:${action.action}`;
-  return { proposedAction: action, outcome, responseText: renderResponse(outcome, action), escalationReason };
+  return { proposedAction: action, outcome, responseText: renderResponse(outcome), escalationReason };
 }

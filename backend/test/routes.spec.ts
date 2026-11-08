@@ -321,12 +321,3 @@ describe('orders', () => {
   });
 });
 
-describe('demo', () => {
-  it('503 when unconfigured', async () => {
-    await withApp(async ({ http }) => {
-      const res = await http.get('/demo/products');
-      expect(res.status).toBe(503);
-      expect(res.body).toEqual({ detail: 'Demo merchant is not configured' });
-    });
-  });
-});

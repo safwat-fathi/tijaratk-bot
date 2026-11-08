@@ -33,6 +33,7 @@ export async function ingestMessage(db: DbOrTx, payload: MessageIngestRequest, m
     messageType: null,
     richPayload: null,
     postbackPayload: null,
+    aiAnswered: false,
   };
   const result = await processMessage(db, conversation, message);
 

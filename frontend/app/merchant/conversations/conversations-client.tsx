@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MessageComposer } from "@/app/demo/message-composer";
-import { returnToAiAction, takeoverConversationAction, type ConversationRecord } from "@/app/demo/actions";
+import { MessageComposer } from "@/components/merchant/message-composer";
+import { returnToAiAction, takeoverConversationAction, type ConversationRecord } from "@/app/merchant/actions";
 
 export function ConversationsClient({ 
   merchantId, 

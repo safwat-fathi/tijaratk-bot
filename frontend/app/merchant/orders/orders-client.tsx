@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Product } from "@/lib/products";
 import { Order } from "@/lib/orders";
-import { createManualOrderAction, fetchOrdersAction, updateOrderStatusAction, type ManualOrderResult } from "@/app/demo/actions";
+import { createManualOrderAction, fetchOrdersAction, updateOrderStatusAction, type ManualOrderResult } from "@/app/merchant/actions";
 import { useMerchantData } from "@/lib/use-merchant-data";
 import { Modal } from "@/components/ui/modal";
 

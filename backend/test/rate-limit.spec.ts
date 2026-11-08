@@ -3,7 +3,7 @@ import { loadSettings } from '../src/config.js';
 import { RateLimitMiddleware } from '../src/core/rate-limit.middleware.js';
 
 const settings = (o: Record<string, string> = {}) =>
-  loadSettings({ ...process.env, RATE_LIMIT_ENABLED: 'true', RATE_LIMIT_DEFAULT_MAX: '3', RATE_LIMIT_DEFAULT_WINDOW: '60', RATE_LIMIT_DEMO_MAX: '2', RATE_LIMIT_DEMO_WINDOW: '600', ...o });
+  loadSettings({ ...process.env, RATE_LIMIT_ENABLED: 'true', RATE_LIMIT_DEFAULT_MAX: '3', RATE_LIMIT_DEFAULT_WINDOW: '60', ...o });
 
 function fakeRedis(failing = false) {
   const counts = new Map<string, number>();
@@ -60,11 +60,6 @@ describe('RateLimitMiddleware', () => {
     expect((await hit(mw, '/health/?x=1')).passed).toBe(true);
     expect((await hit(mw, '/docs')).passed).toBe(true);
     expect((await hit(mw, '/products')).status).toBe(429);
-  });
-
-  it('/demo uses the demo tier', async () => {
-    const mw = new RateLimitMiddleware(fakeRedis() as any, settings());
-    expect([(await hit(mw, '/demo/products')).passed, (await hit(mw, '/demo/products')).passed, (await hit(mw, '/demo/products')).status]).toEqual([true, true, 429]);
   });
 
   it('fails open when Redis is down, and does nothing when disabled', async () => {

@@ -20,9 +20,8 @@ export class RateLimitMiddleware implements NestMiddleware {
     const path = req.originalUrl.split('?')[0];
     if (!this.s.RATE_LIMIT_ENABLED || SKIP.has(path)) return next();
     const ip = (req.headers['x-forwarded-for'] as string | undefined) || req.socket.remoteAddress || 'unknown';
-    const demo = path.startsWith('/demo');
-    const max = demo ? this.s.RATE_LIMIT_DEMO_MAX : this.s.RATE_LIMIT_DEFAULT_MAX;
-    const window = demo ? this.s.RATE_LIMIT_DEMO_WINDOW : this.s.RATE_LIMIT_DEFAULT_WINDOW;
+    const max = this.s.RATE_LIMIT_DEFAULT_MAX;
+    const window = this.s.RATE_LIMIT_DEFAULT_WINDOW;
     const now = Math.floor(Date.now() / 1000);
     try {
       const key = `rl:${ip}:${Math.floor(now / window)}`;

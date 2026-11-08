@@ -14,7 +14,8 @@ afterEach(resetAi);
 const msg = (c: Conversation, text: string, o: Partial<Message> = {}): Message => ({
   id: randomUUID(), conversationId: c.id, direction: 'INBOUND', rawText: text, normalizedText: text, intent: null,
   intentConfidence: null, modelTier: null, escalationReason: null, externalMessageId: null, embedding: null,
-  createdAt: new Date(), clusteredAt: null, messageType: null, richPayload: null, postbackPayload: null, ...o,
+  createdAt: new Date(), clusteredAt: null, messageType: null, richPayload: null, postbackPayload: null,
+  aiAnswered: false, ...o,
 });
 
 const purchase = { intent: 'purchase_intent', confidence: 0.95 };
@@ -30,11 +31,11 @@ async function world(db: Db, o: { toolOrdering?: boolean; productEmbedding?: num
 }
 
 describe('free plan conversation limit', () => {
-  const inbound = (db: Db, c: Conversation, createdAt: Date) =>
-    db.insert(schema.messages).values({ conversationId: c.id, direction: 'INBOUND', rawText: 'hi', normalizedText: 'hi', createdAt });
+  const answeredInbound = (db: Db, c: Conversation, createdAt: Date) =>
+    db.insert(schema.messages).values({ conversationId: c.id, direction: 'INBOUND', rawText: 'hi', normalizedText: 'hi', aiAnswered: true, createdAt });
   const daysAgo = (n: number) => new Date(Date.now() - n * 864e5);
 
-  it('past 10 conversations this month the AI stays silent; counted ones keep working', async () => {
+  it('past 10 answered conversations this month the AI stays silent; counted ones keep working', async () => {
     const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
     await withRollback(async (db) => {
       const m = await makeMerchant(db);
@@ -42,63 +43,62 @@ describe('free plan conversation limit', () => {
       const convs: Conversation[] = [];
       for (let i = 0; i < 10; i++) {
         const c = await makeConversation(db, m.id);
-        await inbound(db, c, new Date(Date.now() - (20 - i) * 1000));
+        await answeredInbound(db, c, new Date(Date.now() - (20 - i) * 1000));
         convs.push(c);
       }
       // last month and other merchants don't count
       const old = await makeConversation(db, m.id);
-      await inbound(db, old, new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 0)));
+      await answeredInbound(db, old, new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 0)));
       const foreign = await makeConversation(db, other.id);
-      await inbound(db, foreign, new Date());
+      await answeredInbound(db, foreign, new Date());
 
       const eleventh = await makeConversation(db, m.id);
       const blocked = await processMessage(db, eleventh, msg(eleventh, 'السلام عليكم'));
-      expect(blocked.messages).toEqual([]);
+      expect(blocked).toMatchObject({ messages: [], message: { aiAnswered: false } });
       const blockedText = await processMessage(db, eleventh, msg(eleventh, 'عايز قميص'));
-      expect(blockedText).toMatchObject({ messages: [], message: { intent: 'fallback:no_ai' } });
+      expect(blockedText).toMatchObject({ messages: [], message: { intent: 'fallback:no_ai', aiAnswered: false } });
       expect(ai.calls).toHaveLength(0);
 
       const first = await processMessage(db, convs[0], msg(convs[0], 'السلام عليكم'));
       expect(kinds(first)).toEqual(['text']);
+      expect(first.message.aiAnswered).toBe(true);
       expect(ai.calls).toHaveLength(1);
     });
   });
 
-  const spamRows = async (db: Db, merchantId: string, n: number, modelTier: 'RULE' | 'DEEPSEEK') => {
-    for (let i = 0; i < n; i++) {
-      const c = await makeConversation(db, merchantId);
-      await db.insert(schema.messages).values({ conversationId: c.id, direction: 'INBOUND', rawText: 'x', normalizedText: 'x', intent: i % 2 ? 'spam' : 'reaction', modelTier, createdAt: new Date(Date.now() - (30 - i) * 1000) });
-    }
-  };
-
-  it('tier-0 spam links and emoji reactions do not use up a slot', async () => {
-    const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
+  it('unanswered messages (spam, escalations, needs_human, AI-off, AI errors) do not use up a slot', async () => {
     await withRollback(async (db) => {
       const m = await makeMerchant(db);
-      await spamRows(db, m.id, 12, 'RULE');
+      for (let i = 0; i < 12; i++) {
+        const c = await makeConversation(db, m.id);
+        await db.insert(schema.messages).values({
+          conversationId: c.id,
+          direction: 'INBOUND',
+          rawText: 'x',
+          normalizedText: 'x',
+          intent: i % 3 === 0 ? 'spam' : i % 3 === 1 ? 'question' : 'fallback:no_ai',
+          escalationReason: i % 3 === 1 ? 'unanswerable' : null,
+          modelTier: i % 2 ? 'RULE' : 'DEEPSEEK',
+          aiAnswered: false,
+          createdAt: new Date(Date.now() - (30 - i) * 1000),
+        });
+      }
+      expect(await conversationUsage(db, m.id)).toEqual({ conversations_used: 0, conversations_limit: 10 });
+
+      const ai = fakeAi([{ reply: 'أهلاً بيك!' }]);
       const real = await makeConversation(db, m.id);
       const r = await processMessage(db, real, msg(real, 'السلام عليكم'));
       expect(kinds(r)).toEqual(['text']);
+      expect(r.message.aiAnswered).toBe(true);
       expect(ai.calls).toHaveLength(1);
+      expect(await conversationUsage(db, m.id)).toEqual({ conversations_used: 1, conversations_limit: 10 });
     });
   });
 
-  it('model-labelled spam still holds a slot (the AI replies to those)', async () => {
-    const ai = fakeAi([]);
+  it('reported usage is capped at the limit even when more threads were answered', async () => {
     await withRollback(async (db) => {
       const m = await makeMerchant(db);
-      await spamRows(db, m.id, 10, 'DEEPSEEK');
-      const real = await makeConversation(db, m.id);
-      const r = await processMessage(db, real, msg(real, 'السلام عليكم'));
-      expect(r.messages).toEqual([]);
-      expect(ai.calls).toHaveLength(0);
-    });
-  });
-
-  it('reported usage is capped at the limit even when more threads wrote (the extra ones got no AI)', async () => {
-    await withRollback(async (db) => {
-      const m = await makeMerchant(db);
-      for (let i = 0; i < 13; i++) await inbound(db, await makeConversation(db, m.id), new Date(Date.now() - (30 - i) * 1000));
+      for (let i = 0; i < 13; i++) await answeredInbound(db, await makeConversation(db, m.id), new Date(Date.now() - (30 - i) * 1000));
       expect(await conversationUsage(db, m.id)).toEqual({ conversations_used: 10, conversations_limit: 10 });
     });
   });
@@ -108,9 +108,10 @@ describe('free plan conversation limit', () => {
     await withRollback(async (db) => {
       const m = await makeMerchant(db);
       const c = await makeConversation(db, m.id);
-      await inbound(db, c, daysAgo(40));
+      await answeredInbound(db, c, daysAgo(40));
       const r = await processMessage(db, c, msg(c, 'السلام عليكم'));
       expect(kinds(r)).toEqual(['text']);
+      expect(r.message.aiAnswered).toBe(true);
     });
   });
 });
@@ -347,7 +348,7 @@ describe('classification + extraction flow', () => {
     });
   });
 
-  it('non-purchase intent answers from the best-matching store knowledge', async () => {
+  it('non-purchase intent injects store knowledge (keyword match first, then the rest)', async () => {
     const ai = fakeAi([{ intent: 'question', confidence: 0.9 }, { reply: 'مواعيد العمل ١٠ للـ ١٠' }]);
     await withRollback(async (db) => {
       const { m, c } = await world(db);
@@ -358,17 +359,20 @@ describe('classification + extraction flow', () => {
       const r = await processMessage(db, c, msg(c, 'ايه مواعيد العمل؟'));
       expect(r.order).toBeNull();
       expect(r.messages).toEqual([{ kind: 'text', text: 'مواعيد العمل ١٠ للـ ١٠' }]);
-      expect(userPromptOf(ai.calls[1])).toContain('store_info: من ١٠ ل ١٠');
+      const sys = ai.calls[1].messages[0].content as string;
+      expect(sys).toContain('من ١٠ ل ١٠');
+      expect(sys).toContain('عام');
+      expect(sys.indexOf('من ١٠ ل ١٠')).toBeLessThan(sys.indexOf('عام'));
     });
   });
 
-  it('with no knowledge match the reply prompt says so; reply failure yields no outbound', async () => {
+  it('reply failure yields no outbound and never tells the model no store_info is available', async () => {
     const ai = fakeAi([{ intent: 'question', confidence: 0.9 }, new AICallError('x')]);
     await withRollback(async (db) => {
       const { c } = await world(db);
       const r = await processMessage(db, c, msg(c, 'ايه ده'));
       expect(r.messages).toEqual([]);
-      expect(userPromptOf(ai.calls[1])).toContain('No store_info is available');
+      expect(userPromptOf(ai.calls[1])).not.toContain('No store_info is available');
     });
   });
 
@@ -404,16 +408,26 @@ describe('classification + extraction flow', () => {
 });
 
 describe('tool ordering mode', () => {
-  it('routes through action resolution and replies from the action result', async () => {
-    const ai = fakeAi([{ action: 'search_products', query: 'قميص', confidence: 0.9 }, { reply: 'لقيت قميص' }]);
+  it('routes through action resolution and replies from the action result JSON (including prices and cart)', async () => {
+    const ai = fakeAi([
+      { action: 'search_products', query: 'قميص', confidence: 0.9 },
+      { reply: 'لقيت قميص بـ 100 جنيه' },
+      { action: 'get_checkout_state', confidence: 0.9 },
+      { reply: 'السلة فيها قميص' },
+    ]);
     await withRollback(async (db) => {
-      const { c } = await world(db, { toolOrdering: true });
+      const { c, p } = await world(db, { toolOrdering: true });
       const r = await processMessage(db, c, msg(c, 'عندكم قمصان؟'));
       expect(r.message.modelTier).toBe('DEEPSEEK');
-      expect(r.messages).toEqual([{ kind: 'text', text: 'لقيت قميص' }]);
-      expect(userPromptOf(ai.calls[1])).toContain('action_result: وجدت 1 منتج(ات): قميص');
+      expect(r.messages).toEqual([{ kind: 'text', text: 'لقيت قميص بـ 100 جنيه' }]);
+      expect(ai.calls[0].messages[0].content).toContain(p.id);
+      expect(userPromptOf(ai.calls[1])).toContain('"price":100');
       const [act] = await db.select().from(schema.aiActions);
       expect(act).toMatchObject({ actionType: 'search_products', status: 'executed', arguments: { query: 'قميص', filters: {} } });
+
+      await processMessage(db, c, msg(c, 'x', { postbackPayload: { action: 'add_to_cart', product_id: p.id } }));
+      await processMessage(db, c, msg(c, 'السلة فيها ايه؟'));
+      expect(userPromptOf(ai.calls[3])).toContain('"subtotal":"100.00"');
     });
   });
 
@@ -507,6 +521,74 @@ describe('deterministic checkout (postback-driven, no AI)', () => {
       const [conv] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
       const r = await processMessage(db, { ...conv, aiEnabled: false }, msg(c, 'Cairo'));
       expect((r.messages[0] as any).text).toContain('حدثت مشكلة');
+    });
+  });
+});
+
+describe('grounded replies', () => {
+  it('price question on default path (state=NEW) injects product name and price into generator system prompt', async () => {
+    const ai = fakeAi([{ intent: 'question', confidence: 0.95 }, { reply: 'سعر التيشيرت القطن 250 جنيه' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db, { name: 'متجر النور' });
+      const c = await makeConversation(db, m.id, { state: 'NEW' });
+      await makeProduct(db, m.id, { name: 'تيشيرت قطن', price: '250.00', embedding: unit(0) });
+      const r = await processMessage(db, c, msg(c, 'سعر التيشيرت كام؟'));
+      expect(r.messages).toEqual([{ kind: 'text', text: 'سعر التيشيرت القطن 250 جنيه' }]);
+      const sys = ai.calls[1].messages[0].content as string;
+      expect(sys).toContain('تيشيرت قطن');
+      expect(sys).toContain('250');
+      expect(sys).not.toContain('{merchant_name}');
+      expect(userPromptOf(ai.calls[1])).not.toContain('No store_info is available');
+    });
+  });
+
+  it('policy with empty keywords reaches the generator on default path', async () => {
+    const ai = fakeAi([{ intent: 'question', confidence: 0.95 }, { reply: 'الدفع عند الاستلام فقط' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db, { name: 'متجر النور' });
+      const c = await makeConversation(db, m.id, { state: 'NEW' });
+      await db.insert(schema.storeKnowledge).values({
+        merchantId: m.id,
+        knowledgeType: 'payment',
+        title: 'الدفع',
+        content: 'الدفع عند الاستلام فقط',
+        keywords: [],
+      });
+      await processMessage(db, c, msg(c, 'طريقة الدفع ايه؟'));
+      expect(ai.calls[1].messages[0].content).toContain('الدفع عند الاستلام فقط');
+    });
+  });
+
+  it('needs_human sends supportOffer buttons, sets escalationReason=unanswerable, and does NOT pause the bot', async () => {
+    fakeAi([{ intent: 'question', confidence: 0.95 }, { reply: 'مش متأكد من الشحن للمنطقة دي', needs_human: true }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db, { name: 'متجر النور' });
+      const c = await makeConversation(db, m.id, { state: 'NEW' });
+      const r = await processMessage(db, c, msg(c, 'بتشحنوا للسعودية؟'));
+      expect(r.message.escalationReason).toBe('unanswerable');
+      expect(r.messages[0]).toMatchObject({
+        kind: 'quick_reply',
+        text: 'مش متأكد من الشحن للمنطقة دي',
+        quick_replies: [{ payload: { action: 'escalate', reason: 'unanswerable' } }, { payload: { action: 'main_menu' } }],
+      });
+      const [conv] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, c.id));
+      expect(conv.humanTakeover).toBe(false);
+    });
+  });
+
+  it('>40 products with null embeddings still yields a non-empty catalog via token fallback', async () => {
+    const ai = fakeAi([{ intent: 'question', confidence: 0.95 }, { reply: 'سعر تيشيرت بولو 350 جنيه' }]);
+    await withRollback(async (db) => {
+      const m = await makeMerchant(db, { name: 'متجر النور' });
+      const c = await makeConversation(db, m.id, { state: 'NEW' });
+      for (let i = 0; i < 42; i++) {
+        await makeProduct(db, m.id, { name: `منتج رقم ${i}`, price: '100.00', embedding: null });
+      }
+      await makeProduct(db, m.id, { name: 'تيشيرت بولو', price: '350.00', embedding: null });
+      await processMessage(db, c, msg(c, 'سعر التيشيرت كام؟'));
+      const sys = ai.calls[1].messages[0].content as string;
+      expect(sys).toContain('تيشيرت بولو');
+      expect(sys).toContain('350');
     });
   });
 });

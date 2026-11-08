@@ -1,4 +1,4 @@
-import { fetchKnowledgeAction } from "@/app/demo/actions";
+import { fetchKnowledgeAction } from "@/app/merchant/actions";
 import { PoliciesClient } from "./policies-client";
 import { getCurrentMerchant } from "@/lib/dal";
 

@@ -59,7 +59,7 @@ describe('real openai SDK against an OpenAI-compatible endpoint', () => {
     try {
       await against(s);
       const [reply, usage] = await generateReply({ userPrompt: 'hi', merchantName: 'M', convState: 'NEW', slots: {} });
-      expect(reply).toBe('أهلاً');
+      expect(reply).toEqual({ reply: 'أهلاً', needs_human: false });
       expect(usage).toMatchObject({ inputTokens: 11, outputTokens: 7, provider: 'openrouter', tier: 'deepseek' });
       const sent = s.seen[0];
       expect(sent.url).toBe('/v1/chat/completions');
@@ -77,7 +77,7 @@ describe('real openai SDK against an OpenAI-compatible endpoint', () => {
     try {
       await against(s);
       const [reply, usage] = await generateReply({ userPrompt: 'hi', merchantName: 'M', convState: 'NEW', slots: {} });
-      expect(reply).toBe('أهلاً بيك');
+      expect(reply).toEqual({ reply: 'أهلاً بيك', needs_human: false });
       expect(usage).toMatchObject({ inputTokens: 21, outputTokens: 9 });
     } finally {
       await s.close();

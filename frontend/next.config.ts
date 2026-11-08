@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
-
 import { paraglide } from "@inlang/paraglide-next/plugin";
-
-import path from "path";
 
 const nextConfig: NextConfig = {
   images: {
@@ -11,14 +8,6 @@ const nextConfig: NextConfig = {
   },
   // Product photo uploads go through a server action (API limit is 5 MB).
   experimental: { serverActions: { bodySizeLimit: "6mb" } },
-  async rewrites() {
-    return [
-      {
-        source: "/blog/:slug.md",
-        destination: "/api/markdown/blog/:slug",
-      },
-    ];
-  },
   turbopack: {
     resolveAlias: {
       "$paraglide/runtime.js": "./paraglide/runtime.js",

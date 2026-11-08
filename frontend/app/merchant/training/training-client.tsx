@@ -7,7 +7,7 @@ import {
   createExampleAction,
   updateExampleAction,
   deleteExampleAction,
-} from "@/app/demo/actions";
+} from "@/app/merchant/actions";
 import { type LabeledExample } from "@/lib/training";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -122,7 +122,7 @@ export function TrainingClient({
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">تدريب الـ AI</h1>
         <p className="text-slate-500 mt-1">
-          أضف أمثلة من رسائل عملائك والتصنيف الصحيح لها حتى يتعلم الـ AI سياق شغلك.
+          أضف أمثلة من رسائل عملائك لتعليم الـ AI تصنيف نية الرسالة (طلب شراء، سؤال، شكوى...) واستخراج الأصناف المطلوبة. لإضافة تعليمات الرد أو قواعد الأسعار أو سياسات الشحن والاسترجاع، استخدم صفحة <a href="/merchant/policies" className="text-blue-600 underline hover:text-blue-700">السياسات</a>.
         </p>
       </div>
 

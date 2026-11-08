@@ -9,7 +9,11 @@ const confidence = z.preprocess(
 export const IntentClassification = z.object({ intent: z.string(), confidence });
 export type IntentClassification = z.infer<typeof IntentClassification>;
 
-export const GeneratedReply = z.object({ reply: z.string().min(1) });
+export const GeneratedReply = z.object({
+  reply: z.string().min(1),
+  needs_human: z.boolean().default(false),
+});
+export type GeneratedReply = z.infer<typeof GeneratedReply>;
 
 export const ExtractedLineItem = z.object({
   product_name: z.string(),

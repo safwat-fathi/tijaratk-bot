@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { getSettings } from '../src/config.js';
 import { AICallError } from '../src/engine/clients.js';
 import { authHeader, fakeAi, makeConversation, makeMerchant, makeProduct, resetAi, schema, withApp } from './harness.js';
 
@@ -70,31 +69,3 @@ describe('POST /messages', () => {
   });
 });
 
-describe('/demo (unauthenticated, pinned to DEMO_STOPGAP_MERCHANT_ID)', () => {
-  it('serves read endpoints and POST /demo/messages for the demo merchant only', async () => {
-    fakeAi([{ intent: 'question', confidence: 0.9 }, { reply: 'أهلاً' }]);
-    await withApp(async ({ http, db }) => {
-      const demo = await makeMerchant(db, { name: 'Demo' });
-      const other = await makeMerchant(db, { name: 'Other' });
-      const c = await makeConversation(db, demo.id);
-      const foreign = await makeConversation(db, other.id);
-      await makeProduct(db, demo.id);
-      await makeProduct(db, other.id, { name: 'سري' });
-      const s = getSettings();
-      const prev = s.DEMO_STOPGAP_MERCHANT_ID;
-      s.DEMO_STOPGAP_MERCHANT_ID = demo.id;
-      try {
-        expect((await http.get('/demo/products')).body.map((p: any) => p.name)).toEqual(['قميص']);
-        expect((await http.get('/demo/conversations')).body.map((x: any) => x.id)).toEqual([c.id]);
-        expect((await http.get('/demo/knowledge')).body).toEqual([]);
-        const ok = await http.post('/demo/messages').send({ conversation_id: c.id, raw_text: 'ايه ده', normalized_text: 'ايه ده' });
-        expect(ok.status).toBe(200);
-        expect(ok.body.answer_messages).toEqual([{ kind: 'text', text: 'أهلاً' }]);
-        const cross = await http.post('/demo/messages').send({ conversation_id: foreign.id, raw_text: 'x', normalized_text: 'x' });
-        expect(cross.status).toBe(404);
-      } finally {
-        s.DEMO_STOPGAP_MERCHANT_ID = prev;
-      }
-    });
-  });
-});

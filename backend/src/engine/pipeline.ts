@@ -11,12 +11,11 @@ import {
   quickReplyMessage,
   textMessage,
 } from '../domains/messaging/models.js';
-import * as knowledge from '../domains/store-knowledge/service.js';
 import { isOverConversationLimit } from '../domains/usage/service.js';
 import { resolveAction } from './action-resolution.js';
 import { classifyMessage } from './classification.js';
 import { AICallError } from './clients.js';
-import { buildContextPrompt } from './context-budget.js';
+import { type HistoryMessage, buildContextPrompt } from './context-budget.js';
 import { estimateCost } from './cost.js';
 import { embedText, findSimilarExamples } from './embeddings.js';
 import { extractOrder } from './extraction.js';
@@ -28,6 +27,8 @@ import {
   matchLineItemsToProducts,
   resolveVariantsForLineItems,
 } from './product-matching.js';
+import type { GeneratedReply } from './schemas.js';
+import { buildStoreFacts } from './store-facts.js';
 import { matchTier0 } from './tier0-rules.js';
 
 const log = new Logger('pipeline');
@@ -57,6 +58,7 @@ export async function saveMessage(db: DbOrTx, m: Message): Promise<void> {
         modelTier: m.modelTier,
         escalationReason: m.escalationReason,
         embedding: m.embedding,
+        aiAnswered: m.aiAnswered,
       },
     });
 }
@@ -137,14 +139,23 @@ async function generateAiReply(
   db: DbOrTx,
   conversation: Conversation,
   message: Message,
-  p: { merchantName: string; userPrompt: string },
-): Promise<string | null> {
+  p: {
+    merchantName: string;
+    userPrompt: string;
+    catalog?: string;
+    policies?: string;
+    history?: HistoryMessage[];
+  },
+): Promise<GeneratedReply | null> {
   try {
     const [reply, usage] = await generateReply({
       userPrompt: p.userPrompt,
       merchantName: p.merchantName,
       convState: conversation.state,
       slots: conversation.slots as Slots,
+      catalog: p.catalog,
+      policies: p.policies,
+      history: p.history,
     });
     await addUsageEvent(db, conversation.id, message.id, usage, { success: true });
     return reply;
@@ -156,13 +167,21 @@ async function generateAiReply(
   }
 }
 
-const textToMessages = (text: string | null): OutboundMessage[] => (text ? [textMessage(text)] : []);
-
 const supportOffer = (text: string, reason: string) =>
   quickReplyMessage(text, [
     { title: 'نعم، تواصل مع الدعم', payload: { action: 'escalate', reason } },
     { title: 'لا، القائمة الرئيسية', payload: { action: 'main_menu' } },
   ]);
+
+function replyMessages(message: Message, generated: GeneratedReply | null): OutboundMessage[] {
+  if (!generated) return [];
+  if (generated.needs_human) {
+    if (!message.escalationReason) message.escalationReason = 'unanswerable';
+    return [supportOffer(generated.reply, 'unanswerable')];
+  }
+  message.aiAnswered = true;
+  return [textMessage(generated.reply)];
+}
 
 async function setSlots(db: DbOrTx, conversation: Conversation, slots: Slots) {
   conversation.slots = slots;
@@ -182,6 +201,7 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
   const [info] = await db
     .select({
       name: schema.merchants.name,
+      currency: schema.merchants.currency,
       toolOrdering: schema.merchants.aiToolOrderingEnabled,
       aiEnabled: schema.merchants.aiEnabled,
     })
@@ -217,16 +237,20 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     message.modelTier = 'RULE';
     const outbound: OutboundMessage[] = [];
     if (tier0 === 'greeting' && !conversation.humanTakeover) { // a human is in the conversation: no bot greeting or menu
-      let aiText: string | null = null;
+      let aiReply: GeneratedReply | null = null;
       if (info.aiEnabled && conversation.aiEnabled) {
-        aiText = await generateAiReply(db, conversation, message, {
+        aiReply = await generateAiReply(db, conversation, message, {
           merchantName,
           userPrompt: `customer: ${normalizedText}\nThe customer just greeted you. Greet them back and ask how you can help.`,
         });
       }
       // Plain-text fallback only when AI is on but the call failed; AI off = stay silent.
       const aiOn = info.aiEnabled && conversation.aiEnabled && !conversation.humanTakeover;
-      if (aiText ?? aiOn) outbound.push(textMessage(aiText ?? greetingFallback(displayName)));
+      if (aiReply) {
+        outbound.push(...replyMessages(message, aiReply));
+      } else if (aiOn) {
+        outbound.push(textMessage(greetingFallback(displayName)));
+      }
     }
     return finish(null, outbound);
   }
@@ -276,7 +300,13 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
   const corrections = await correctionCount(db, conversation.id);
 
   if (info.toolOrdering) {
-    const resolution = await resolveAction(db, conversation, message);
+    const facts = await buildStoreFacts(db, conversation.merchantId, {
+      embedding: message.embedding,
+      query: normalizedText,
+      currency: info.currency,
+      withIds: true,
+    });
+    const resolution = await resolveAction(db, conversation, message, facts);
     message.modelTier = 'DEEPSEEK';
     // Tools may have rewritten the conversation's slots (update_customer_info): re-read for the reply prompt.
     const [fresh] = await db.select().from(schema.conversations).where(eq(schema.conversations.id, conversation.id));
@@ -286,14 +316,17 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
     if (resolution.escalationReason) {
       await triggerEscalation(db, conversation, message, resolution.escalationReason);
     } else {
-      const aiText = await generateAiReply(db, conversation, message, {
+      const aiReply = await generateAiReply(db, conversation, message, {
         merchantName,
+        catalog: facts.catalog,
+        policies: facts.policies,
+        history,
         userPrompt:
           `customer: ${normalizedText}\n` +
           `action_result: ${resolution.responseText}\n` +
           'Turn the action_result facts into a natural reply to the customer.',
       });
-      outbound = textToMessages(aiText);
+      outbound = replyMessages(message, aiReply);
     }
     return finish(null, outbound);
   }
@@ -394,15 +427,23 @@ export async function processMessage(db: DbOrTx, conversation: Conversation, mes
 
   let outbound: OutboundMessage[];
   if (order) {
+    message.aiAnswered = true;
     const display = order.orderNumber || order.id.slice(0, 8);
     outbound = [textMessage(`تم استلام طلبك #${display}. هنتواصل معاك قريب!`)];
   } else {
-    const matches = await knowledge.search(db, conversation.merchantId, normalizedText);
-    const genPrompt = matches.length
-      ? `customer: ${normalizedText}\nstore_info: ${matches[0].content}\nAnswer the customer's question using store_info.`
-      : `customer: ${normalizedText}\nNo store_info is available. Respond naturally to the customer; ` +
-        'if you cannot answer their question, say you will check and get back to them.';
-    outbound = textToMessages(await generateAiReply(db, conversation, message, { merchantName, userPrompt: genPrompt }));
+    const facts = await buildStoreFacts(db, conversation.merchantId, {
+      embedding: message.embedding,
+      query: normalizedText,
+      currency: info.currency,
+    });
+    const aiReply = await generateAiReply(db, conversation, message, {
+      merchantName,
+      catalog: facts.catalog,
+      policies: facts.policies,
+      history,
+      userPrompt: `customer: ${normalizedText}`,
+    });
+    outbound = replyMessages(message, aiReply);
   }
   return finish(order, outbound);
 }

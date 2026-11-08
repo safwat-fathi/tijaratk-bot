@@ -766,6 +766,11 @@
     },
     "reply": {
       "properties": {
+        "needs_human": {
+          "default": false,
+          "title": "Needs Human",
+          "type": "boolean"
+        },
         "reply": {
           "minLength": 1,
           "title": "Reply",

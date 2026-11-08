@@ -1,6 +1,5 @@
 import { getCurrentMerchant, getMerchantSettings } from "@/lib/dal";
-import { connectFacebookAction } from "../actions";
-import { updateAiEnabledAction, updateAutoLearningAction } from "@/app/demo/actions";
+import { connectFacebookAction, updateAiEnabledAction, updateAutoLearningAction } from "../actions";
 import { SettingToggle } from "./setting-toggle";
 
 const CONNECT_ERRORS: Record<string, string> = {

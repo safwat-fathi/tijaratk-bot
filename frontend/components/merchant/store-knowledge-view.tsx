@@ -3,7 +3,7 @@
 import { useState } from "react";
 import * as m from "@/paraglide/messages";
 import type { StoreKnowledge } from "@/lib/knowledge";
-import { createKnowledgeAction, deleteKnowledgeAction, updateKnowledgeAction } from "./actions";
+import { createKnowledgeAction, deleteKnowledgeAction, updateKnowledgeAction } from "@/app/merchant/actions";
 
 const KNOWLEDGE_TYPES = [
   { value: "shipping", label: "Shipping / توصيل" },
@@ -256,7 +256,7 @@ export function StoreKnowledgeView({
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  كلمات مفتاحية (مفصولة بفاصلة)
+                  كلمات مفتاحية (اختياري — مفصولة بفاصلة)
                 </label>
                 <input
                   type="text"
@@ -265,6 +265,9 @@ export function StoreKnowledgeView({
                   placeholder="مثال: شحن, توصيل, مصاريف, القاهرة"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
                 />
+                <p className="mt-1 text-[11px] text-gray-500">
+                  يقرأ الذكاء الاصطناعي جميع السياسات المضافة هنا في كل رد. الكلمات المفتاحية اختيارية وتُستخدم فقط لإعطاء أولوية للسياسة عند كثرة السياسات.
+                </p>
               </div>
 
               <div className="mt-4 flex justify-end gap-2">

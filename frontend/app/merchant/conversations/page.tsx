@@ -1,4 +1,4 @@
-import { fetchConversationsAction } from "@/app/demo/actions";
+import { fetchConversationsAction } from "@/app/merchant/actions";
 import { ConversationsClient } from "./conversations-client";
 
 export default async function ConversationsPage() {

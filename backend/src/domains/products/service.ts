@@ -1,10 +1,13 @@
-import { and, asc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { Logger } from '@nestjs/common';
+import { and, asc, cosineDistance, count, eq, ilike, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import { getSettings } from '../../config.js';
 import { iso, num } from '../../core/serialize.js';
 import { type DbOrTx, schema } from '../../db/index.js';
 import type { Product, ProductVariant } from '../../db/types.js';
 import { embedText } from '../../engine/embeddings.js';
 import { isOfferActive } from './offers.js';
+
+const log = new Logger('products');
 
 export interface ProductVariantRead {
   id: string;
@@ -88,6 +91,57 @@ const embeddingText = (name: string, aliases: string[]) => `${name} ${aliases.jo
 export async function listProducts(db: DbOrTx, merchantId: string): Promise<ProductRead[]> {
   const rows = await db.select().from(schema.products).where(eq(schema.products.merchantId, merchantId)).orderBy(asc(schema.products.name));
   return withVariants(db, rows);
+}
+
+export function extractSearchTokens(query: string): string[] {
+  const out = new Set<string>();
+  for (const raw of query.split(/[^\p{L}\p{N}]+/u)) {
+    const stripped = raw.startsWith('ال') && raw.length >= 5 ? raw.slice(2) : raw;
+    if (stripped.length >= 3) out.add(stripped);
+    if (raw.length >= 3) out.add(raw);
+  }
+  return [...out];
+}
+
+export async function catalogForAi(
+  db: DbOrTx,
+  merchantId: string,
+  o: { embedding?: number[] | null; query?: string } = {},
+): Promise<ProductRead[]> {
+  const t = schema.products;
+  const [{ n }] = await db.select({ n: count() }).from(t).where(eq(t.merchantId, merchantId));
+  const total = Number(n);
+  if (total === 0) return [];
+  if (total <= 40) return listProducts(db, merchantId);
+
+  if (o.embedding?.length) {
+    const nearest = await db
+      .select()
+      .from(t)
+      .where(and(eq(t.merchantId, merchantId), isNotNull(t.embedding)))
+      .orderBy(asc(cosineDistance(t.embedding, o.embedding)))
+      .limit(8);
+    if (nearest.length) return withVariants(db, nearest);
+  }
+
+  log.warn(`catalog_nearest_fallback merchant_id=${merchantId}`);
+  const tokens = extractSearchTokens(o.query ?? '');
+  if (tokens.length) {
+    const conds = tokens.flatMap((tok) => [
+      ilike(t.name, `%${tok}%`),
+      ilike(sql`array_to_string(${t.aliases}, ' ')`, `%${tok}%`),
+    ]);
+    const matched = await db
+      .select()
+      .from(t)
+      .where(and(eq(t.merchantId, merchantId), or(...conds)))
+      .orderBy(asc(t.name))
+      .limit(40);
+    if (matched.length) return withVariants(db, matched);
+  }
+
+  const first = await db.select().from(t).where(eq(t.merchantId, merchantId)).orderBy(asc(t.name)).limit(40);
+  return withVariants(db, first);
 }
 
 export async function searchProducts(db: DbOrTx, merchantId: string, query: string, _filters: unknown): Promise<ProductRead[]> {

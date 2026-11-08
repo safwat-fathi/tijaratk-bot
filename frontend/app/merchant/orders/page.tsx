@@ -1,4 +1,4 @@
-import { fetchProductsAction, fetchOrdersAction } from "@/app/demo/actions";
+import { fetchProductsAction, fetchOrdersAction } from "@/app/merchant/actions";
 import { OrdersClient } from "./orders-client";
 import { getCurrentMerchant } from "@/lib/dal";
 

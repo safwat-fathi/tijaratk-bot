@@ -19,19 +19,4 @@ export interface Product {
   offer_active?: boolean;
 }
 
-export async function getProducts(): Promise<Product[]> {
-  const baseUrl = process.env.BASE_API_URL;
-  if (!baseUrl) {
-    throw new Error("BASE_API_URL not configured");
-  }
-  const response = await fetch(
-    `${baseUrl}/demo/products/`,
-    { 
-      cache: "no-store" 
-    },
-  );
-  if (!response.ok) {
-    throw new Error(`Failed to fetch products: ${response.status}`);
-  }
-  return (await response.json()) as Product[];
-}
+

@@ -8,7 +8,6 @@ import { ZernioConnectController } from './domains/channels/zernio-connect.contr
 import { CheckoutController } from './domains/checkout/checkout.controller.js';
 import { ConversationsController } from './domains/conversations/conversations.controller.js';
 import { DeliveryController } from './domains/delivery/delivery.controller.js';
-import { DemoController } from './domains/demo/demo.controller.js';
 import { HandoffController } from './domains/handoff/handoff.controller.js';
 import { HealthController, RootController } from './domains/health/health.controller.js';
 import { LabeledExamplesController } from './domains/labeled-examples/labeled-examples.controller.js';
@@ -33,7 +32,6 @@ import { StoreKnowledgeController } from './domains/store-knowledge/store-knowle
     HandoffController, // shares the /conversations prefix; routes don't overlap
     MessagesController,
     CheckoutController,
-    DemoController,
     ChannelsController,
     ZernioConnectController,
   ],

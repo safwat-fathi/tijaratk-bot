@@ -62,10 +62,7 @@ const schema = z
     // ponytail: one global value; add Merchant.plan when paid plans exist.
     FREE_PLAN_MONTHLY_CONVERSATIONS: z.coerce.number().default(10),
     ENCRYPTION_KEY: z.string().default(''),
-    DEMO_STOPGAP_MERCHANT_ID: z.string().default(''),
     RATE_LIMIT_ENABLED: bool.default(true),
-    RATE_LIMIT_DEMO_MAX: z.coerce.number().default(10),
-    RATE_LIMIT_DEMO_WINDOW: z.coerce.number().default(600),
     RATE_LIMIT_DEFAULT_MAX: z.coerce.number().default(100),
     RATE_LIMIT_DEFAULT_WINDOW: z.coerce.number().default(60),
   })

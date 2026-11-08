@@ -1,8 +1,8 @@
 "use client";
 
 import { useMerchantData } from "@/lib/use-merchant-data";
-import { ProductCatalog } from "@/app/demo/product-catalog";
-import { fetchProductsAction } from "@/app/demo/actions";
+import { ProductCatalog } from "@/components/merchant/product-catalog";
+import { fetchProductsAction } from "@/app/merchant/actions";
 import type { Product } from "@/lib/products";
 
 export function ProductsClient({

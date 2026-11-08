@@ -99,6 +99,7 @@ export const messages = pgTable("messages", {
 	messageType: varchar("message_type"),
 	richPayload: json("rich_payload"),
 	postbackPayload: json("postback_payload"),
+	aiAnswered: boolean("ai_answered").default(false).notNull(),
 }, (table) => [
 	index("ix_messages_conversation_id_created_at").using("btree", table.conversationId.asc().nullsLast().op("text_ops"), table.createdAt.asc().nullsLast()),
 	uniqueIndex("ix_messages_external_message_id_unique").using("btree", table.externalMessageId.asc().nullsLast().op("text_ops")).where(sql`(external_message_id IS NOT NULL)`),

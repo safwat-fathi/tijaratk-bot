@@ -10,7 +10,7 @@ import {
   deleteProductImageAction,
   updateProductAction,
   uploadProductImageAction,
-} from "./actions";
+} from "@/app/merchant/actions";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
