@@ -10,6 +10,7 @@ const CONNECT_ERRORS: Record<string, string> = {
   account_in_use: "هذه الصفحة مرتبطة بحساب تاجر آخر.",
   account_not_found: "لم نعثر على الصفحة، حاول مرة أخرى.",
   unsupported_platform: "هذا النوع من الحسابات غير مدعوم.",
+  billing_required: "ربط الصفحات غير متاح مؤقتاً، تواصل مع الدعم.",
   zernio_unavailable: "الخدمة غير متاحة حالياً، حاول بعد قليل.",
 };
 

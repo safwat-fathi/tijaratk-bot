@@ -61,7 +61,8 @@ export class ZernioConnectController {
       const res = await this.zernio(`/connect/${platform}?${q}`);
       if (!res.ok) {
         log.warn(`zernio_connect_failed status=${res.status} body=${(await res.text()).slice(0, 200)}`);
-        throw new ApiError(502, 'channel connect failed');
+        // 402 = the Zernio account itself needs a payment method; retrying will not help, and the merchant cannot fix it.
+        throw res.status === 402 ? new ApiError(402, 'billing_required') : new ApiError(502, 'channel connect failed');
       }
       body = await res.json();
     } catch (e) {

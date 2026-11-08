@@ -39,6 +39,7 @@ export async function connectFacebookAction() {
     cache: "no-store",
   }).catch(() => null);
   if (res?.status === 401) redirect(`/login?${LOGIN_MARKER}=1`);
+  if (res?.status === 402) redirect("/merchant/settings?error=billing_required");
   const body = res?.ok ? ((await res.json()) as { auth_url?: string; connected?: string }) : null;
   if (body?.auth_url) redirect(body.auth_url);
   redirect(`/merchant/settings?${body?.connected ? `connected=${body.connected}` : "error=connect_failed"}`);

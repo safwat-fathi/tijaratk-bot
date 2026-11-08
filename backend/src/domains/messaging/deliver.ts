@@ -3,7 +3,7 @@ import { getSettings } from '../../config.js';
 import { type OutboundMessage, serializePayload, textFallback } from './models.js';
 import { sendFacebookMessages } from './sender.js';
 
-const API = 'https://zernio.com/api/v1';
+export const ZERNIO_API = 'https://zernio.com/api/v1';
 const HTTP_TIMEOUT_MS = 10_000;
 const log = new Logger('messaging.deliver');
 
@@ -37,7 +37,7 @@ export async function sendZernioMessages(accountId: string, conversationId: stri
   const results: boolean[] = [];
   for (const msg of messages) {
     try {
-      const res = await fetch(`${API}/inbox/conversations/${encodeURIComponent(conversationId)}/messages`, {
+      const res = await fetch(`${ZERNIO_API}/inbox/conversations/${encodeURIComponent(conversationId)}/messages`, {
         method: 'POST',
         headers: { authorization: `Bearer ${getSettings().ZERNIO_API_KEY}`, 'content-type': 'application/json' },
         body: JSON.stringify(zernioBody(accountId, msg)),

@@ -1,8 +1,10 @@
 import { createHmac } from 'node:crypto';
+import { Logger } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type supertest from 'supertest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authHeader, fakeRedisKeys, makeConnection, makeConversation, makeMerchant, queued, schema, setSettingsForTests, withApp } from './harness.js';
+import { checkZernioHealth } from '../src/domains/channels/zernio-health.js';
+import { authHeader, fakeRedisKeys, makeConnection, makeConversation, makeMerchant, queued, schema, setSettingsForTests, withApp, withRollback } from './harness.js';
 
 type Http = ReturnType<typeof supertest>;
 
@@ -120,11 +122,14 @@ describe('POST /webhooks/zernio', () => {
 });
 
 /** Stubs Zernio's REST API; `accounts` is what `/accounts?search=<id>` can find. */
-function stubZernio(accounts: { _id: string; platform?: string; displayName?: string }[] = [], o: { connect?: unknown; accountsStatus?: number } = {}) {
+function stubZernio(accounts: { _id: string; platform?: string; displayName?: string }[] = [], o: { connect?: unknown; connectStatus?: number; accountsStatus?: number } = {}) {
   const calls: { url: URL; auth?: string }[] = [];
   vi.stubGlobal('fetch', async (url: string, init?: { headers?: Record<string, string> }) => {
     const u = new URL(url);
     calls.push({ url: u, auth: init?.headers?.authorization });
+    if (u.pathname.startsWith('/api/v1/connect/')) {
+      if (o.connectStatus) return new Response('{"code":"PAYMENT_REQUIRED"}', { status: o.connectStatus });
+    }
     if (u.pathname.startsWith('/api/v1/connect/')) return Response.json(o.connect ?? { authUrl: 'https://zernio.com/oauth/xyz' });
     if (u.pathname === '/api/v1/accounts') {
       if (o.accountsStatus) return new Response('down', { status: o.accountsStatus });
@@ -168,6 +173,18 @@ describe('Zernio connect flow', () => {
       expect(calls[0].url.searchParams.get('scopes')).toBe('messaging,comments');
       expect(calls[0].url.searchParams.has('oauthAppId')).toBe(false);
       expect(calls[0].url.searchParams.get('redirect_url')).toMatch(/^https:\/\/api\.example\.test\/zernio\/callback\?state=/);
+    });
+  });
+
+  it('start: a Zernio 402 (payment method needed) is reported as billing_required, other failures stay generic', async () => {
+    await withApp(async ({ http, db }) => {
+      const m = await makeMerchant(db);
+      stubZernio([], { connectStatus: 402 });
+      const billing = await http.get('/merchants/me/connect/facebook').set(authHeader(m.id));
+      expect([billing.status, billing.body]).toEqual([402, { detail: 'billing_required' }]);
+      stubZernio([], { connectStatus: 500 });
+      const other = await http.get('/merchants/me/connect/facebook').set(authHeader(m.id));
+      expect([other.status, other.body]).toEqual([502, { detail: 'channel connect failed' }]);
     });
   });
 
@@ -397,5 +414,37 @@ describe('POST /webhooks/zernio: message.sent (a person replied from our side)',
       expect(await db.select().from(schema.conversations)).toHaveLength(1);
       expect(await db.select().from(schema.messages)).toHaveLength(0);
     });
+  });
+});
+
+describe('Zernio health check', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const run = async (accounts: Response, setup?: (db: any) => Promise<void>) => {
+    vi.stubGlobal('fetch', async () => accounts);
+    const warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    await withRollback(async (db) => {
+      await setup?.(db);
+      await checkZernioHealth(db);
+    });
+    return warn.mock.calls.map((c) => String(c[0]));
+  };
+
+  it('logs Zernio\'s status when the accounts call is refused (e.g. billing)', async () => {
+    const warns = await run(new Response('{"code":"PAYMENT_REQUIRED"}', { status: 402 }));
+    expect(warns).toEqual([expect.stringContaining('zernio_health_failed status=402')]);
+  });
+
+  it('warns for an active Zernio connection that Zernio no longer lists, and stays quiet for listed and legacy ones', async () => {
+    const warns = await run(Response.json({ accounts: [{ _id: 'LISTED' }] }), async (db) => {
+      const m = await makeMerchant(db);
+      await makeConnection(db, m.id, { externalAccountId: 'LISTED', channel: 'FACEBOOK' });
+      await makeConnection(db, m.id, { externalAccountId: 'GONE', channel: 'INSTAGRAM' });
+      await makeConnection(db, m.id, { externalAccountId: 'LEGACY', channel: 'FACEBOOK', pageAccessToken: 'tok' });
+    });
+    expect(warns).toEqual([expect.stringContaining('zernio_health_account_missing channel=INSTAGRAM account_id=GONE')]);
   });
 });
