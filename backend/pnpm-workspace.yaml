@@ -1,0 +1,5 @@
+# Native binaries come from optional platform packages; the install scripts are not needed.
+allowBuilds:
+  '@swc/core': false
+  esbuild: false
+  msgpackr-extract: false
