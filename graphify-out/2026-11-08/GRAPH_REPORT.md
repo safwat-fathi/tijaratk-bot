@@ -1,16 +1,16 @@
 # Graph Report - tijaratk-bot  (2026-11-08)
 
 ## Corpus Check
-- 199 files · ~372,102 words
+- 199 files · ~372,126 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1630 nodes · 3176 edges · 125 communities (111 shown, 14 thin omitted)
+- 1630 nodes · 3176 edges · 124 communities (110 shown, 14 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 16 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4bc021c6`
+- Built from commit: `c9c96a4a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -27,15 +27,15 @@
 - checkout/service.ts
 - schema.ts
 - compilerOptions
-- Merchant
+- CurrentMerchant
 - pipeline.spec.ts
-- StoreKnowledgeController
+- notFound
 - getBaseUrl
 - messages.ts
 - orders-client.tsx
 - compilerOptions
 - training-client.tsx
-- parse
+- delivery.controller.ts
 - labeled-examples.controller.ts
 - types.ts
 - classification.ts
@@ -59,13 +59,13 @@
 - units.spec.ts
 - ZernioConnectController
 - order-writer.ts
-- .takeover
-- CurrentMerchant
+- TijaratkBot — Product Requirements Document (PRD)
+- .reply
 - Fix: bot answers "هتأكد من السعر وأرجعلك" instead of quoting the catalog price
 - Implementation decisions (phases 1-6, built 2026-11-04)
 - TijaratkBot
 - fetchProductsAction
-- notFound
+- .ingest
 - README.md
 - CLAUDE.md
 - backend/package.json
@@ -93,7 +93,6 @@
 - conversations.ts
 - MerchantsController
 - job.ts
-- 7. AI Is an Add-On
 - schemas.ts
 - TijaratkBot: Message Classification & AI Engine — Technical Spec (Core)
 - 33. Onboarding
@@ -155,7 +154,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (125 total, 14 thin omitted)
+## Communities (124 total, 14 thin omitted)
 
 ### Community 0 - "models.ts"
 Cohesion: 0.10
@@ -205,17 +204,17 @@ Nodes (33): Fernet, encryptedString, getFernet(), aiActions, aiUsageEvents, byte
 Cohesion: 0.06
 Nodes (30): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+22 more)
 
-### Community 13 - "Merchant"
-Cohesion: 0.11
-Nodes (20): Merchant, ProductCreate, ProductImagesController, ProductsController, ProductUpdate, Body, Controller, Delete (+12 more)
+### Community 13 - "CurrentMerchant"
+Cohesion: 0.10
+Nodes (24): Get, UseGuards, CurrentMerchant, Merchant, ProductCreate, ProductImagesController, ProductsController, ProductUpdate (+16 more)
 
 ### Community 14 - "pipeline.spec.ts"
 Cohesion: 0.20
 Nodes (12): AICallError, setAiClientsForTests(), setup(), fakeAi(), makeConversation(), makeMerchant(), makeProduct(), resetAi() (+4 more)
 
-### Community 15 - "StoreKnowledgeController"
-Cohesion: 0.13
-Nodes (12): deleteKnowledge(), StoreKnowledgeController, Body, Controller, Delete, Get, HttpCode, Inject (+4 more)
+### Community 15 - "notFound"
+Cohesion: 0.09
+Nodes (24): notFound(), parse(), HandoffController, Body, Controller, HttpCode, Inject, Param (+16 more)
 
 ### Community 16 - "getBaseUrl"
 Cohesion: 0.23
@@ -237,9 +236,9 @@ Nodes (22): compilerOptions, allowSyntheticDefaultImports, declaration, emitDeco
 Cohesion: 0.23
 Nodes (9): createExampleAction(), deleteExampleAction(), updateExampleAction(), SOURCE_LABELS, TrainingClient(), handleAdd(), handleDelete(), handleUpdate() (+1 more)
 
-### Community 21 - "parse"
+### Community 21 - "delivery.controller.ts"
 Cohesion: 0.11
-Nodes (17): parse(), Create, DeliveryController, NOTE: unlike the Python router (which never committed - its writes were rolled…, Body, Controller, Delete, Get (+9 more)
+Nodes (16): Create, DeliveryController, NOTE: unlike the Python router (which never committed - its writes were rolled…, Body, Controller, Delete, Get, HttpCode (+8 more)
 
 ### Community 22 - "labeled-examples.controller.ts"
 Cohesion: 0.10
@@ -333,13 +332,9 @@ Nodes (7): Controller, Get, Param, Query, Res, UseGuards, ZernioConnectControlle
 Cohesion: 0.23
 Nodes (16): centsToString(), lineTotalCents(), quantize2(), roundHalfEven(), roundScaledToCents(), scaledProduct(), toBigScaled(), toCents() (+8 more)
 
-### Community 45 - ".takeover"
-Cohesion: 0.25
-Nodes (8): HandoffController, Body, Controller, HttpCode, Inject, Param, Post, UseGuards
-
-### Community 46 - "CurrentMerchant"
-Cohesion: 0.15
-Nodes (12): Get, UseGuards, CurrentMerchant, ConversationsController, Body, Controller, Get, HttpCode (+4 more)
+### Community 46 - ".reply"
+Cohesion: 0.18
+Nodes (9): ConversationsController, Body, Controller, Get, HttpCode, Inject, Param, Post (+1 more)
 
 ### Community 47 - "Fix: bot answers "هتأكد من السعر وأرجعلك" instead of quoting the catalog price"
 Cohesion: 0.18
@@ -357,9 +352,9 @@ Nodes (11): Architecture, Backend, Documentation, Frontend, Getting started, Pre
 Cohesion: 0.28
 Nodes (8): fetchKnowledgeAction(), fetchProductsAction(), MerchantDashboard(), PoliciesPage(), PoliciesClient(), ProductsPage(), ProductsClient(), useMerchantData()
 
-### Community 51 - "notFound"
-Cohesion: 0.18
-Nodes (11): notFound(), ingestInTransaction(), MessageIngestRequest, MessagesController, Body, Controller, Inject, Post (+3 more)
+### Community 51 - ".ingest"
+Cohesion: 0.22
+Nodes (7): MessagesController, Body, Controller, Inject, Post, Res, UseGuards
 
 ### Community 52 - "README.md"
 Cohesion: 0.20
@@ -557,11 +552,11 @@ Nodes (3): 8.1 Entry, 8.2 Browse, 8. Recommended Customer Conversation Flow
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Db` connect `index.ts` to `harness.ts`, `config.ts`, `checkout.controller.ts`, `units.spec.ts`, `.takeover`, `CurrentMerchant`, `Merchant`, `StoreKnowledgeController`, `pipeline.spec.ts`, `notFound`, `MerchantsController`, `parse`, `labeled-examples.controller.ts`?**
+- **Why does `Db` connect `index.ts` to `harness.ts`, `config.ts`, `checkout.controller.ts`, `units.spec.ts`, `CurrentMerchant`, `.reply`, `notFound`, `pipeline.spec.ts`, `.ingest`, `MerchantsController`, `delivery.controller.ts`, `labeled-examples.controller.ts`?**
   _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **Why does `Merchant` connect `Merchant` to `checkout.controller.ts`, `index.ts`, `ZernioConnectController`, `.takeover`, `CurrentMerchant`, `StoreKnowledgeController`, `notFound`, `MerchantsController`, `parse`, `labeled-examples.controller.ts`?**
+- **Why does `Merchant` connect `CurrentMerchant` to `checkout.controller.ts`, `index.ts`, `ZernioConnectController`, `.reply`, `notFound`, `.ingest`, `MerchantsController`, `delivery.controller.ts`, `labeled-examples.controller.ts`?**
   _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Why does `CurrentMerchant` connect `CurrentMerchant` to `checkout.controller.ts`, `index.ts`, `ZernioConnectController`, `.takeover`, `Merchant`, `StoreKnowledgeController`, `notFound`, `MerchantsController`, `parse`, `labeled-examples.controller.ts`?**
+- **Why does `CurrentMerchant` connect `CurrentMerchant` to `checkout.controller.ts`, `index.ts`, `ZernioConnectController`, `.reply`, `notFound`, `.ingest`, `MerchantsController`, `delivery.controller.ts`, `labeled-examples.controller.ts`?**
   _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **What connects `$schema`, `typescript/no-explicit-any`, `typescript/no-floating-promises` to the rest of the system?**
   _708 weakly-connected nodes found - possible documentation gaps or missing edges._

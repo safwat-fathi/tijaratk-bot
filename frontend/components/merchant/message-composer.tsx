@@ -39,7 +39,7 @@ export function MessageComposer({
   };
 
   useEffect(() => {
-    setMessages([]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     const t = setInterval(load, 5000); // ponytail: polling, switch to SSE/websocket if load matters
     return () => clearInterval(t);

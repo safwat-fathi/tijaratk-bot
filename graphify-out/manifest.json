@@ -240,9 +240,9 @@
     "semantic_hash": ""
   },
   "frontend/app/merchant/conversations/page.tsx": {
-    "mtime": 1794124494.1865027,
-    "seen": 1794126424.847782,
-    "ast_hash": "15b54b3ae32cac7cd46ef7a0f16e122e",
+    "mtime": 1794128255.3165317,
+    "seen": 1794136053.78217,
+    "ast_hash": "28fba7dff4ded252184d4781d5dec66e",
     "semantic_hash": ""
   },
   "frontend/app/merchant/layout.tsx": {
@@ -252,9 +252,9 @@
     "semantic_hash": ""
   },
   "frontend/app/merchant/orders/page.tsx": {
-    "mtime": 1794124445.3854828,
-    "seen": 1794126424.8478122,
-    "ast_hash": "f8646bb61eb9ad9c2acd34b6c126bffe",
+    "mtime": 1794128255.358353,
+    "seen": 1794136053.782221,
+    "ast_hash": "14d99180ca98c1bca0d7fb846579e2ec",
     "semantic_hash": ""
   },
   "frontend/app/merchant/page.tsx": {
@@ -264,15 +264,15 @@
     "semantic_hash": ""
   },
   "frontend/app/merchant/policies/page.tsx": {
-    "mtime": 1794124412.2324033,
-    "seen": 1794126424.8478138,
-    "ast_hash": "c67ba0fc1763a1007088ef332db74316",
+    "mtime": 1794128255.3943658,
+    "seen": 1794136053.7822459,
+    "ast_hash": "886bc867775fd37051c42500afabfeea",
     "semantic_hash": ""
   },
   "frontend/app/merchant/products/page.tsx": {
-    "mtime": 1794124408.684847,
-    "seen": 1794126424.847848,
-    "ast_hash": "581d36ef468c79a45a011d9d7c0d5d61",
+    "mtime": 1794128255.433322,
+    "seen": 1794136053.782274,
+    "ast_hash": "db43c92e2b37d9d413919dc438c751f3",
     "semantic_hash": ""
   },
   "frontend/app/merchant/settings/page.tsx": {
@@ -294,9 +294,9 @@
     "semantic_hash": ""
   },
   "frontend/app/merchant/conversations/conversations-client.tsx": {
-    "mtime": 1794124455.728213,
-    "seen": 1794126424.8477812,
-    "ast_hash": "90054196925a1491d1514534aa3872cf",
+    "mtime": 1794135921.1382854,
+    "seen": 1794136053.78217,
+    "ast_hash": "002c1e86f6c7ffd321ff80fe5dfb4365",
     "semantic_hash": ""
   },
   "frontend/app/merchant/orders/orders-client.tsx": {
@@ -318,9 +318,9 @@
     "semantic_hash": ""
   },
   "frontend/app/merchant/sidebar-client.tsx": {
-    "mtime": 1793903439.5957758,
-    "seen": 1794122377.1572978,
-    "ast_hash": "26e9583c5b4b5054d72f9b41f66ad075",
+    "mtime": 1794135909.7578213,
+    "seen": 1794136053.782353,
+    "ast_hash": "bdc622d4bc8319a63e44d8f9230ceb58",
     "semantic_hash": ""
   },
   "frontend/lib/constants.ts": {
@@ -444,15 +444,15 @@
     "semantic_hash": ""
   },
   "frontend/lib/api.ts": {
-    "mtime": 1793767763.2585106,
-    "seen": 1793878588.349625,
-    "ast_hash": "39f85a4a9d816004feed4c5ea979986d",
+    "mtime": 1794128255.59302,
+    "seen": 1794136053.78263,
+    "ast_hash": "87af59caf042333e07509378bd6234e2",
     "semantic_hash": ""
   },
   "frontend/app/merchant/training/page.tsx": {
-    "mtime": 1793767763.246859,
-    "seen": 1793878588.34959,
-    "ast_hash": "6c7ae8887536a702172c907de43e473f",
+    "mtime": 1794128255.4863462,
+    "seen": 1794136053.7823539,
+    "ast_hash": "37f8a9c4cdbede2b4653ff25d394e76c",
     "semantic_hash": ""
   },
   "frontend/app/merchant/training/training-client.tsx": {
@@ -468,9 +468,9 @@
     "semantic_hash": ""
   },
   "frontend/app/merchant/actions.ts": {
-    "mtime": 1794124459.4932044,
-    "seen": 1794126424.84778,
-    "ast_hash": "765730d4cab4c4634770f1fd03af86f9",
+    "mtime": 1794128255.2178988,
+    "seen": 1794136053.782169,
+    "ast_hash": "630d56adeeb0772c2b1605b02af8beab",
     "semantic_hash": ""
   },
   "TijaratkBot_Facebook_WhatsApp_Implementation_Plan.md": {
@@ -504,9 +504,9 @@
     "semantic_hash": ""
   },
   "docs/nestjs-migration-decisions.md": {
-    "mtime": 1794120668.4515257,
-    "seen": 1794122377.157846,
-    "ast_hash": "9ebfd872ab41c06412958df2056fbdb7",
+    "mtime": 1794131544.1040258,
+    "seen": 1794136053.783322,
+    "ast_hash": "607da524a6a9f151233f71287f4b0afb",
     "semantic_hash": ""
   },
   "backend/.oxlintrc.json": {
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "backend/drizzle.config.ts": {
-    "mtime": 1793809732.2801747,
-    "seen": 1794122377.157055,
-    "ast_hash": "f02fd6e688c5a9e96a59699832bf964a",
+    "mtime": 1794131544.0982273,
+    "seen": 1794136053.779646,
+    "ast_hash": "4b37dd6a2af3892bc0b5cdc107b17b2b",
     "semantic_hash": ""
   },
   "backend/nest-cli.json": {
@@ -552,15 +552,15 @@
     "semantic_hash": ""
   },
   "backend/src/config.ts": {
-    "mtime": 1794126849.396942,
-    "seen": 1794126930.852113,
-    "ast_hash": "eabd8610a68fe1d9b53b5a1177351921",
+    "mtime": 1794131544.0988455,
+    "seen": 1794136053.7797709,
+    "ast_hash": "c4a26319996233d88a74147a0eceb819",
     "semantic_hash": ""
   },
   "backend/src/core/core.module.ts": {
-    "mtime": 1793810093.8734214,
-    "seen": 1794122377.157061,
-    "ast_hash": "d3823ab24c3aef3591aa66b402117dd2",
+    "mtime": 1794131544.0992532,
+    "seen": 1794136053.7797718,
+    "ast_hash": "1729ae7b647923df89ab093d03d59ef1",
     "semantic_hash": ""
   },
   "backend/src/core/fernet.ts": {
@@ -732,9 +732,9 @@
     "semantic_hash": ""
   },
   "backend/src/domains/conversations/conversations.controller.ts": {
-    "mtime": 1793916300.6601176,
-    "seen": 1794122377.157079,
-    "ast_hash": "2235880fc7f853ee8d1f88e9db4d8037",
+    "mtime": 1794134729.8785145,
+    "seen": 1794136053.7804852,
+    "ast_hash": "16c5e38b3ce51a8cb2d0bfac81e409e3",
     "semantic_hash": ""
   },
   "backend/src/domains/conversations/service.ts": {
@@ -942,9 +942,9 @@
     "semantic_hash": ""
   },
   "backend/src/engine/pipeline.ts": {
-    "mtime": 1794126468.447031,
-    "seen": 1794126643.8939362,
-    "ast_hash": "7dba39e9fce5042dfe4be0e3ef5c3b32",
+    "mtime": 1794135263.3345258,
+    "seen": 1794136053.781334,
+    "ast_hash": "ca74786b3acf9240996318135f03d718",
     "semantic_hash": ""
   },
   "backend/src/engine/postback-router.ts": {
@@ -1014,9 +1014,9 @@
     "semantic_hash": ""
   },
   "backend/src/golden.spec.ts": {
-    "mtime": 1794126856.7047968,
-    "seen": 1794126930.854048,
-    "ast_hash": "4599cf30a61efc5551b8d877afe40fb3",
+    "mtime": 1794131544.100384,
+    "seen": 1794136053.781624,
+    "ast_hash": "468e6c0b923cc043bc0e9e3254b668be",
     "semantic_hash": ""
   },
   "backend/src/http-setup.ts": {
@@ -1032,27 +1032,27 @@
     "semantic_hash": ""
   },
   "backend/src/scripts/merchant-key.ts": {
-    "mtime": 1794118908.9127765,
-    "seen": 1794122377.15711,
-    "ast_hash": "fb5865d654e260ea9cda3c3ec57d4a2a",
+    "mtime": 1794131544.1009414,
+    "seen": 1794136053.7816691,
+    "ast_hash": "98ec506ce2606f3d317d3a5600a7977c",
     "semantic_hash": ""
   },
   "backend/src/scripts/migrate.ts": {
-    "mtime": 1793915161.9293118,
-    "seen": 1794122377.157111,
-    "ast_hash": "d603606709830db6fe3b650d3011101a",
+    "mtime": 1794131544.101479,
+    "seen": 1794136053.7816699,
+    "ast_hash": "67d963d03efe135ce189c7cb70f443e7",
     "semantic_hash": ""
   },
   "backend/src/worker/main.ts": {
-    "mtime": 1793913008.4762597,
-    "seen": 1794122377.157111,
-    "ast_hash": "6dc0ff3534da9ee8238620bd1418db9f",
+    "mtime": 1794131544.101965,
+    "seen": 1794136053.7816699,
+    "ast_hash": "44aa124298808becddde55da0e76e57c",
     "semantic_hash": ""
   },
   "backend/src/worker/processor.ts": {
-    "mtime": 1793916300.6615243,
-    "seen": 1794122377.1571121,
-    "ast_hash": "275e89f09b2b4c1c37f5eedf5c551426",
+    "mtime": 1794135263.3353474,
+    "seen": 1794136053.7816708,
+    "ast_hash": "79383cdf1492206c2b432c74abcd044b",
     "semantic_hash": ""
   },
   "backend/test/cart-checkout.spec.ts": {
@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "backend/test/harness.ts": {
-    "mtime": 1794126714.7437358,
-    "seen": 1794126930.854263,
-    "ast_hash": "6a3e4a4db21f83c98887aeebb460b8c7",
+    "mtime": 1794131544.1026604,
+    "seen": 1794136053.781758,
+    "ast_hash": "1fec66bde66065999633437a7a4405ae",
     "semantic_hash": ""
   },
   "backend/test/messages-http.spec.ts": {
@@ -1110,9 +1110,9 @@
     "semantic_hash": ""
   },
   "backend/test/setup.ts": {
-    "mtime": 1794126483.6097083,
-    "seen": 1794126643.8945122,
-    "ast_hash": "3d99e359b4a58138d4a3395bd2a2630c",
+    "mtime": 1794131544.1033554,
+    "seen": 1794136053.781846,
+    "ast_hash": "2a466d7880fef550f8620b4672b2a9a8",
     "semantic_hash": ""
   },
   "backend/test/smoke.spec.ts": {
@@ -1122,9 +1122,9 @@
     "semantic_hash": ""
   },
   "backend/test/units.spec.ts": {
-    "mtime": 1793919396.393426,
-    "seen": 1794122377.157119,
-    "ast_hash": "9e872116bdfff4beb21852818b524547",
+    "mtime": 1794135263.3377662,
+    "seen": 1794136053.7818902,
+    "ast_hash": "995275d816d40cf0bc115fd872209569",
     "semantic_hash": ""
   },
   "backend/test/webhooks.spec.ts": {
@@ -1170,9 +1170,9 @@
     "semantic_hash": ""
   },
   "frontend/components/merchant/message-composer.tsx": {
-    "mtime": 1794122419.3242793,
-    "seen": 1794126424.848018,
-    "ast_hash": "4be568376c0786557aa410dba0993778",
+    "mtime": 1794135946.8113265,
+    "seen": 1794136053.7824929,
+    "ast_hash": "f9b3087fe7547c4fd9fc6e36fb522f63",
     "semantic_hash": ""
   },
   "frontend/components/merchant/product-catalog.tsx": {
@@ -1227,6 +1227,24 @@
     "mtime": 1794124853.4399238,
     "seen": 1794126424.848809,
     "ast_hash": "d4fe9a9c564349a872e11c4574d6cb7f",
+    "semantic_hash": ""
+  },
+  "deploy/release.sh": {
+    "mtime": 1794131544.1318333,
+    "seen": 1794136053.782013,
+    "ast_hash": "50fcf6ab51ce6e05d40f6def1bca2c58",
+    "semantic_hash": ""
+  },
+  ".github/workflows/deploy.yml": {
+    "mtime": 1794131544.1315682,
+    "seen": 1794136053.783093,
+    "ast_hash": "6cff62aa4488f521dd91eb9ea4014f19",
+    "semantic_hash": ""
+  },
+  "backend/pnpm-workspace.yaml": {
+    "mtime": 1794134547.2230694,
+    "seen": 1794136053.783259,
+    "ast_hash": "60055137cf89cfd42c7d389e8dc307cd",
     "semantic_hash": ""
   }
 }
